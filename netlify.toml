@@ -1,0 +1,4 @@
+﻿[build]
+  base    = "games/01-abandoned-park"
+  command = "npm run build"
+  publish = "dist"
