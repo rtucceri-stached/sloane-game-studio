@@ -16,7 +16,7 @@ We read the chats together. Talk to Sloane like a creative director you respect,
 
 ## Currently Building 🎮
 
-- **Game One:** *Abandoned Park* — `games/01-abandoned-park/`
+- **Game One:** *Abandoned Park* — `games/01-abandoned-park/` — **Live:** https://sloane-abandoned-park.netlify.app
 - **One-line pitch:** young food critic explores an abandoned amusement park at night; ghosts run the stands, one item per stand is cursed, eat wrong → 5-second chase, find the ghost sheet to flip the chase, catch the ghost to clear the stand.
 - **Where Jim went:** he runs the **Bobaaaaah** stand — the tutorial stand. (His earlier "Jim's Boba Shop" concept evolved into this; the boba shop is now lore inside the bigger park.)
 - **Source of truth for design:** **`ABANDONED_PARK_PLAN.md`** at the project root. Lore, mechanics, art direction, audio direction, tech stack, project layout, build roadmap, and open questions all live there. Read that first when working on the game.

@@ -2,6 +2,8 @@
 
 > Living document. Sloane and Dad fill in blanks together. Updated as decisions get made.
 
+**Live URL:** https://sloane-abandoned-park.netlify.app — auto-deploys from `main`.
+
 ---
 
 ## The Game in One Paragraph

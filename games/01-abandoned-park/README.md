@@ -1,5 +1,11 @@
 # Abandoned Park
 
+### ▶ Play it: https://sloane-abandoned-park.netlify.app
+
+Auto-deploys from `main` on every push. Open it on any phone, tablet, or computer.
+
+---
+
 Game One of Sloane and Dad's Game Studio. A young food critic explores an abandoned amusement park at night, where ghosts have taken over the food stands. Most food is fine — but exactly one item per stand is cursed, and eating the wrong thing kicks off a five-second chase.
 
 This folder is the Vite project that will eventually become the full game. Right now it's just the scaffolding: engine modules wired up, a canvas drawn in the dark sky color, a placeholder title on screen.
