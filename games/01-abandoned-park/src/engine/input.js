@@ -4,7 +4,7 @@
  * One object that knows about ALL controls.
  *   ✅ Keyboard
  *   ✅ Touch (virtual D-pad + action button)
- *   🔜 Bluetooth gamepads (see ABANDONED_PARK_PLAN.md → Controller Support)
+ *   ✅ Gamepads (XInput layout — Xbox, PlayStation, most BT controllers)
  *
  * USAGE in a game:
  *   import { Input } from './engine/input.js';
@@ -37,6 +37,23 @@ export const Input = (function () {
   // Touch
   const touchActionsDown = new Set();
   const touchActionsPressedThisFrame = new Set();
+  // Gamepad — populated by pollGamepads() each frame.
+  const gamepadActionsDown = new Set();
+  const gamepadActionsPressedThisFrame = new Set();
+
+  // -- Gamepad bindings (XInput layout) ------------------------
+  // Standard Gamepad mapping is what `navigator.getGamepads()` returns
+  // for any controller it recognizes (Xbox, PS, most BT pads).
+  const GAMEPAD_BUTTONS = {
+    action: 0,   // A / Cross
+    cancel: 1,   // B / Circle
+    menu:   9,   // Start / Options
+    up:    12,
+    down:  13,
+    left:  14,
+    right: 15,
+  };
+  const GAMEPAD_DEADZONE = 0.5;
 
   // -- Keyboard wiring -----------------------------------------
   window.addEventListener('keydown', (e) => {
@@ -57,7 +74,7 @@ export const Input = (function () {
     const keys = KEY_BINDINGS[action];
     if (keys && keys.some(k => keysDown.has(k))) return true;
     if (touchActionsDown.has(action)) return true;
-    // TODO: gamepad button mapped to this action
+    if (gamepadActionsDown.has(action)) return true;
     return false;
   }
 
@@ -65,6 +82,7 @@ export const Input = (function () {
     const keys = KEY_BINDINGS[action];
     if (keys && keys.some(k => keysPressedThisFrame.has(k))) return true;
     if (touchActionsPressedThisFrame.has(action)) return true;
+    if (gamepadActionsPressedThisFrame.has(action)) return true;
     return false;
   }
 
@@ -76,14 +94,66 @@ export const Input = (function () {
 
   // Call once per frame at the END of update().
   function endFrame() {
+    // Poll gamepads BEFORE clearing per-frame markers — keyboard/touch
+    // get their press flags from events that fired during the frame; the
+    // gamepad layer needs us to refresh those flags itself.
+    pollGamepads();
     keysPressedThisFrame.clear();
     keysReleasedThisFrame.clear();
     touchActionsPressedThisFrame.clear();
-    // TODO: poll gamepad state here
   }
 
   function bind(action, keys) {
     KEY_BINDINGS[action] = Array.isArray(keys) ? keys : [keys];
+  }
+
+  // -- Gamepad polling -----------------------------------------
+  // The Gamepad API has no events — we read state every frame.
+  // We diff this frame's "currently down" actions against the prior
+  // frame's to compute "just pressed."
+  function pollGamepads() {
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let pad = null;
+    for (const p of pads) {
+      if (p) { pad = p; break; }
+    }
+
+    const nowDown = new Set();
+    if (pad) {
+      // Buttons
+      for (const action in GAMEPAD_BUTTONS) {
+        const btn = pad.buttons[GAMEPAD_BUTTONS[action]];
+        if (btn && btn.pressed) nowDown.add(action);
+      }
+      // Left stick — XInput layout: axis 0 = X, axis 1 = Y, Y down is positive.
+      const lx = pad.axes[0] || 0;
+      const ly = pad.axes[1] || 0;
+      if (lx < -GAMEPAD_DEADZONE) nowDown.add('left');
+      if (lx >  GAMEPAD_DEADZONE) nowDown.add('right');
+      if (ly < -GAMEPAD_DEADZONE) nowDown.add('up');
+      if (ly >  GAMEPAD_DEADZONE) nowDown.add('down');
+    }
+
+    // "Just pressed" = in nowDown, NOT in previous frame's down set.
+    gamepadActionsPressedThisFrame.clear();
+    for (const action of nowDown) {
+      if (!gamepadActionsDown.has(action)) {
+        gamepadActionsPressedThisFrame.add(action);
+      }
+    }
+
+    // Replace the persistent "down" set with this frame's snapshot.
+    gamepadActionsDown.clear();
+    for (const action of nowDown) gamepadActionsDown.add(action);
+  }
+
+  function hasGamepad() {
+    if (!navigator.getGamepads) return false;
+    const pads = navigator.getGamepads();
+    for (const p of pads) {
+      if (p) return true;
+    }
+    return false;
   }
 
   // -- Touch controls ------------------------------------------
@@ -171,5 +241,6 @@ export const Input = (function () {
   return {
     isDown, wasPressed, wasReleased,
     endFrame, bind, enableTouchControls,
+    hasGamepad,
   };
 })();
