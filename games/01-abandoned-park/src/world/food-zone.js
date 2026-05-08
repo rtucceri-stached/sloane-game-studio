@@ -542,32 +542,63 @@ export class FoodZone {
   /* ---------- 1. SKY GRADIENT (smooth horizon bleed) ---------- */
   _drawSkyGradient() {
     const ctx = this.ctx;
-    const g = ctx.createLinearGradient(0, 0, 0, H * 0.7);
-    g.addColorStop(0,    PAL.skyTop);
-    g.addColorStop(0.45, PAL.skyMid);
-    g.addColorStop(0.85, PAL.skyBottom);
-    g.addColorStop(1,    PAL.skyHaze);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H * 0.7);
+    const camY = this.camera.y;
 
-    // Sickly green tint at horizon (additive)
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    const gg = ctx.createLinearGradient(0, H * 0.45, 0, H * 0.7);
-    gg.addColorStop(0, 'rgba(0,0,0,0)');
-    gg.addColorStop(1, 'rgba(108, 168, 90, 0.18)');
-    ctx.fillStyle = gg;
-    ctx.fillRect(0, H * 0.45, W, H * 0.25);
-    ctx.restore();
+    // Sky band — world y = 0 to SKY_BOTTOM (above the walkable area)
+    const SKY_BOTTOM = 700;
+    const skyTopScreen = -camY;
+    const skyBottomScreen = SKY_BOTTOM - camY;
 
-    // Ground gradient — first stop already opaque to kill any horizon seam.
-    const gr = ctx.createLinearGradient(0, H * 0.55, 0, H);
-    gr.addColorStop(0,    'rgba(58, 36, 88, 0)');
-    gr.addColorStop(0.18, PAL.groundFar);
-    gr.addColorStop(0.55, PAL.groundMid);
-    gr.addColorStop(1,    PAL.groundDark);
-    ctx.fillStyle = gr;
-    ctx.fillRect(0, H * 0.55, W, H * 0.45);
+    if (skyBottomScreen > 0) {
+      const g = ctx.createLinearGradient(0, skyTopScreen, 0, skyBottomScreen);
+      g.addColorStop(0,    PAL.skyTop);
+      g.addColorStop(0.45, PAL.skyMid);
+      g.addColorStop(0.85, PAL.skyBottom);
+      g.addColorStop(1,    PAL.skyHaze);
+      ctx.fillStyle = g;
+      const yStart = Math.max(0, skyTopScreen);
+      const yEnd = Math.min(H, skyBottomScreen);
+      ctx.fillRect(0, yStart, W, yEnd - yStart);
+
+      // Sickly green horizon tint (additive, lower portion of sky band)
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      const tintStartScreen = (SKY_BOTTOM - 200) - camY;
+      if (tintStartScreen < H) {
+        const gg = ctx.createLinearGradient(0, tintStartScreen, 0, skyBottomScreen);
+        gg.addColorStop(0, 'rgba(0,0,0,0)');
+        gg.addColorStop(1, 'rgba(108, 168, 90, 0.18)');
+        ctx.fillStyle = gg;
+        const tStart = Math.max(0, tintStartScreen);
+        const tEnd = Math.min(H, skyBottomScreen);
+        if (tEnd > tStart) ctx.fillRect(0, tStart, W, tEnd - tStart);
+      }
+      ctx.restore();
+    }
+
+    // Solid ground fill — world y >= GROUND_TOP, always covers visible ground.
+    const GROUND_TOP = 580; // slight overlap with sky bottom for the bleed
+    const groundTopScreen = GROUND_TOP - camY;
+    if (groundTopScreen < H) {
+      ctx.fillStyle = PAL.groundDark;
+      const yStart = Math.max(0, groundTopScreen);
+      ctx.fillRect(0, yStart, W, H - yStart);
+    }
+
+    // Horizon bleed — sits ON TOP of the solid ground for a smooth transition.
+    const bleedTopScreen = GROUND_TOP - camY;
+    const bleedBottomScreen = (GROUND_TOP + 350) - camY;
+    if (bleedBottomScreen > 0 && bleedTopScreen < H) {
+      const g = ctx.createLinearGradient(0, bleedTopScreen, 0, bleedBottomScreen);
+      g.addColorStop(0,    'rgba(58, 36, 88, 0)');
+      g.addColorStop(0.18, PAL.groundFar);
+      g.addColorStop(0.55, PAL.groundMid);
+      g.addColorStop(1,    PAL.groundDark);
+      ctx.fillStyle = g;
+      const yStart = Math.max(0, bleedTopScreen);
+      const yEnd = Math.min(H, bleedBottomScreen);
+      if (yEnd > yStart) ctx.fillRect(0, yStart, W, yEnd - yStart);
+    }
   }
 
   /* ---------- 2. DISTANT RIDES (parallax silhouettes) ---------- */
