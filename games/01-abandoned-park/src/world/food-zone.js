@@ -167,7 +167,7 @@ export class FoodZone {
 
     // Hero props (verbatim from artifact)
     this.bobaStand = {
-      x: 1100, y: 720, w: 320, h: 200,
+      x: 1100, y: 950, w: 320, h: 200,
       signGlow: 0,
       interiorPhase: 0,
       wrong: 0,        // 0=cozy warm, 1=sickly green
@@ -376,7 +376,7 @@ export class FoodZone {
     this.player.x += this.player.vx;
     this.player.y += this.player.vy;
     this.player.x = clamp(this.player.x, 60, WORLD_W - 60);
-    this.player.y = clamp(this.player.y, 1000, WORLD_H - 80);
+    this.player.y = clamp(this.player.y, 1170, WORLD_H - 80);
 
     const moving = Math.abs(this.player.vx) + Math.abs(this.player.vy) > 0.4;
     if (moving) {

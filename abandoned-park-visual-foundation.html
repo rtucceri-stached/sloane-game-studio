@@ -414,7 +414,7 @@ const litter = [];
 
 /* ---- HERO PROPS (hand-placed, hand-drawn) ---- */
 const bobaStand = {
-  x: 1100, y: 720, w: 320, h: 200,
+  x: 1100, y: 950, w: 320, h: 200,
   signGlow: 0,
   interiorPhase: 0,
   wrong: 0,        // 0=cozy warm, 1=sickly green
@@ -1955,7 +1955,7 @@ function updatePlayer(t) {
   player.x += player.vx;
   player.y += player.vy;
   player.x = clamp(player.x, 60, WORLD_W - 60);
-  player.y = clamp(player.y, 1000, WORLD_H - 80);
+  player.y = clamp(player.y, 1170, WORLD_H - 80);
 
   const moving = Math.abs(player.vx) + Math.abs(player.vy) > 0.4;
   if (moving) {
