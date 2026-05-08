@@ -165,6 +165,33 @@ export class FoodZone {
     this.grassTufts       = [];
     this.litter           = [];
 
+    // Boba Hut image asset (white-to-alpha composite)
+    this.bobaHutImage = null;
+    this.bobaHutDrawH = 0;
+    const _bobaImg = new Image();
+    _bobaImg.src = '/Boba_Hut.png';
+    _bobaImg.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = _bobaImg.naturalWidth;
+      c.height = _bobaImg.naturalHeight;
+      const cx = c.getContext('2d');
+      cx.drawImage(_bobaImg, 0, 0);
+      const id = cx.getImageData(0, 0, c.width, c.height);
+      const d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        const luma = (r + g + b) / 3;
+        if (luma >= 248) {
+          d[i + 3] = 0;
+        } else if (luma >= 220) {
+          d[i + 3] = Math.round((248 - luma) * 255 / 28);
+        }
+      }
+      cx.putImageData(id, 0, 0);
+      this.bobaHutImage = c;
+      this.bobaHutDrawH = Math.round(500 * (_bobaImg.naturalHeight / _bobaImg.naturalWidth));
+    };
+
     // Hero props (verbatim from artifact)
     this.bobaStand = {
       x: 1100, y: 950, w: 320, h: 200,
@@ -1190,147 +1217,34 @@ export class FoodZone {
   }
 
   /* ---------- 12. BOBA STAND ---------- */
-  _drawBobaStand(t) {
+  _drawBobaStand(_t) {
+    if (!this.bobaHutImage) return;
+
     const ctx = this.ctx;
     const b = this.bobaStand;
-    const wx = b.x - this.camera.x, wy = b.y - this.camera.y;
-    if (wx + b.w < -50 || wx > W + 50) return;
-    const wrong = b.wrong;
 
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.beginPath();
-    ctx.ellipse(wx + b.w / 2, wy + b.h + 8, b.w * 0.55, 14, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // World-space: 500 units wide, bottom anchored at y=1150, centered at x=1100
+    const DRAW_W = 500;
+    const BOTTOM_Y = 1150;
+    const CENTER_X = 1100;
+    const drawH = this.bobaHutDrawH;
 
-    ctx.fillStyle = PAL.standWood;
-    this._roundRect(wx, wy + 30, b.w, b.h, 4); ctx.fill();
-    ctx.strokeStyle = PAL.standWoodLo;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo(wx + 4, wy + 50 + i * 28);
-      ctx.lineTo(wx + b.w - 4, wy + 50 + i * 28 + Math.sin(i) * 4);
-      ctx.stroke();
+    const sx = (CENTER_X - DRAW_W / 2) - this.camera.x;
+    const sy = (BOTTOM_Y - drawH) - this.camera.y;
+
+    if (sx + DRAW_W < -50 || sx > W + 50) return;
+
+    ctx.drawImage(this.bobaHutImage, sx, sy, DRAW_W, drawH);
+
+    // Wrongness tint — sickly green overlay when the tonal cycle triggers
+    if (b.wrong > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = b.wrong * 0.35;
+      ctx.fillStyle = '#6CA85A';
+      ctx.fillRect(sx, sy, DRAW_W, drawH);
+      ctx.restore();
     }
-    ctx.fillStyle = PAL.standWoodLo;
-    ctx.fillRect(wx, wy + b.h + 26, b.w, 6);
-    ctx.fillStyle = PAL.standWoodHi;
-    ctx.fillRect(wx, wy + 30, b.w, 2);
-
-    const counterX = wx + 20, counterY = wy + 70, counterW = b.w - 40, counterH = 80;
-    ctx.fillStyle = PAL.standCounter;
-    ctx.fillRect(counterX - 4, counterY - 4, counterW + 8, counterH + 8);
-
-    const interiorGrad = ctx.createLinearGradient(0, counterY, 0, counterY + counterH);
-    if (wrong > 0) {
-      interiorGrad.addColorStop(0, PAL.standWrong);
-      interiorGrad.addColorStop(0.5, PAL.standWrongHi);
-      interiorGrad.addColorStop(1, PAL.standWrong);
-    } else {
-      interiorGrad.addColorStop(0, PAL.standInterior);
-      interiorGrad.addColorStop(0.5, PAL.standInteriorHi);
-      interiorGrad.addColorStop(1, PAL.standInterior);
-    }
-    ctx.fillStyle = interiorGrad;
-    ctx.fillRect(counterX, counterY, counterW, counterH);
-
-    ctx.fillStyle = wrong > 0 ? 'rgba(0,40,20,0.5)' : 'rgba(0,0,0,0.45)';
-    ctx.fillRect(counterX + 8, counterY + 8, counterW - 16, 4);
-    ctx.fillRect(counterX + 8, counterY + 32, counterW - 16, 4);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(counterX + 16, counterY + 18, 22, 50);
-    ctx.fillStyle = PAL.standPearl;
-    for (let py = counterY + 30; py < counterY + 66; py += 6) {
-      for (let px = counterX + 18; px < counterX + 36; px += 6) {
-        ctx.beginPath();
-        ctx.arc(px + (py % 12 === 0 ? 0 : 3), py, 2.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < 5; i++) {
-      const cx = counterX + 60 + i * 32;
-      ctx.fillStyle = PAL.standCup;
-      ctx.fillRect(cx, counterY + 24, 20, 28);
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(cx, counterY + 24, 20, 2);
-      ctx.fillStyle = i % 2 === 0 ? PAL.standStraw : PAL.green;
-      ctx.fillRect(cx + 8, counterY + 14, 2, 14);
-    }
-
-    ctx.fillStyle = 'rgba(20,16,28,0.85)';
-    ctx.fillRect(counterX + counterW - 36, counterY + 32, 14, 30);
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(counterX + counterW - 35, counterY + 33, 2, 26);
-
-    ctx.fillStyle = PAL.standCounterHi;
-    ctx.fillRect(counterX - 6, counterY + counterH - 4, counterW + 12, 8);
-    ctx.fillStyle = PAL.standWoodLo;
-    ctx.fillRect(counterX - 6, counterY + counterH + 4, counterW + 12, 2);
-
-    const awningY = wy + 14;
-    const stripes = 8;
-    const stripeW = b.w / stripes;
-    for (let i = 0; i < stripes; i++) {
-      ctx.fillStyle = i % 2 === 0 ? PAL.standAwningP : PAL.standAwningG;
-      ctx.beginPath();
-      ctx.moveTo(wx + i * stripeW, awningY);
-      ctx.lineTo(wx + (i + 1) * stripeW, awningY);
-      ctx.lineTo(wx + (i + 1) * stripeW, awningY + 24);
-      ctx.lineTo(wx + i * stripeW + stripeW / 2, awningY + 32);
-      ctx.lineTo(wx + i * stripeW, awningY + 24);
-      ctx.closePath(); ctx.fill();
-    }
-    ctx.fillStyle = PAL.standAwningD;
-    ctx.beginPath();
-    ctx.moveTo(wx, awningY + 24);
-    for (let i = 0; i < stripes; i++) {
-      ctx.lineTo(wx + i * stripeW + stripeW / 2, awningY + 32);
-      ctx.lineTo(wx + (i + 1) * stripeW, awningY + 24);
-    }
-    ctx.lineTo(wx + b.w, awningY + 28);
-    ctx.lineTo(wx, awningY + 28);
-    ctx.closePath();
-    ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1;
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.fillRect(wx, awningY, b.w, 2);
-
-    ctx.fillStyle = PAL.standCounter;
-    this._roundRect(wx + b.w * 0.18, wy - 28, b.w * 0.64, 36, 4); ctx.fill();
-    const glow = b.signGlow;
-    ctx.save();
-    ctx.font = 'bold 22px VT323, monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = PAL.standNeon;
-    ctx.shadowBlur = 20 + glow * 12;
-    ctx.fillStyle = PAL.standNeonGlow;
-    ctx.fillText('BOBAAAAAH', wx + b.w / 2, wy - 10);
-    ctx.shadowBlur = 8 + glow * 6;
-    ctx.fillStyle = PAL.standNeon;
-    ctx.fillText('BOBAAAAAH', wx + b.w / 2, wy - 10);
-    ctx.restore();
-
-    ctx.fillStyle = PAL.standWoodLo;
-    ctx.fillRect(wx + b.w * 0.18 - 2, wy - 28, 2, 50);
-    ctx.fillRect(wx + b.w * 0.82, wy - 28, 2, 50);
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.strokeStyle = wrong > 0 ? 'rgba(168, 240, 138, 0.35)' : 'rgba(255, 220, 180, 0.35)';
-    ctx.lineWidth = 1.6;
-    for (let i = 0; i < 4; i++) {
-      const sx = counterX + 30 + i * 70;
-      const sy = counterY;
-      const off = Math.sin(t * 0.003 + i + b.steamPhase) * 6;
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.quadraticCurveTo(sx + off, sy - 16, sx + off / 2, sy - 32);
-      ctx.quadraticCurveTo(sx + off + 4, sy - 50, sx + off / 2, sy - 70);
-      ctx.stroke();
-    }
-    ctx.restore();
   }
 
   /* ---------- 13. STREETLAMP (procedural verdigris) ---------- */
