@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Game Template — Sloane & Dad</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: #1a1a2e;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #game {
+      display: block;
+      background: #2d2d4a;
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      image-rendering: pixelated; /* keep things crisp when scaled */
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="game"></canvas>
+
+  <!--
+    HOW TO START A NEW GAME FROM THIS TEMPLATE
+    ==========================================
+    1. Copy this whole `_template` folder.
+    2. Rename the new copy to something like `01-cat-adventure`.
+    3. Change the <title> above.
+    4. Change the GAME STATE / UPDATE / DRAW sections below.
+    5. Open index.html in a browser. Done!
+
+    The four shared scripts below give you:
+      Input    - keyboard + touch (and gamepads later)
+      Juice    - lerp, shake, particles, hit-stop
+      Sound    - procedural beeps (no audio files needed!)
+      Canvas   - auto-resize for any screen
+  -->
+
+  <!-- Shared helpers (loaded from the project's shared/ folder) -->
+  <script src="../../shared/input-manager.js"></script>
+  <script src="../../shared/juice.js"></script>
+  <script src="../../shared/sound.js"></script>
+  <script src="../../shared/canvas.js"></script>
+
+  <script>
+  /* ============================================================
+   *  GAME SETUP
+   * ============================================================ */
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  // The "logical" game world. Code uses these dimensions no matter
+  // how big the actual screen is. 480 x 270 is a 16:9 small window
+  // that scales nicely on phones and big monitors.
+  const W = 480;
+  const H = 270;
+
+  Canvas.fit(canvas, W, H);
+  Input.enableTouchControls();   // virtual D-pad appears on phones
+
+  /* ============================================================
+   *  GAME STATE
+   *  (all the variables your game needs)
+   * ============================================================ */
+  const player = {
+    x: W / 2,
+    y: H / 2,
+    size: 32,
+    vx: 0,        // velocity in x
+    vy: 0,        // velocity in y
+    maxSpeed: 2.5,
+  };
+
+  const particles = [];
+  let frameCount = 0;
+
+  /* ============================================================
+   *  UPDATE  — runs 60 times per second
+   *  (change what's happening in the game)
+   * ============================================================ */
+  function update() {
+    frameCount++;
+
+    // --- Movement (smooth, with a little inertia) ---
+    let targetVX = 0, targetVY = 0;
+    if (Input.isDown('left'))  targetVX = -player.maxSpeed;
+    if (Input.isDown('right')) targetVX =  player.maxSpeed;
+    if (Input.isDown('up'))    targetVY = -player.maxSpeed;
+    if (Input.isDown('down'))  targetVY =  player.maxSpeed;
+
+    player.vx = Juice.lerp(player.vx, targetVX, 0.18);
+    player.vy = Juice.lerp(player.vy, targetVY, 0.18);
+    player.x += player.vx;
+    player.y += player.vy;
+
+    // --- Bounce off walls (with juice!) ---
+    const r = player.size / 2;
+    if (player.x < r)         { player.x = r;       player.vx *= -1; bounce(); }
+    if (player.x > W - r)     { player.x = W - r;   player.vx *= -1; bounce(); }
+    if (player.y < r)         { player.y = r;       player.vy *= -1; bounce(); }
+    if (player.y > H - r)     { player.y = H - r;   player.vy *= -1; bounce(); }
+
+    // --- Sparkle trail when moving ---
+    const speed = Math.hypot(player.vx, player.vy);
+    if (speed > 0.5 && frameCount % 2 === 0) {
+      particles.push(...Juice.burst(player.x, player.y, 1, '#ffcc00'));
+    }
+
+    // --- Press SPACE / action button: wave of particles ---
+    if (Input.wasPressed('action')) {
+      particles.push(...Juice.burst(player.x, player.y, 24, '#6effc8'));
+      Sound.play('powerup');
+    }
+
+    // --- Update particles (fade + slow down + die) ---
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.94;
+      p.vy *= 0.94;
+      p.life -= 1;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    Input.endFrame();   // <-- IMPORTANT: always call this last
+  }
+
+  function bounce() {
+    Juice.shake(8);
+    Sound.play('hit');
+    particles.push(...Juice.burst(player.x, player.y, 14, '#ff6b9d'));
+  }
+
+  /* ============================================================
+   *  DRAW  — runs after every update
+   *  (paint the current state on screen)
+   * ============================================================ */
+  function draw() {
+    // Background
+    ctx.fillStyle = '#2d2d4a';
+    ctx.fillRect(0, 0, W, H);
+
+    // Apply screen shake to everything that follows
+    const shake = Juice.shakeOffset();
+    ctx.save();
+    ctx.translate(shake.x, shake.y);
+
+    // Particles
+    for (const p of particles) {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+
+    // Player (a smiley emoji!)
+    ctx.font = `${player.size}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('😊', player.x, player.y);
+
+    ctx.restore();
+
+    // UI text (drawn outside of shake so it stays steady)
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Sloane & Dad — Template', 12, 22);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px system-ui, sans-serif';
+    ctx.fillText('Move: Arrow keys / WASD / D-pad   Action: Space / ●', 12, H - 12);
+  }
+
+  /* ============================================================
+   *  MAIN LOOP  — the heartbeat of the game
+   * ============================================================ */
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  </script>
+
+</body>
+</html>
