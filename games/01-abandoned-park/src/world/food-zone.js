@@ -544,7 +544,7 @@ export class FoodZone {
     const ctx = this.ctx;
     const camY = this.camera.y;
 
-    // Sky band — world y = 0 to SKY_BOTTOM (above the walkable area)
+    // ===== SKY =====
     const SKY_BOTTOM = 1000;
     const skyTopScreen = -camY;
     const skyBottomScreen = SKY_BOTTOM - camY;
@@ -560,7 +560,7 @@ export class FoodZone {
       const yEnd = Math.min(H, skyBottomScreen);
       ctx.fillRect(0, yStart, W, yEnd - yStart);
 
-      // Sickly green horizon tint (additive, lower portion of sky band)
+      // Sickly green horizon tint
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       const tintStartScreen = (SKY_BOTTOM - 200) - camY;
@@ -576,18 +576,12 @@ export class FoodZone {
       ctx.restore();
     }
 
-    // Solid ground fill — world y >= GROUND_TOP, always covers visible ground.
-    const GROUND_TOP = 850; // slight overlap with sky bottom for the bleed
-    const groundTopScreen = GROUND_TOP - camY;
-    if (groundTopScreen < H) {
-      ctx.fillStyle = PAL.groundDark;
-      const yStart = Math.max(0, groundTopScreen);
-      ctx.fillRect(0, yStart, W, H - yStart);
-    }
-
-    // Horizon bleed — sits ON TOP of the solid ground for a smooth transition.
+    // ===== HORIZON BLEED (overlaps sky bottom for smooth transition) =====
+    const GROUND_TOP = 850;
+    const BLEED_HEIGHT = 350;
     const bleedTopScreen = GROUND_TOP - camY;
-    const bleedBottomScreen = (GROUND_TOP + 350) - camY;
+    const bleedBottomScreen = (GROUND_TOP + BLEED_HEIGHT) - camY;
+
     if (bleedBottomScreen > 0 && bleedTopScreen < H) {
       const g = ctx.createLinearGradient(0, bleedTopScreen, 0, bleedBottomScreen);
       g.addColorStop(0,    'rgba(58, 36, 88, 0)');
@@ -598,6 +592,14 @@ export class FoodZone {
       const yStart = Math.max(0, bleedTopScreen);
       const yEnd = Math.min(H, bleedBottomScreen);
       if (yEnd > yStart) ctx.fillRect(0, yStart, W, yEnd - yStart);
+    }
+
+    // ===== SOLID GROUND (only BELOW the bleed end) =====
+    const solidGroundStartScreen = (GROUND_TOP + BLEED_HEIGHT) - camY;
+    if (solidGroundStartScreen < H) {
+      ctx.fillStyle = PAL.groundDark;
+      const yStart = Math.max(0, solidGroundStartScreen);
+      ctx.fillRect(0, yStart, W, H - yStart);
     }
   }
 
