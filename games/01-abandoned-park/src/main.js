@@ -15,8 +15,8 @@ import './engine/skeleton.js';
 import './engine/assets.js';
 import './engine/save.js';
 
-const CANVAS_W = 800;
-const CANVAS_H = 500;
+const CANVAS_W = 960;
+const CANVAS_H = 600;
 
 const canvas = document.getElementById('game');
 Canvas.fit(canvas, CANVAS_W, CANVAS_H);

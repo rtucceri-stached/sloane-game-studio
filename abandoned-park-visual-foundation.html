@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Abandoned Park — Food Zone (Visual Foundation)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: #050208;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: 'Cormorant Garamond', serif;
+    }
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    #game {
+      display: block;
+      background: #050208;
+      box-shadow: 0 0 80px rgba(168, 85, 255, 0.18), 0 0 200px rgba(155, 255, 94, 0.06);
+    }
+    #touch-controls { position: fixed; inset: 0; pointer-events: none; display: none; z-index: 10; }
+    #touch-controls.on { display: block; }
+    .pad-base { position: absolute; pointer-events: auto; user-select: none; -webkit-user-select: none; }
+    #dpad { left: 18px; bottom: 18px; width: 168px; height: 168px; }
+    .dpad-btn {
+      position: absolute; width: 56px; height: 56px;
+      background: rgba(168, 85, 255, 0.22);
+      border: 2px solid rgba(155, 255, 94, 0.55);
+      border-radius: 14px;
+      color: #f5e8ff; font-family: 'VT323', monospace; font-size: 30px;
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .dpad-btn.active { background: rgba(255, 77, 200, 0.55); border-color: #ff4dc8; }
+    #dpad .up    { left: 56px; top: 0; }
+    #dpad .down  { left: 56px; top: 112px; }
+    #dpad .left  { left: 0; top: 56px; }
+    #dpad .right { left: 112px; top: 56px; }
+    #action-btn {
+      right: 28px; bottom: 50px; width: 96px; height: 96px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 77, 200, 0.85), rgba(168, 85, 255, 0.55));
+      border: 3px solid #9bff5e;
+      color: #0f0820; font-family: 'VT323', monospace; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 24px rgba(155, 255, 94, 0.45);
+    }
+    #action-btn.active { transform: scale(0.93); }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="touch-controls">
+    <div id="dpad" class="pad-base">
+      <div class="dpad-btn up"    data-key="up">▲</div>
+      <div class="dpad-btn down"  data-key="down">▼</div>
+      <div class="dpad-btn left"  data-key="left">◀</div>
+      <div class="dpad-btn right" data-key="right">▶</div>
+    </div>
+    <div id="action-btn" class="pad-base" data-key="action">SHIFT</div>
+  </div>
+
+<script>
+/* ============================================================
+   ABANDONED PARK — FOOD ZONE — VISUAL FOUNDATION ARTIFACT
+   ------------------------------------------------------------
+   Single-file canvas test of the visual layer that the Vite
+   project's food-zone.js render loop should match. Engine
+   modules (Input/Juice/Sound/Canvas) are inlined so this runs
+   standalone — when porting, the visual code (palette, draw
+   helpers, render order) is the part that matters.
+   ============================================================ */
+
+/* ---------- Input (kbd + touch) ---------- */
+const Input = (function () {
+  const keys = {}, justPressed = {};
+  const map = {
+    'arrowleft':'left','a':'left','arrowright':'right','d':'right',
+    'arrowup':'up','w':'up','arrowdown':'down','s':'down',
+    ' ':'action','enter':'action','e':'action','shift':'action'
+  };
+  window.addEventListener('keydown', e => {
+    const a = map[e.key.toLowerCase()];
+    if (a) { if (!keys[a]) justPressed[a] = true; keys[a] = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => {
+    const a = map[e.key.toLowerCase()];
+    if (a) keys[a] = false;
+  });
+  function setupBtn(el, n) {
+    const press = ev => { ev.preventDefault(); if (!keys[n]) justPressed[n] = true; keys[n] = true; el.classList.add('active'); };
+    const rel   = ev => { ev.preventDefault(); keys[n] = false; el.classList.remove('active'); };
+    el.addEventListener('touchstart', press, {passive:false});
+    el.addEventListener('touchend', rel, {passive:false});
+    el.addEventListener('touchcancel', rel, {passive:false});
+    el.addEventListener('mousedown', press); el.addEventListener('mouseup', rel); el.addEventListener('mouseleave', rel);
+  }
+  let touchOn = false;
+  function enableTouchControls() {
+    if (touchOn) return;
+    if (!('ontouchstart' in window) && !navigator.maxTouchPoints) return;
+    touchOn = true;
+    const tc = document.getElementById('touch-controls'); if (!tc) return;
+    tc.classList.add('on');
+    tc.querySelectorAll('[data-key]').forEach(el => setupBtn(el, el.dataset.key));
+  }
+  return {
+    isDown: n => !!keys[n],
+    wasPressed: n => !!justPressed[n],
+    enableTouchControls,
+    endFrame() { for (const k in justPressed) justPressed[k] = false; }
+  };
+})();
+
+/* ---------- Juice ---------- */
+const Juice = (function () {
+  let shake = 0;
+  return {
+    lerp: (a, b, t) => a + (b - a) * t,
+    burst(x, y, n, color) {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 1 + Math.random() * 4;
+        out.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 30+Math.random()*25, maxLife: 55, color, size: 2+Math.random()*3 });
+      }
+      return out;
+    },
+    shake(amt) { shake = Math.max(shake, amt); },
+    getShakeOffset() {
+      const s = shake;
+      shake *= 0.85; if (shake < 0.1) shake = 0;
+      return { x: (Math.random()-0.5)*s, y: (Math.random()-0.5)*s };
+    }
+  };
+})();
+
+/* ---------- Sound (footsteps + ambient hooks) ---------- */
+const Sound = (function () {
+  let ac = null, muted = false;
+  function ensure() { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; }
+  function noiseBurst({dur=0.05, vol=0.025, filter=380}) {
+    if (muted) return;
+    const a = ensure(); const t = a.currentTime;
+    const buf = a.createBuffer(1, a.sampleRate*dur, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * 0.5;
+    const src = a.createBufferSource(); src.buffer = buf;
+    const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filter;
+    const g = a.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    src.connect(f).connect(g).connect(a.destination);
+    src.start(t); src.stop(t+dur);
+  }
+  function tone({freq, dur=0.15, type='sine', vol=0.05, slideTo=null}) {
+    if (muted) return;
+    const a = ensure(); const t = a.currentTime;
+    const o = a.createOscillator(); const g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slideTo !== null) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  return {
+    step() { noiseBurst({dur:0.04, vol:0.018, filter:340}); },
+    wrong() { tone({freq: 180, dur: 0.5, type: 'sine', vol: 0.04, slideTo: 110}); },
+    cozy() { tone({freq: 440, dur: 0.18, type: 'triangle', vol: 0.03}); },
+    set mute(v) { muted = !!v; }, get mute() { return muted; }
+  };
+})();
+
+/* ---------- Canvas ---------- */
+const Canvas = (function () {
+  return {
+    fit(canvas, W, H) {
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const ratio = W / H;
+        const winRatio = window.innerWidth / window.innerHeight;
+        let cssW, cssH;
+        if (winRatio > ratio) { cssH = window.innerHeight; cssW = cssH * ratio; }
+        else { cssW = window.innerWidth; cssH = cssW / ratio; }
+        canvas.style.width = cssW + 'px'; canvas.style.height = cssH + 'px';
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        const c = canvas.getContext('2d');
+        c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.imageSmoothingEnabled = true;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+    }
+  };
+})();
+
+
+/* ============================================================
+   PALETTE — every color used below comes from here.
+   ============================================================ */
+const PAL = {
+  // Sky — deep purple-black night, sickly haze near horizon
+  skyTop: '#070314', skyMid: '#160a2c', skyBottom: '#2a1644', skyHaze: '#3d2458',
+
+  // Ground — dirt midway
+  groundFar: '#1a1024', groundMid: '#241828', groundNear: '#2e1f30', groundDark: '#0a0612',
+  concrete: '#2a2832', concreteHi: '#3a3540', concreteCrack: '#100810',
+  dirt: '#1f1820', dirtHi: '#2e2528',
+
+  // Sloane's three loud colors
+  pink: '#ff4dc8', pinkHi: '#ffb0e0', pinkLo: '#c2369a',
+  green: '#9bff5e', greenHi: '#d8ffb8', greenLo: '#5cb838',
+  blue: '#a8e0ff', blueHi: '#e0f4ff',
+
+  // Horror accents
+  sickGreen: '#6dff8a', sickGreenD: '#3dc858',
+  bloodBoba: '#a01828', bloodHi: '#d93450',
+
+  // Distant rides
+  rideFar: '#100822', rideMid: '#1c0e30', rideNear: '#2a163e',
+  rideStrut: '#3a2a4e', rideRust: '#5a2a1c', rideBeam: '#1a0e26',
+
+  // Lighting
+  warmLamp: '#ffd76b', warmLampHi: '#fff4c2',
+  fireflyGlow: '#ffe4a0',
+  spiritPink: '#ff8acc', spiritGreen: '#9bff5e', spiritPurp: '#c9a8ff', spiritBlue: '#a8e0ff',
+
+  // Boba stand
+  standWood: '#3a2818', standWoodHi: '#5a3e28', standWoodLo: '#1f140a',
+  standAwningP: '#ff5dbe', standAwningG: '#a8f08a', standAwningD: '#c2369a',
+  standCounter: '#1a1014', standCounterHi: '#2a1f24',
+  standInterior: '#3a2814', standInteriorHi: '#5e421e',
+  standWrong: '#1a3018', standWrongHi: '#2a5028',
+  standNeon: '#ff4dc8', standNeonGlow: '#ffaadd',
+  standCup: '#e8e0d0', standStraw: '#ff8ac8',
+  standPearl: '#1a0e14',
+
+  // Streetlamp (verdigris green like the photo)
+  lampPost: '#3e5a4c', lampPostHi: '#6a8674', lampPostLo: '#1f2e26',
+  lampBrass: '#8a6a32', lampBrassHi: '#c2a058',
+  lampGlass: '#ffe4a0', lampGlassDim: '#a88a48',
+  lampHand: '#0a0612',
+
+  // Lantern posts / string lights
+  lanternPost: '#2a1f1a', lanternPostHi: '#3e2e26',
+  bulbWarm: '#ffa860', bulbPink: '#ff8acc', bulbGreen: '#a8f08a', bulbWire: '#1a1218',
+
+  // Litter
+  litterPaper: '#cdb87a', litterCup: '#d8d0c0', litterTicket: '#c47b3a', litterFlyer: '#8a9ab8',
+  popcorn: '#f0e8c0',
+
+  // Grass / weeds
+  grass: '#3a4a30', grassHi: '#5a6a44', weed: '#4a4838', deadGrass: '#5a4a30',
+
+  // Bench
+  benchWood: '#3a2818', benchWoodH: '#5a3e28', benchMetal: '#1a1820', benchMetalH: '#3a3a44',
+
+  // Trash can
+  canBody: '#2a2630', canBodyHi: '#444050', canRust: '#5a3a1e', canBag: '#1a1a22',
+
+  // Cone
+  coneBase: '#a0501a', coneStripe: '#e8e0d0',
+
+  // Balloon
+  balloonPink: '#ff8acc', balloonPinkHi: '#ffd0e8', balloonString: '#c0a0d0',
+
+  // Player (apron girl placeholder — Dad's pixel art swaps in)
+  hairBase: '#3a2418', hairHi: '#5a3a26', hairLo: '#1f1208',
+  skin: '#f0d4b8', skinSh: '#c8a68a',
+  shirt: '#4a3020', shirtHi: '#6a4838',
+  apron: '#bcb4a8', apronHi: '#dcd4c8', apronLo: '#7a7268',
+  jeans: '#3a4a6a', jeansHi: '#5a6a8a', jeansLo: '#243044',
+  shoe: '#e8e0d0', shoeLo: '#a8a090',
+
+  // UI
+  uiText: '#f5e8ff', uiBg: 'rgba(15,8,28,0.92)', uiBorder: '#a855ff',
+  uiAccent: '#9bff5e', uiPink: '#ff4dc8', uiDim: '#7a6a8a',
+
+  vignette: 'rgba(0,0,0,0.85)'
+};
+
+
+/* ============================================================
+   CANVAS / WORLD / CAMERA / PLAYER
+   ============================================================ */
+const W = 960, H = 600;
+const canvas = document.getElementById('game');
+Canvas.fit(canvas, W, H);
+const ctx = canvas.getContext('2d');
+
+const WORLD_W = 2400, WORLD_H = 1700;
+const camera = { x: 0, y: 0, tx: 0, ty: 0 };
+
+const player = {
+  x: 1180, y: 1180, vx: 0, vy: 0, r: 18,
+  facing: 1, walkPhase: 0, bobPhase: 0,
+  speed: 2.4, _stepTimer: 0
+};
+
+
+/* ============================================================
+   WORLD CONTENT
+   ============================================================ */
+function rng(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const distantRides = [
+  { type: 'tent',     x: 280,  y: 360, w: 380, h: 220 },
+  { type: 'coaster',  x: 720,  y: 280, w: 980, h: 200 },
+  { type: 'carousel', x: 1340, y: 380, r: 110 },
+  { type: 'ferris',   x: 1980, y: 400, r: 200, tilt: 0.05 }
+];
+
+const midSilhouettes = [];
+const lanternPosts = [];
+const stringLightLines = [];
+const benches = [];
+const trashCans = [];
+const cones = [];
+const concretePatches = [];
+const grassTufts = [];
+const litter = [];
+
+(function buildWorld() {
+  const r = rng(73);
+
+  // Other food stand silhouettes (the 7 stands we haven't built — just hinted)
+  const standSpots = [
+    [340, 640], [600, 660], [860, 650], [1500, 660],
+    [1740, 640], [1980, 660], [2200, 650]
+  ];
+  for (const [x, y] of standSpots) {
+    midSilhouettes.push({
+      x, y, w: 150 + r() * 60, h: 110 + r() * 30, accent: r()
+    });
+  }
+
+  // Lantern posts (warm pools) — line the path
+  const postSpots = [
+    [380, 1130], [780, 1300], [1480, 1090], [1820, 1300],
+    [2160, 1180], [560, 1480], [1180, 1520], [1660, 1470]
+  ];
+  for (const p of postSpots) lanternPosts.push({ x: p[0], y: p[1], h: 180, sway: r() * Math.PI * 2, hue: r() });
+  stringLightLines.push([0, 2], [2, 4], [5, 6], [6, 7]);
+
+  // Benches
+  benches.push({ x: 690,  y: 1240, broken: true,  rot: -0.04 });
+  benches.push({ x: 1620, y: 1330, broken: false, rot: 0.02 });
+  benches.push({ x: 460,  y: 1380, broken: false, rot: 0 });
+  benches.push({ x: 2010, y: 1220, broken: true,  rot: 0.18 });
+  benches.push({ x: 1380, y: 1450, broken: false, rot: -0.01 });
+  benches.push({ x: 880,  y: 1500, broken: false, rot: 0.03 });
+
+  // Trash cans (some knocked over)
+  trashCans.push({ x: 540,  y: 1180, knocked: false });
+  trashCans.push({ x: 1300, y: 1200, knocked: false });
+  trashCans.push({ x: 1740, y: 1240, knocked: true });
+  trashCans.push({ x: 2080, y: 1340, knocked: false });
+  trashCans.push({ x: 940,  y: 1430, knocked: false });
+  trashCans.push({ x: 1530, y: 1530, knocked: true });
+  trashCans.push({ x: 360,  y: 1560, knocked: false });
+
+  // Cones
+  for (let i = 0; i < 9; i++) cones.push({
+    x: 250 + r() * (WORLD_W - 500),
+    y: 1180 + r() * 360,
+    lean: (r() - 0.5) * 0.4
+  });
+
+  // Concrete patches (cracked tiles in the dirt)
+  for (let i = 0; i < 22; i++) concretePatches.push({
+    x: r() * WORLD_W,
+    y: 1080 + r() * (WORLD_H - 1180),
+    w: 90 + r() * 160, h: 60 + r() * 90,
+    rot: (r() - 0.5) * 0.3,
+    cracks: 2 + Math.floor(r() * 4)
+  });
+
+  // Grass tufts (mostly dead)
+  for (let i = 0; i < 240; i++) grassTufts.push({
+    x: r() * WORLD_W,
+    y: 1060 + r() * (WORLD_H - 1140),
+    h: 5 + r() * 9,
+    sway: r() * Math.PI * 2,
+    lean: (r() - 0.5) * 0.6,
+    dead: r() < 0.6
+  });
+
+  // Litter — lots, makes the ground feel lived-in / abandoned
+  const litterKinds = ['paper', 'cup', 'ticket', 'flyer', 'popcorn'];
+  for (let i = 0; i < 220; i++) litter.push({
+    x: r() * WORLD_W,
+    y: 1080 + r() * (WORLD_H - 1180),
+    kind: litterKinds[Math.floor(r() * litterKinds.length)],
+    rot: r() * Math.PI * 2,
+    size: 0.7 + r() * 0.7
+  });
+})();
+
+
+/* ---- HERO PROPS (hand-placed, hand-drawn) ---- */
+const bobaStand = {
+  x: 1100, y: 720, w: 320, h: 200,
+  signGlow: 0,
+  interiorPhase: 0,
+  wrong: 0,        // 0=cozy warm, 1=sickly green
+  wrongTimer: 360, // first scheduled tonal flicker
+  steamPhase: 0
+};
+
+const streetlamp = {
+  x: 1620, y: 1080,
+  glow: 1.0,
+  handPhase: 0,
+  handFade: 0     // hand silhouette inside glass — fades in/out very subtly
+};
+
+const balloon = {
+  x: 580, y: 760,
+  bobPhase: 0,
+  // The "wrong" detail — its drop shadow lives offset from where it should
+  shadowOffsetX: -50, shadowOffsetY: 12
+};
+
+
+/* ---- PARTICLES ---- */
+const fireflies = [];
+for (let i = 0; i < 90; i++) {
+  fireflies.push({
+    x: Math.random() * WORLD_W,
+    y: 200 + Math.random() * (WORLD_H - 350),
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.04 + Math.random() * 0.04
+  });
+}
+
+const spiritMotes = [];
+const spiritColors = [PAL.spiritPink, PAL.spiritGreen, PAL.spiritPurp, PAL.spiritBlue];
+for (let i = 0; i < 50; i++) {
+  spiritMotes.push({
+    x: Math.random() * WORLD_W,
+    y: 200 + Math.random() * (WORLD_H - 350),
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: -0.05 - Math.random() * 0.16,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.02 + Math.random() * 0.03,
+    color: spiritColors[i % spiritColors.length],
+    size: 2 + Math.random() * 2.4
+  });
+}
+
+const fogPuffsBack = [];
+for (let i = 0; i < 16; i++) {
+  fogPuffsBack.push({
+    x: Math.random() * WORLD_W,
+    y: 280 + Math.random() * 600,
+    r: 220 + Math.random() * 260,
+    vx: -0.08 - Math.random() * 0.10,
+    alpha: 0.06 + Math.random() * 0.06
+  });
+}
+
+const fogPuffsFront = [];
+for (let i = 0; i < 12; i++) {
+  fogPuffsFront.push({
+    x: Math.random() * WORLD_W,
+    y: 850 + Math.random() * (WORLD_H - 950),
+    r: 160 + Math.random() * 220,
+    vx: -0.18 - Math.random() * 0.18,
+    alpha: 0.05 + Math.random() * 0.04
+  });
+}
+
+const dustMotes = [];
+for (let i = 0; i < 130; i++) {
+  dustMotes.push({
+    x: Math.random() * WORLD_W,
+    y: Math.random() * WORLD_H,
+    vx: (Math.random() - 0.5) * 0.18,
+    vy: -0.04 - Math.random() * 0.12,
+    life: Math.random() * 200,
+    size: 0.5 + Math.random() * 1.2
+  });
+}
+
+let burstParticles = [];
+
+/* HUD state */
+const hud = {
+  titleAlpha: 1,
+  introHintT: 600  // fades after a while
+};
+
+
+/* ============================================================
+   DRAWING HELPERS
+   ============================================================ */
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+}
+
+function additivePool(x, y, radius, color, intensity) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+  g.addColorStop(0, color.replace(/[\d.]+\)$/, (intensity * 0.55).toFixed(2) + ')'));
+  g.addColorStop(0.45, color.replace(/[\d.]+\)$/, (intensity * 0.18).toFixed(2) + ')'));
+  g.addColorStop(1, color.replace(/[\d.]+\)$/, '0)'));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+
+/* ---------- 1. SKY GRADIENT (with smooth horizon bleed, no hard line) ---------- */
+function drawSkyGradient() {
+  // Top sky → upper haze
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+  g.addColorStop(0,    PAL.skyTop);
+  g.addColorStop(0.45, PAL.skyMid);
+  g.addColorStop(0.85, PAL.skyBottom);
+  g.addColorStop(1,    PAL.skyHaze);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H * 0.7);
+
+  // Sickly green tint right at horizon (additive, very subtle)
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const gg = ctx.createLinearGradient(0, H * 0.45, 0, H * 0.7);
+  gg.addColorStop(0, 'rgba(0,0,0,0)');
+  gg.addColorStop(1, 'rgba(108, 168, 90, 0.18)');
+  ctx.fillStyle = gg;
+  ctx.fillRect(0, H * 0.45, W, H * 0.25);
+  ctx.restore();
+
+  // Ground gradient (continues from haze, no hard seam)
+  const gr = ctx.createLinearGradient(0, H * 0.55, 0, H);
+  gr.addColorStop(0,    'rgba(58, 36, 88, 0)');
+  gr.addColorStop(0.18, PAL.groundFar);
+  gr.addColorStop(0.55, PAL.groundMid);
+  gr.addColorStop(1,    PAL.groundDark);
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, H * 0.55, W, H * 0.45);
+}
+
+
+/* ---------- 2. DISTANT RIDES (parallax silhouettes — ferris, coaster, tent, carousel) ---------- */
+function drawDistantRides(t) {
+  for (const ride of distantRides) {
+    const wx = ride.x - camera.x * 0.55;
+    const wy = ride.y - camera.y * 0.45;
+    if (ride.type === 'ferris') drawFerrisWheel(wx, wy, ride.r, ride.tilt, t);
+    else if (ride.type === 'coaster') drawCoaster(wx, wy, ride.w, ride.h, t);
+    else if (ride.type === 'tent') drawBigTent(wx, wy, ride.w, ride.h);
+    else if (ride.type === 'carousel') drawCarousel(wx, wy, ride.r, t);
+  }
+}
+
+function drawFerrisWheel(cx, cy, r, tilt, t) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(tilt);
+
+  // Support struts coming up from ground
+  ctx.strokeStyle = PAL.rideStrut;
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.8, r + 280);
+  ctx.lineTo(0, 0);
+  ctx.moveTo(r * 0.8, r + 280);
+  ctx.lineTo(0, 0);
+  ctx.stroke();
+
+  // Outer ring
+  ctx.strokeStyle = PAL.rideMid;
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = PAL.rideNear; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, r - 10, 0, Math.PI * 2); ctx.stroke();
+
+  // Spokes
+  ctx.strokeStyle = PAL.rideStrut;
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 12; i++) {
+    const a = i * (Math.PI * 2 / 12) + t * 0.00006;  // barely turning
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    ctx.stroke();
+  }
+
+  // Cabins (hanging under spoke tips)
+  for (let i = 0; i < 12; i++) {
+    const a = i * (Math.PI * 2 / 12) + t * 0.00006;
+    const tx = Math.cos(a) * r, ty = Math.sin(a) * r;
+    ctx.fillStyle = PAL.rideMid;
+    ctx.fillRect(tx - 6, ty + 2, 12, 8);
+    // every few has a faint pink bulb still working
+    if (i % 4 === 0) {
+      ctx.fillStyle = 'rgba(255, 138, 204, 0.55)';
+      ctx.fillRect(tx - 1, ty - 1, 2, 2);
+    }
+  }
+
+  // Center hub
+  ctx.fillStyle = PAL.rideStrut;
+  ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCoaster(cx, cy, w, h, t) {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Lattice support beams going down to ground
+  ctx.strokeStyle = PAL.rideBeam;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 9; i++) {
+    const x = -w / 2 + i * (w / 8);
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + (i % 2 === 0 ? 6 : -6), h * 1.4);
+    ctx.stroke();
+  }
+
+  // Cross-bracing
+  ctx.strokeStyle = PAL.rideMid;
+  ctx.lineWidth = 1.4;
+  for (let i = 0; i < 8; i++) {
+    const x = -w / 2 + i * (w / 8);
+    ctx.beginPath();
+    ctx.moveTo(x, 30);
+    ctx.lineTo(x + w / 8, h * 0.6);
+    ctx.moveTo(x + w / 8, 30);
+    ctx.lineTo(x, h * 0.6);
+    ctx.stroke();
+  }
+
+  // The wavy track itself
+  ctx.strokeStyle = PAL.rideStrut;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let x = -w / 2; x <= w / 2; x += 6) {
+    const localT = (x + w / 2) / w;
+    const y = -Math.sin(localT * Math.PI * 1.8) * h * 0.5
+            - Math.sin(localT * Math.PI * 4) * h * 0.18;
+    if (x === -w / 2) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Inner rail
+  ctx.strokeStyle = PAL.rideRust;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let x = -w / 2; x <= w / 2; x += 6) {
+    const localT = (x + w / 2) / w;
+    const y = -Math.sin(localT * Math.PI * 1.8) * h * 0.5
+            - Math.sin(localT * Math.PI * 4) * h * 0.18 + 6;
+    if (x === -w / 2) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawBigTent(cx, cy, w, h) {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Main tent body — circus tent shape
+  ctx.fillStyle = PAL.rideMid;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2, h);
+  ctx.lineTo(-w / 2, h * 0.4);
+  ctx.bezierCurveTo(-w / 4, h * 0.5, -w * 0.1, h * 0.55, 0, h * 0.5);
+  ctx.bezierCurveTo(w * 0.1, h * 0.55, w / 4, h * 0.5, w / 2, h * 0.4);
+  ctx.lineTo(w / 2, h);
+  ctx.closePath(); ctx.fill();
+
+  // Tent peaks
+  ctx.fillStyle = PAL.rideNear;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.42, h * 0.5);
+  ctx.lineTo(-w * 0.18, 0);
+  ctx.lineTo(0, h * 0.5);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.5);
+  ctx.lineTo(w * 0.18, 0);
+  ctx.lineTo(w * 0.42, h * 0.5);
+  ctx.closePath(); ctx.fill();
+
+  // Stripes (subtle)
+  ctx.strokeStyle = PAL.rideStrut;
+  ctx.lineWidth = 1;
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * w * 0.08 - w * 0.18, 0);
+    ctx.lineTo(i * w * 0.08 - w * 0.18 - w * 0.04, h * 0.5);
+    ctx.stroke();
+  }
+
+  // Crooked flag on top
+  ctx.fillStyle = PAL.bloodBoba;
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.18, 0);
+  ctx.lineTo(-w * 0.18, -28);
+  ctx.lineTo(-w * 0.10, -22);
+  ctx.lineTo(-w * 0.18, -16);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PAL.rideStrut;
+  ctx.fillRect(w * 0.18 - 1, -22, 2, 22);
+
+  // Door slit
+  ctx.fillStyle = PAL.groundDark;
+  ctx.beginPath();
+  ctx.moveTo(-14, h);
+  ctx.lineTo(-10, h * 0.55);
+  ctx.lineTo(10, h * 0.55);
+  ctx.lineTo(14, h);
+  ctx.closePath(); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCarousel(cx, cy, r, t) {
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Center pole
+  ctx.fillStyle = PAL.rideStrut;
+  ctx.fillRect(-3, -r * 1.1, 6, r * 2.2);
+
+  // Roof (striped, conical)
+  ctx.fillStyle = PAL.rideNear;
+  ctx.beginPath();
+  ctx.moveTo(-r, 0);
+  ctx.lineTo(0, -r * 0.9);
+  ctx.lineTo(r, 0);
+  ctx.closePath(); ctx.fill();
+  // Roof stripes
+  ctx.strokeStyle = PAL.rideStrut;
+  ctx.lineWidth = 0.8;
+  for (let i = -4; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * r * 0.2, 0);
+    ctx.lineTo(0, -r * 0.9);
+    ctx.stroke();
+  }
+
+  // Roof rim
+  ctx.fillStyle = PAL.rideMid;
+  ctx.fillRect(-r * 1.05, -2, r * 2.1, 6);
+
+  // Platform shadow
+  ctx.fillStyle = PAL.rideFar;
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.2, r * 0.95, r * 0.18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Horse silhouettes around the perimeter (just suggestions, slowly turning)
+  ctx.fillStyle = PAL.rideStrut;
+  for (let i = 0; i < 6; i++) {
+    const a = i * (Math.PI * 2 / 6) + t * 0.0001;
+    const px = Math.cos(a) * r * 0.85;
+    const py = Math.sin(a) * r * 0.18;
+    if (Math.sin(a) > -0.2) {  // only draw front-facing horses
+      ctx.beginPath();
+      ctx.ellipse(px, py - 18, 8, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(px - 6, py - 28, 12, 4);
+      ctx.fillRect(px - 1, py - 36, 2, 8);
+    }
+  }
+  // Pole going through each horse
+  ctx.strokeStyle = PAL.rideMid;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 6; i++) {
+    const a = i * (Math.PI * 2 / 6) + t * 0.0001;
+    if (Math.sin(a) > -0.2) {
+      const px = Math.cos(a) * r * 0.85;
+      ctx.beginPath();
+      ctx.moveTo(px, -2);
+      ctx.lineTo(px, r * 0.2);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+
+/* ---------- 3. FOG (back layer) ---------- */
+function drawFogBack(t) {
+  ctx.save();
+  for (const f of fogPuffsBack) {
+    const wx = f.x - camera.x * 0.85;
+    const wy = f.y - camera.y * 0.85;
+    if (wx < -300 || wx > W + 300 || wy < -300 || wy > H + 100) continue;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, f.r);
+    g.addColorStop(0, `rgba(110, 90, 150, ${f.alpha})`);
+    g.addColorStop(1, 'rgba(110, 90, 150, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, f.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+
+/* ---------- 4. MID SILHOUETTES (the other 7 stands, hinted) ---------- */
+function drawMidSilhouettes(t) {
+  for (const s of midSilhouettes) {
+    const wx = s.x - camera.x * 0.85;
+    const wy = s.y - camera.y * 0.7;
+    if (wx + s.w < -50 || wx > W + 50 || wy > H) continue;
+
+    // Body
+    ctx.fillStyle = PAL.rideMid;
+    roundRect(wx, wy, s.w, s.h, 4); ctx.fill();
+    // Awning top
+    ctx.fillStyle = PAL.rideNear;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      ctx.moveTo(wx + i * (s.w / 5), wy);
+      ctx.lineTo(wx + i * (s.w / 5) + s.w / 10, wy - 14);
+      ctx.lineTo(wx + (i + 1) * (s.w / 5), wy);
+    }
+    ctx.fill();
+    // Counter slit
+    ctx.fillStyle = PAL.groundDark;
+    ctx.fillRect(wx + s.w * 0.15, wy + s.h * 0.3, s.w * 0.7, s.h * 0.25);
+    // Faint accent light (some stands still half-lit)
+    if (s.accent < 0.4) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      const accentColor = s.accent < 0.2 ? 'rgba(255, 138, 204,' : 'rgba(168, 240, 138,';
+      const g = ctx.createRadialGradient(wx + s.w * 0.5, wy + s.h * 0.4, 0, wx + s.w * 0.5, wy + s.h * 0.4, 60);
+      g.addColorStop(0, accentColor + '0.35)');
+      g.addColorStop(1, accentColor + '0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(wx + s.w * 0.5, wy + s.h * 0.4, 60, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+
+/* ---------- 5. GROUND (concrete patches, grass tufts, litter) ---------- */
+function drawConcretePatches() {
+  for (const p of concretePatches) {
+    const wx = p.x - camera.x, wy = p.y - camera.y;
+    if (wx + p.w < -20 || wx > W + 20 || wy + p.h < -20 || wy > H + 20) continue;
+    ctx.save();
+    ctx.translate(wx + p.w / 2, wy + p.h / 2);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = PAL.concrete;
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    // Edge highlight
+    ctx.fillStyle = PAL.concreteHi;
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, 2);
+    ctx.fillRect(-p.w / 2, -p.h / 2, 2, p.h);
+    // Cracks
+    ctx.strokeStyle = PAL.concreteCrack;
+    ctx.lineWidth = 1;
+    for (let i = 0; i < p.cracks; i++) {
+      ctx.beginPath();
+      const sx = (Math.sin(i * 17.3 + p.x) - 0.5) * p.w * 0.7;
+      const sy = (Math.cos(i * 11.7 + p.y) - 0.5) * p.h * 0.7;
+      ctx.moveTo(sx, sy);
+      for (let j = 0; j < 4; j++) {
+        const nx = sx + (Math.sin(i * 31 + j * 7 + p.x) - 0.5) * p.w * 0.4;
+        const ny = sy + (Math.cos(i * 23 + j * 9 + p.y) - 0.5) * p.h * 0.4;
+        ctx.lineTo(nx, ny);
+      }
+      ctx.stroke();
+    }
+    // Stain
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(p.w * 0.1, p.h * 0.1, p.w * 0.18, p.h * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawGrassTufts(t) {
+  for (const g of grassTufts) {
+    const wx = g.x - camera.x, wy = g.y - camera.y;
+    if (wx < -10 || wx > W + 10 || wy < -10 || wy > H + 10) continue;
+    const sway = Math.sin(t * 0.001 + g.sway) * 1.5 + g.lean;
+    ctx.strokeStyle = g.dead ? PAL.deadGrass : PAL.grass;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(wx, wy);
+    ctx.quadraticCurveTo(wx + sway, wy - g.h * 0.6, wx + sway * 1.6, wy - g.h);
+    ctx.stroke();
+    // Side blade
+    ctx.beginPath();
+    ctx.moveTo(wx + 1, wy);
+    ctx.quadraticCurveTo(wx + 2 + sway * 0.8, wy - g.h * 0.5, wx + 3 + sway * 1.4, wy - g.h * 0.85);
+    ctx.stroke();
+  }
+}
+
+function drawLitter(t) {
+  for (const l of litter) {
+    const wx = l.x - camera.x, wy = l.y - camera.y;
+    if (wx < -20 || wx > W + 20 || wy < -20 || wy > H + 20) continue;
+    ctx.save();
+    ctx.translate(wx, wy);
+    ctx.rotate(l.rot);
+    ctx.scale(l.size, l.size);
+    // soft drop shadow
+    ctx.fillStyle = PAL.litterShadow || 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(1, 2, 7, 2, 0, 0, Math.PI * 2); ctx.fill();
+    if (l.kind === 'paper') {
+      ctx.fillStyle = PAL.litterPaper;
+      ctx.fillRect(-6, -4, 12, 8);
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(-6, -4, 12, 1);
+    } else if (l.kind === 'cup') {
+      ctx.fillStyle = PAL.litterCup;
+      ctx.beginPath();
+      ctx.moveTo(-5, -4); ctx.lineTo(5, -4); ctx.lineTo(4, 5); ctx.lineTo(-4, 5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(-4, -4, 8, 1);
+      // straw
+      ctx.fillStyle = PAL.standStraw;
+      ctx.fillRect(0, -8, 1, 6);
+    } else if (l.kind === 'ticket') {
+      ctx.fillStyle = PAL.litterTicket;
+      ctx.fillRect(-7, -3, 14, 6);
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(-3, -3, 1, 6);
+      ctx.fillRect(2, -3, 1, 6);
+    } else if (l.kind === 'flyer') {
+      ctx.fillStyle = PAL.litterFlyer;
+      ctx.fillRect(-5, -6, 10, 12);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(-4, -4, 8, 1);
+      ctx.fillRect(-4, -1, 6, 1);
+    } else if (l.kind === 'popcorn') {
+      ctx.fillStyle = PAL.popcorn;
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.arc(Math.sin(k * 1.3) * 3, Math.cos(k * 2.1) * 2, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+
+/* ---------- 6. CONES, TRASH CANS, BENCHES ---------- */
+function drawCones() {
+  for (const c of cones) {
+    const wx = c.x - camera.x, wy = c.y - camera.y;
+    if (wx < -40 || wx > W + 40 || wy < -40 || wy > H + 40) continue;
+    ctx.save();
+    ctx.translate(wx, wy);
+    ctx.rotate(c.lean);
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(2, 4, 14, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cone body
+    ctx.fillStyle = PAL.coneBase;
+    ctx.beginPath();
+    ctx.moveTo(-10, 4); ctx.lineTo(0, -22); ctx.lineTo(10, 4);
+    ctx.closePath(); ctx.fill();
+    // Stripes
+    ctx.fillStyle = PAL.coneStripe;
+    ctx.fillRect(-7, -8, 14, 3);
+    // Base
+    ctx.fillStyle = PAL.coneBase;
+    ctx.fillRect(-12, 4, 24, 3);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(-12, 6, 24, 1);
+    ctx.restore();
+  }
+}
+
+function drawTrashCans(t) {
+  for (const c of trashCans) {
+    const wx = c.x - camera.x, wy = c.y - camera.y;
+    if (wx < -40 || wx > W + 40 || wy < -60 || wy > H + 40) continue;
+    ctx.save();
+    ctx.translate(wx, wy);
+    if (c.knocked) {
+      ctx.rotate(Math.PI / 2);
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(0, 18, 22, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // standing shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(0, 16, 18, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Body
+    ctx.fillStyle = PAL.canBody;
+    roundRect(-15, -32, 30, 48, 3); ctx.fill();
+    // Highlight
+    ctx.fillStyle = PAL.canBodyHi;
+    ctx.fillRect(-13, -30, 3, 44);
+    // Rust
+    ctx.fillStyle = PAL.canRust;
+    ctx.fillRect(-14, 0, 28, 3);
+    ctx.fillRect(-12, -20, 6, 1);
+    ctx.fillRect(4, -10, 6, 1);
+    // Top rim
+    ctx.fillStyle = PAL.canBodyHi;
+    ctx.fillRect(-16, -34, 32, 4);
+    ctx.fillStyle = PAL.groundDark;
+    ctx.fillRect(-13, -33, 26, 2);
+    // Garbage bag poking out
+    ctx.fillStyle = PAL.canBag;
+    ctx.beginPath();
+    ctx.ellipse(2, -34, 8, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(-2, -36, 3, 1);
+
+    if (c.knocked) {
+      // Spilled litter
+      ctx.fillStyle = PAL.litterPaper;
+      ctx.fillRect(20, -8, 8, 4);
+      ctx.fillStyle = PAL.litterCup;
+      ctx.fillRect(28, -2, 5, 5);
+      ctx.fillStyle = PAL.popcorn;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(22 + i * 3, -12 + Math.sin(i) * 2, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+function drawBenches() {
+  for (const b of benches) {
+    const wx = b.x - camera.x, wy = b.y - camera.y;
+    if (wx < -100 || wx > W + 100 || wy < -40 || wy > H + 40) continue;
+    ctx.save();
+    ctx.translate(wx, wy);
+    ctx.rotate(b.rot);
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(0, 16, 50, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // legs (metal)
+    ctx.fillStyle = PAL.benchMetal;
+    ctx.fillRect(-46, -4, 6, 22);
+    ctx.fillRect(40, -4, 6, 22);
+    ctx.fillStyle = PAL.benchMetalH;
+    ctx.fillRect(-46, -4, 1, 22);
+    ctx.fillRect(40, -4, 1, 22);
+    // seat slats (wood)
+    if (!b.broken) {
+      ctx.fillStyle = PAL.benchWood;
+      ctx.fillRect(-50, -8, 100, 6);
+      ctx.fillStyle = PAL.benchWoodH;
+      ctx.fillRect(-50, -8, 100, 1);
+      // Back rest
+      ctx.fillStyle = PAL.benchWood;
+      ctx.fillRect(-46, -28, 92, 5);
+      ctx.fillStyle = PAL.benchWoodH;
+      ctx.fillRect(-46, -28, 92, 1);
+      ctx.fillStyle = PAL.benchMetal;
+      ctx.fillRect(-44, -23, 2, 14);
+      ctx.fillRect(42, -23, 2, 14);
+    } else {
+      // broken: only one slat, splinters
+      ctx.fillStyle = PAL.benchWood;
+      ctx.fillRect(-50, -8, 60, 6);
+      ctx.fillStyle = PAL.benchWoodH;
+      ctx.fillRect(-50, -8, 60, 1);
+      // splinter
+      ctx.fillStyle = PAL.benchWood;
+      ctx.beginPath();
+      ctx.moveTo(10, -2); ctx.lineTo(20, -10); ctx.lineTo(16, -2); ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = PAL.benchWoodLo || PAL.benchMetal;
+      ctx.fillRect(20, 0, 18, 2);
+    }
+    ctx.restore();
+  }
+}
+
+
+/* ---------- 7. LANTERN POSTS + STRING LIGHTS ---------- */
+function drawLanternPosts(t) {
+  // String lights between posts (drawn first, behind posts)
+  for (const [i, j] of stringLightLines) {
+    const a = lanternPosts[i], b = lanternPosts[j];
+    if (!a || !b) continue;
+    const ax = a.x - camera.x, ay = a.y - camera.y - a.h + 6;
+    const bx = b.x - camera.x, by = b.y - camera.y - b.h + 6;
+    if ((ax < -50 && bx < -50) || (ax > W + 50 && bx > W + 50)) continue;
+
+    // Wire (sagging)
+    const sag = Math.hypot(bx - ax, by - ay) * 0.18;
+    ctx.strokeStyle = PAL.bulbWire;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.quadraticCurveTo((ax + bx) / 2, (ay + by) / 2 + sag, bx, by);
+    ctx.stroke();
+
+    // Bulbs along the wire
+    const bulbCount = 8;
+    for (let k = 1; k < bulbCount; k++) {
+      const u = k / bulbCount;
+      // quadratic curve point
+      const mx = (1 - u) * (1 - u) * ax + 2 * (1 - u) * u * ((ax + bx) / 2) + u * u * bx;
+      const my = (1 - u) * (1 - u) * ay + 2 * (1 - u) * u * ((ay + by) / 2 + sag) + u * u * by;
+      const colorPick = (k + i) % 3;
+      const color = colorPick === 0 ? PAL.bulbWarm : colorPick === 1 ? PAL.bulbPink : PAL.bulbGreen;
+      const flicker = 0.7 + 0.3 * Math.sin(t * 0.003 + k * 1.7 + i);
+      // bulb
+      ctx.fillStyle = color;
+      ctx.globalAlpha = flicker;
+      ctx.beginPath();
+      ctx.arc(mx, my + 3, 2.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Posts
+  for (const p of lanternPosts) {
+    const wx = p.x - camera.x, wy = p.y - camera.y;
+    if (wx < -40 || wx > W + 40 || wy < -p.h - 20 || wy > H + 20) continue;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(wx, wy + 2, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // post
+    ctx.fillStyle = PAL.lanternPost;
+    ctx.fillRect(wx - 2, wy - p.h, 4, p.h);
+    ctx.fillStyle = PAL.lanternPostHi;
+    ctx.fillRect(wx - 2, wy - p.h, 1, p.h);
+    // top crossbar
+    ctx.fillStyle = PAL.lanternPost;
+    ctx.fillRect(wx - 10, wy - p.h, 20, 3);
+    // bulb at top
+    const bulbColors = [PAL.bulbWarm, PAL.bulbPink, PAL.bulbGreen];
+    const bulb = bulbColors[Math.floor(p.hue * 3)];
+    const flicker = 0.85 + 0.15 * Math.sin(t * 0.004 + p.sway);
+    ctx.fillStyle = bulb;
+    ctx.globalAlpha = flicker;
+    ctx.beginPath();
+    ctx.arc(wx, wy - p.h - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+
+/* ---------- 8. THE BOBA STAND (the hero — drawn with care) ---------- */
+function drawBobaStand(t) {
+  const b = bobaStand;
+  const wx = b.x - camera.x, wy = b.y - camera.y;
+  if (wx + b.w < -50 || wx > W + 50) return;
+
+  const wrong = b.wrong;  // 0 → cozy, 1 → sickly green flicker
+
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(wx + b.w / 2, wy + b.h + 8, b.w * 0.55, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ---- main wooden body ----
+  ctx.fillStyle = PAL.standWood;
+  roundRect(wx, wy + 30, b.w, b.h, 4); ctx.fill();
+  // wood grain
+  ctx.strokeStyle = PAL.standWoodLo;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(wx + 4, wy + 50 + i * 28);
+    ctx.lineTo(wx + b.w - 4, wy + 50 + i * 28 + Math.sin(i) * 4);
+    ctx.stroke();
+  }
+  // base shading
+  ctx.fillStyle = PAL.standWoodLo;
+  ctx.fillRect(wx, wy + b.h + 26, b.w, 6);
+  // top edge highlight
+  ctx.fillStyle = PAL.standWoodHi;
+  ctx.fillRect(wx, wy + 30, b.w, 2);
+
+  // ---- counter (the dark window the player would order through) ----
+  const counterX = wx + 20, counterY = wy + 70, counterW = b.w - 40, counterH = 80;
+  // outer frame
+  ctx.fillStyle = PAL.standCounter;
+  ctx.fillRect(counterX - 4, counterY - 4, counterW + 8, counterH + 8);
+  // interior glow base — color shifts when "wrong" is firing
+  const interiorBase = wrong > 0
+    ? `rgba(${Math.floor(58 - 30 * wrong)}, ${Math.floor(40 + 80 * wrong)}, ${Math.floor(20 + 30 * wrong)}, 1)`
+    : `rgba(58, 40, 20, 1)`;
+  const interiorGrad = ctx.createLinearGradient(0, counterY, 0, counterY + counterH);
+  if (wrong > 0) {
+    interiorGrad.addColorStop(0, PAL.standWrong);
+    interiorGrad.addColorStop(0.5, PAL.standWrongHi);
+    interiorGrad.addColorStop(1, PAL.standWrong);
+  } else {
+    interiorGrad.addColorStop(0, PAL.standInterior);
+    interiorGrad.addColorStop(0.5, PAL.standInteriorHi);
+    interiorGrad.addColorStop(1, PAL.standInterior);
+  }
+  ctx.fillStyle = interiorGrad;
+  ctx.fillRect(counterX, counterY, counterW, counterH);
+
+  // interior detail — shelving silhouettes
+  ctx.fillStyle = wrong > 0 ? 'rgba(0,40,20,0.5)' : 'rgba(0,0,0,0.45)';
+  ctx.fillRect(counterX + 8, counterY + 8, counterW - 16, 4);
+  ctx.fillRect(counterX + 8, counterY + 32, counterW - 16, 4);
+
+  // boba pearls jar (glass with pearls visible)
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(counterX + 16, counterY + 18, 22, 50);
+  ctx.fillStyle = PAL.standPearl;
+  for (let py = counterY + 30; py < counterY + 66; py += 6) {
+    for (let px = counterX + 18; px < counterX + 36; px += 6) {
+      ctx.beginPath();
+      ctx.arc(px + (py % 12 === 0 ? 0 : 3), py, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // cup row on the counter back wall
+  for (let i = 0; i < 5; i++) {
+    const cx = counterX + 60 + i * 32;
+    ctx.fillStyle = PAL.standCup;
+    ctx.fillRect(cx, counterY + 24, 20, 28);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(cx, counterY + 24, 20, 2);
+    // straw
+    ctx.fillStyle = i % 2 === 0 ? PAL.standStraw : PAL.green;
+    ctx.fillRect(cx + 8, counterY + 14, 2, 14);
+  }
+
+  // shaker on the counter (silhouetted)
+  ctx.fillStyle = 'rgba(20,16,28,0.85)';
+  ctx.fillRect(counterX + counterW - 36, counterY + 32, 14, 30);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(counterX + counterW - 35, counterY + 33, 2, 26);
+
+  // counter ledge (where customer puts coins)
+  ctx.fillStyle = PAL.standCounterHi;
+  ctx.fillRect(counterX - 6, counterY + counterH - 4, counterW + 12, 8);
+  ctx.fillStyle = PAL.standWoodLo;
+  ctx.fillRect(counterX - 6, counterY + counterH + 4, counterW + 12, 2);
+
+  // ---- AWNING (striped, scalloped bottom) ----
+  const awningY = wy + 14;
+  const stripes = 8;
+  const stripeW = b.w / stripes;
+  for (let i = 0; i < stripes; i++) {
+    ctx.fillStyle = i % 2 === 0 ? PAL.standAwningP : PAL.standAwningG;
+    ctx.beginPath();
+    ctx.moveTo(wx + i * stripeW, awningY);
+    ctx.lineTo(wx + (i + 1) * stripeW, awningY);
+    ctx.lineTo(wx + (i + 1) * stripeW, awningY + 24);
+    ctx.lineTo(wx + i * stripeW + stripeW / 2, awningY + 32);
+    ctx.lineTo(wx + i * stripeW, awningY + 24);
+    ctx.closePath(); ctx.fill();
+  }
+  // awning shadow underside
+  ctx.fillStyle = PAL.standAwningD;
+  ctx.beginPath();
+  ctx.moveTo(wx, awningY + 24);
+  for (let i = 0; i < stripes; i++) {
+    ctx.lineTo(wx + i * stripeW + stripeW / 2, awningY + 32);
+    ctx.lineTo(wx + (i + 1) * stripeW, awningY + 24);
+  }
+  ctx.lineTo(wx + b.w, awningY + 28);
+  ctx.lineTo(wx, awningY + 28);
+  ctx.closePath();
+  ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1;
+  // awning top highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillRect(wx, awningY, b.w, 2);
+
+  // ---- NEON SIGN ----
+  // sign back panel
+  ctx.fillStyle = PAL.standCounter;
+  roundRect(wx + b.w * 0.18, wy - 28, b.w * 0.64, 36, 4); ctx.fill();
+  // glow box
+  const glow = b.signGlow;
+  // The neon text
+  ctx.save();
+  ctx.font = 'bold 22px VT323, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // outer pink halo
+  ctx.shadowColor = PAL.standNeon;
+  ctx.shadowBlur = 20 + glow * 12;
+  ctx.fillStyle = PAL.standNeonGlow;
+  ctx.fillText('BOBAAAAAH', wx + b.w / 2, wy - 10);
+  ctx.shadowBlur = 8 + glow * 6;
+  ctx.fillStyle = PAL.standNeon;
+  ctx.fillText('BOBAAAAAH', wx + b.w / 2, wy - 10);
+  ctx.restore();
+
+  // sign post mounts
+  ctx.fillStyle = PAL.standWoodLo;
+  ctx.fillRect(wx + b.w * 0.18 - 2, wy - 28, 2, 50);
+  ctx.fillRect(wx + b.w * 0.82, wy - 28, 2, 50);
+
+  // ---- STEAM WISPS rising from the counter ----
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.strokeStyle = wrong > 0 ? 'rgba(168, 240, 138, 0.35)' : 'rgba(255, 220, 180, 0.35)';
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 4; i++) {
+    const sx = counterX + 30 + i * 70;
+    const sy = counterY;
+    const off = Math.sin(t * 0.003 + i + b.steamPhase) * 6;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(sx + off, sy - 16, sx + off / 2, sy - 32);
+    ctx.quadraticCurveTo(sx + off + 4, sy - 50, sx + off / 2, sy - 70);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+
+/* ---------- 9. STREETLAMP (procedural verdigris recreation) ---------- */
+function drawStreetlamp(t) {
+  const s = streetlamp;
+  const wx = s.x - camera.x, wy = s.y - camera.y;
+  if (wx < -100 || wx > W + 100 || wy < -200 || wy > H + 100) return;
+
+  // ground shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(wx, wy + 4, 22, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // post (tall, ornate)
+  const postH = 220;
+  const postTopY = wy - postH;
+
+  // main column
+  ctx.fillStyle = PAL.lampPost;
+  ctx.fillRect(wx - 5, postTopY + 30, 10, postH - 30);
+  // verdigris streaks
+  ctx.fillStyle = PAL.lampPostHi;
+  ctx.fillRect(wx - 5, postTopY + 30, 2, postH - 30);
+  ctx.fillStyle = PAL.lampPostLo;
+  ctx.fillRect(wx + 3, postTopY + 30, 2, postH - 30);
+
+  // base flare at bottom
+  ctx.fillStyle = PAL.lampPostLo;
+  ctx.fillRect(wx - 12, wy - 8, 24, 8);
+  ctx.fillStyle = PAL.lampPost;
+  ctx.fillRect(wx - 10, wy - 16, 20, 8);
+  ctx.fillStyle = PAL.lampPostHi;
+  ctx.fillRect(wx - 8, wy - 22, 16, 6);
+
+  // mid-post ornamental ring
+  ctx.fillStyle = PAL.lampPost;
+  ctx.fillRect(wx - 9, postTopY + 110, 18, 5);
+  ctx.fillStyle = PAL.lampPostHi;
+  ctx.fillRect(wx - 9, postTopY + 110, 18, 1);
+  // mid-post crossarm (small)
+  ctx.fillStyle = PAL.lampPost;
+  ctx.fillRect(wx - 18, postTopY + 90, 36, 4);
+  ctx.fillStyle = PAL.lampPostLo;
+  ctx.fillRect(wx - 18, postTopY + 92, 36, 2);
+  // crossarm finials
+  ctx.fillStyle = PAL.lampBrass;
+  ctx.beginPath(); ctx.arc(wx - 18, postTopY + 92, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(wx + 18, postTopY + 92, 3, 0, Math.PI * 2); ctx.fill();
+
+  // upper post bell shape
+  ctx.fillStyle = PAL.lampPost;
+  ctx.beginPath();
+  ctx.moveTo(wx - 6, postTopY + 30);
+  ctx.lineTo(wx - 12, postTopY + 12);
+  ctx.lineTo(wx + 12, postTopY + 12);
+  ctx.lineTo(wx + 6, postTopY + 30);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PAL.lampPostHi;
+  ctx.fillRect(wx - 12, postTopY + 12, 24, 1);
+
+  // lantern body
+  const lx = wx, ly = postTopY - 20;
+  ctx.fillStyle = PAL.lampPostLo;
+  ctx.beginPath();
+  ctx.moveTo(lx - 14, ly + 32);
+  ctx.lineTo(lx - 18, ly);
+  ctx.lineTo(lx + 18, ly);
+  ctx.lineTo(lx + 14, ly + 32);
+  ctx.closePath(); ctx.fill();
+  // lantern frame
+  ctx.fillStyle = PAL.lampBrass;
+  ctx.fillRect(lx - 18, ly - 4, 36, 4);
+  ctx.fillRect(lx - 14, ly + 30, 28, 4);
+
+  // glass panes (warm glow)
+  ctx.fillStyle = PAL.lampGlass;
+  ctx.beginPath();
+  ctx.moveTo(lx - 12, ly + 28);
+  ctx.lineTo(lx - 16, ly + 2);
+  ctx.lineTo(lx + 16, ly + 2);
+  ctx.lineTo(lx + 12, ly + 28);
+  ctx.closePath(); ctx.fill();
+
+  // Hand silhouette inside the glass — fades in/out very subtly (kawaii horror beat)
+  ctx.save();
+  ctx.globalAlpha = s.handFade;
+  ctx.fillStyle = PAL.lampHand;
+  // 5-finger hand pressed against glass
+  ctx.beginPath();
+  ctx.moveTo(lx - 6, ly + 26);
+  ctx.lineTo(lx - 6, ly + 14);
+  ctx.lineTo(lx - 4, ly + 8);
+  ctx.lineTo(lx - 2, ly + 6);
+  ctx.lineTo(lx, ly + 6);
+  ctx.lineTo(lx + 2, ly + 6);
+  ctx.lineTo(lx + 4, ly + 8);
+  ctx.lineTo(lx + 6, ly + 14);
+  ctx.lineTo(lx + 6, ly + 26);
+  ctx.closePath(); ctx.fill();
+  // wrist
+  ctx.fillRect(lx - 4, ly + 24, 8, 4);
+  ctx.restore();
+
+  // glass frame crossbars
+  ctx.strokeStyle = PAL.lampBrass;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(lx - 16, ly + 14); ctx.lineTo(lx + 16, ly + 14);
+  ctx.moveTo(lx, ly + 2); ctx.lineTo(lx, ly + 28);
+  ctx.stroke();
+
+  // top finial & cap
+  ctx.fillStyle = PAL.lampPost;
+  ctx.beginPath();
+  ctx.moveTo(lx - 16, ly - 4);
+  ctx.lineTo(lx - 12, ly - 16);
+  ctx.lineTo(lx + 12, ly - 16);
+  ctx.lineTo(lx + 16, ly - 4);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = PAL.lampBrass;
+  ctx.fillRect(lx - 2, ly - 22, 4, 8);
+  ctx.beginPath(); ctx.arc(lx, ly - 24, 3, 0, Math.PI * 2); ctx.fill();
+}
+
+
+/* ---------- 10. BALLOON (the wrong-shadow detail) ---------- */
+function drawBalloon(t) {
+  const wx = balloon.x - camera.x;
+  const wy = balloon.y - camera.y + Math.sin(balloon.bobPhase) * 6;
+  if (wx < -60 || wx > W + 60) return;
+
+  // The "wrong" shadow on the ground (in the wrong place — not under the balloon)
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(
+    wx + balloon.shadowOffsetX,
+    wy + balloon.shadowOffsetY + 280,
+    18, 5, 0, 0, Math.PI * 2
+  );
+  ctx.fill();
+
+  // String
+  ctx.strokeStyle = PAL.balloonString;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(wx, wy + 22);
+  ctx.quadraticCurveTo(wx + Math.sin(t * 0.001) * 6, wy + 80, wx - 4, wy + 140);
+  ctx.stroke();
+
+  // Balloon
+  ctx.fillStyle = PAL.balloonPink;
+  ctx.beginPath();
+  ctx.ellipse(wx, wy, 18, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // highlight
+  ctx.fillStyle = PAL.balloonPinkHi;
+  ctx.beginPath();
+  ctx.ellipse(wx - 6, wy - 8, 5, 8, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // tie knot
+  ctx.fillStyle = PAL.balloonPink;
+  ctx.beginPath();
+  ctx.moveTo(wx - 3, wy + 20);
+  ctx.lineTo(wx, wy + 26);
+  ctx.lineTo(wx + 3, wy + 20);
+  ctx.closePath();
+  ctx.fill();
+}
+
+
+/* ---------- 11. PLAYER (apron girl placeholder — Dad's pixel art swaps in) ---------- */
+function drawPlayer(t) {
+  const wx = player.x - camera.x;
+  const wy = player.y - camera.y;
+  const moving = Math.abs(player.vx) + Math.abs(player.vy) > 0.4;
+  const phase = player.walkPhase;
+  const bob = moving ? Math.abs(Math.sin(phase * 2)) * 1.6 : Math.sin(t * 0.003) * 0.8;
+
+  ctx.save();
+  ctx.translate(wx, wy - bob);
+
+  // soft drop shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(0, 32, 16, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // legs (jeans + sneakers, walk swing)
+  const legSwing = moving ? Math.sin(phase) * 4 : 0;
+  ctx.scale(player.facing, 1);
+
+  // back leg
+  ctx.fillStyle = PAL.jeans;
+  ctx.fillRect(-7, 8, 6, 18 + legSwing);
+  ctx.fillStyle = PAL.jeansLo;
+  ctx.fillRect(-7, 8, 1, 18 + legSwing);
+  // back sneaker
+  ctx.fillStyle = PAL.shoeLo;
+  ctx.fillRect(-9, 26 + legSwing, 9, 6);
+  ctx.fillStyle = PAL.shoe;
+  ctx.fillRect(-9, 24 + legSwing, 9, 4);
+
+  // front leg
+  ctx.fillStyle = PAL.jeans;
+  ctx.fillRect(1, 8, 6, 18 - legSwing);
+  ctx.fillStyle = PAL.jeansHi;
+  ctx.fillRect(6, 8, 1, 18 - legSwing);
+  // front sneaker
+  ctx.fillStyle = PAL.shoeLo;
+  ctx.fillRect(0, 26 - legSwing, 9, 6);
+  ctx.fillStyle = PAL.shoe;
+  ctx.fillRect(0, 24 - legSwing, 9, 4);
+
+  // shirt (short-sleeved brown tee — visible at neck and arms)
+  ctx.fillStyle = PAL.shirt;
+  roundRect(-9, -8, 18, 18, 2); ctx.fill();
+  ctx.fillStyle = PAL.shirtHi;
+  ctx.fillRect(-9, -8, 18, 2);
+
+  // arms (skin showing under short sleeves)
+  const armSwing = moving ? Math.sin(phase) * 2 : 0;
+  ctx.fillStyle = PAL.shirt;
+  ctx.fillRect(-12, -6, 4, 8);  // back upper arm
+  ctx.fillRect(8, -6, 4, 8);    // front upper arm
+  ctx.fillStyle = PAL.skin;
+  ctx.fillRect(-12, 2 + armSwing, 4, 8);   // back forearm
+  ctx.fillRect(8, 2 - armSwing, 4, 8);     // front forearm
+
+  // apron (gray, from chest to mid-thigh)
+  ctx.fillStyle = PAL.apron;
+  // bib
+  ctx.beginPath();
+  ctx.moveTo(-7, -6);
+  ctx.lineTo(-7, -1);
+  ctx.lineTo(7, -1);
+  ctx.lineTo(7, -6);
+  ctx.lineTo(5, -8);
+  ctx.lineTo(-5, -8);
+  ctx.closePath(); ctx.fill();
+  // skirt
+  ctx.beginPath();
+  ctx.moveTo(-9, -1);
+  ctx.lineTo(-10, 14);
+  ctx.lineTo(10, 14);
+  ctx.lineTo(9, -1);
+  ctx.closePath(); ctx.fill();
+  // apron highlight
+  ctx.fillStyle = PAL.apronHi;
+  ctx.fillRect(-7, -8, 2, 6);
+  ctx.fillRect(-9, 0, 1, 14);
+  // apron shadow underside
+  ctx.fillStyle = PAL.apronLo;
+  ctx.fillRect(-10, 13, 20, 1);
+  // apron strap
+  ctx.fillStyle = PAL.apron;
+  ctx.fillRect(-7, -10, 4, 3);
+
+  // head (skin tone, simple oval)
+  ctx.fillStyle = PAL.skin;
+  ctx.beginPath();
+  ctx.arc(0, -18, 9, 0, Math.PI * 2);
+  ctx.fill();
+  // chin shadow
+  ctx.fillStyle = PAL.skinSh;
+  ctx.beginPath();
+  ctx.ellipse(0, -12, 7, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // hair — long flowing brown waves
+  ctx.fillStyle = PAL.hairBase;
+  // back of head/hair behind
+  ctx.beginPath();
+  ctx.moveTo(-10, -22);
+  ctx.lineTo(-12, -10);
+  ctx.lineTo(-14, 12);
+  ctx.lineTo(-10, 14);
+  ctx.lineTo(-6, 4);
+  ctx.lineTo(-8, -8);
+  ctx.lineTo(-7, -22);
+  ctx.closePath(); ctx.fill();
+  // top of hair (covers forehead a bit)
+  ctx.beginPath();
+  ctx.moveTo(-10, -22);
+  ctx.bezierCurveTo(-8, -28, 2, -28, 8, -24);
+  ctx.lineTo(10, -16);
+  ctx.lineTo(7, -16);
+  ctx.lineTo(5, -20);
+  ctx.lineTo(-3, -20);
+  ctx.lineTo(-7, -16);
+  ctx.lineTo(-10, -16);
+  ctx.closePath(); ctx.fill();
+  // side strand falling forward
+  ctx.beginPath();
+  ctx.moveTo(8, -20);
+  ctx.lineTo(10, -8);
+  ctx.lineTo(12, 6);
+  ctx.lineTo(9, 8);
+  ctx.lineTo(7, -4);
+  ctx.lineTo(6, -14);
+  ctx.closePath(); ctx.fill();
+  // hair highlights
+  ctx.fillStyle = PAL.hairHi;
+  ctx.fillRect(-9, -22, 1, 14);
+  ctx.fillRect(10, -16, 1, 18);
+
+  // simple eyes
+  ctx.fillStyle = PAL.hairLo;
+  ctx.fillRect(-4, -19, 2, 2);
+  ctx.fillRect(2, -19, 2, 2);
+  // tiny mouth (neutral, slightly cute)
+  ctx.fillStyle = PAL.skinSh;
+  ctx.fillRect(-1, -14, 2, 1);
+
+  ctx.restore();
+}
+
+
+/* ---------- 12. LIGHT POOLS (additive screen blend — every glowing prop) ---------- */
+function drawLightPools(t) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+
+  // Streetlamp warm pool
+  {
+    const wx = streetlamp.x - camera.x;
+    const wy = streetlamp.y - camera.y - 220;
+    const r = 220;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    g.addColorStop(0,    'rgba(255, 220, 130, 0.65)');
+    g.addColorStop(0.4,  'rgba(255, 200, 110, 0.22)');
+    g.addColorStop(1,    'rgba(255, 180, 90, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+    // ground splash directly beneath
+    const gx = streetlamp.x - camera.x;
+    const gy = streetlamp.y - camera.y - 30;
+    const gg = ctx.createRadialGradient(gx, gy, 0, gx, gy, 140);
+    gg.addColorStop(0, 'rgba(255, 200, 110, 0.45)');
+    gg.addColorStop(1, 'rgba(255, 180, 90, 0)');
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.ellipse(gx, gy, 140, 60, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Boba stand neon sign pool
+  {
+    const wx = bobaStand.x - camera.x + bobaStand.w / 2;
+    const wy = bobaStand.y - camera.y - 10;
+    const intensity = 0.9 + 0.1 * Math.sin(t * 0.006) + bobaStand.signGlow * 0.4;
+    const r = 200 + bobaStand.signGlow * 60;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    g.addColorStop(0,    `rgba(255, 80, 200, ${0.55 * intensity})`);
+    g.addColorStop(0.45, `rgba(255, 80, 200, ${0.18 * intensity})`);
+    g.addColorStop(1,    'rgba(255, 80, 200, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Boba stand interior counter pool (cozy or wrong)
+  {
+    const wx = bobaStand.x - camera.x + bobaStand.w / 2;
+    const wy = bobaStand.y - camera.y + 110;
+    const wrong = bobaStand.wrong;
+    const r = 140;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    if (wrong > 0) {
+      g.addColorStop(0, `rgba(150, 255, 138, ${0.4 + 0.2 * wrong})`);
+      g.addColorStop(0.5, `rgba(150, 255, 138, ${0.12})`);
+      g.addColorStop(1, 'rgba(150, 255, 138, 0)');
+    } else {
+      g.addColorStop(0, 'rgba(255, 200, 110, 0.4)');
+      g.addColorStop(0.5, 'rgba(255, 180, 90, 0.12)');
+      g.addColorStop(1, 'rgba(255, 180, 90, 0)');
+    }
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Lantern post pools (smaller warm)
+  for (const p of lanternPosts) {
+    const wx = p.x - camera.x;
+    const wy = p.y - camera.y - p.h - 4;
+    if (wx < -100 || wx > W + 100 || wy < -100 || wy > H + 100) continue;
+    const colorMix = Math.floor(p.hue * 3);
+    const colors = [
+      'rgba(255, 168, 96,',
+      'rgba(255, 138, 204,',
+      'rgba(168, 240, 138,'
+    ];
+    const c = colors[colorMix];
+    const flicker = 0.85 + 0.15 * Math.sin(t * 0.004 + p.sway);
+    const r = 90;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    g.addColorStop(0,   c + (0.5 * flicker).toFixed(2) + ')');
+    g.addColorStop(0.5, c + (0.16 * flicker).toFixed(2) + ')');
+    g.addColorStop(1,   c + '0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Mid silhouette accent pools (some stands faintly lit)
+  for (const s of midSilhouettes) {
+    if (s.accent > 0.4) continue;
+    const wx = s.x - camera.x * 0.85 + s.w * 0.5;
+    const wy = s.y - camera.y * 0.7 + s.h * 0.4;
+    if (wx < -50 || wx > W + 50) continue;
+    const c = s.accent < 0.2 ? 'rgba(255, 138, 204,' : 'rgba(168, 240, 138,';
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, 80);
+    g.addColorStop(0, c + '0.32)');
+    g.addColorStop(1, c + '0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, 80, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+
+/* ---------- 13. FIREFLIES + 14. SPIRIT MOTES ---------- */
+function drawFireflies(t) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (const f of fireflies) {
+    const wx = f.x - camera.x, wy = f.y - camera.y;
+    if (wx < -40 || wx > W + 40 || wy < -40 || wy > H + 40) continue;
+    const blink = 0.4 + 0.6 * Math.abs(Math.sin(t * f.speed + f.phase));
+    const r = 6 + blink * 6;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    g.addColorStop(0, `rgba(255, 228, 160, ${0.85 * blink})`);
+    g.addColorStop(1, 'rgba(255, 228, 160, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(255, 240, 200, ${blink})`;
+    ctx.fillRect(wx - 0.5, wy - 0.5, 1, 1);
+  }
+  ctx.restore();
+}
+
+function drawSpiritMotes(t) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (const m of spiritMotes) {
+    const wx = m.x - camera.x, wy = m.y - camera.y;
+    if (wx < -40 || wx > W + 40 || wy < -40 || wy > H + 40) continue;
+    const pulse = 0.6 + 0.4 * Math.sin(t * m.speed + m.phase);
+    const r = 10 + pulse * 8;
+    // hex color → rgba
+    const hex = m.color.replace('#', '');
+    const cr = parseInt(hex.slice(0, 2), 16);
+    const cg = parseInt(hex.slice(2, 4), 16);
+    const cb = parseInt(hex.slice(4, 6), 16);
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+    g.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${0.55 * pulse})`);
+    g.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(${cr + 40}, ${cg + 40}, ${cb + 40}, ${pulse * 0.9})`;
+    ctx.fillRect(wx - m.size / 2, wy - m.size / 2, m.size, m.size);
+  }
+  ctx.restore();
+}
+
+
+/* ---------- 15. FOG (front layer, lighter) ---------- */
+function drawFogFront(t) {
+  ctx.save();
+  for (const f of fogPuffsFront) {
+    const wx = f.x - camera.x;
+    const wy = f.y - camera.y;
+    if (wx < -300 || wx > W + 300 || wy < -300 || wy > H + 300) continue;
+    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, f.r);
+    g.addColorStop(0, `rgba(180, 160, 220, ${f.alpha})`);
+    g.addColorStop(1, 'rgba(180, 160, 220, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(wx, wy, f.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+
+/* ---------- 16. DUST MOTES ---------- */
+function drawDustMotes() {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 240, 220, 0.45)';
+  for (const d of dustMotes) {
+    const wx = d.x - camera.x, wy = d.y - camera.y;
+    if (wx < 0 || wx > W || wy < 0 || wy > H) continue;
+    ctx.fillRect(wx, wy, d.size, d.size);
+  }
+  ctx.restore();
+}
+
+
+/* ---------- 17. VIGNETTE ---------- */
+function drawVignette() {
+  const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.95);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, PAL.vignette);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
+
+
+/* ---------- 18. UI / TITLE / HINT ---------- */
+function drawTitle(t) {
+  ctx.save();
+  ctx.globalAlpha = hud.titleAlpha;
+  ctx.fillStyle = PAL.uiText;
+  ctx.font = 'italic 32px "Cormorant Garamond", serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 14;
+  ctx.fillText('abandoned midway — food zone', 28, 22);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+function drawHint(t) {
+  if (hud.introHintT <= 0) return;
+  const a = clamp(hud.introHintT / 200, 0, 1);
+  ctx.save();
+  ctx.globalAlpha = a * 0.85;
+  ctx.fillStyle = PAL.uiText;
+  ctx.font = '16px "VT323", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('arrows / wasd to walk · SHIFT to flicker the stand', 28, 60);
+  ctx.restore();
+}
+
+function drawBurstParticles() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (const p of burstParticles) {
+    const wx = p.x - camera.x, wy = p.y - camera.y;
+    const a = p.life / p.maxLife;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(wx - p.size / 2, wy - p.size / 2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+
+/* ============================================================
+   UPDATE
+   ============================================================ */
+function updatePlayer(t) {
+  let dx = 0, dy = 0;
+  if (Input.isDown('left'))  dx -= 1;
+  if (Input.isDown('right')) dx += 1;
+  if (Input.isDown('up'))    dy -= 1;
+  if (Input.isDown('down'))  dy += 1;
+  if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
+
+  const tx = dx * player.speed;
+  const ty = dy * player.speed;
+  player.vx = Juice.lerp(player.vx, tx, 0.25);
+  player.vy = Juice.lerp(player.vy, ty, 0.25);
+  if (dx !== 0) player.facing = dx > 0 ? 1 : -1;
+
+  player.x += player.vx;
+  player.y += player.vy;
+  player.x = clamp(player.x, 60, WORLD_W - 60);
+  player.y = clamp(player.y, 1000, WORLD_H - 80);
+
+  const moving = Math.abs(player.vx) + Math.abs(player.vy) > 0.4;
+  if (moving) {
+    player.walkPhase += 0.18;
+    player._stepTimer++;
+    if (player._stepTimer > 16) { Sound.step(); player._stepTimer = 0; }
+  } else {
+    player.walkPhase = 0;
+    player._stepTimer = 0;
+  }
+}
+
+function updateCamera() {
+  camera.tx = clamp(player.x - W / 2, 0, WORLD_W - W);
+  camera.ty = clamp(player.y - H / 2, 0, WORLD_H - H);
+  camera.x = Juice.lerp(camera.x, camera.tx, 0.12);
+  camera.y = Juice.lerp(camera.y, camera.ty, 0.12);
+}
+
+function updateWorld(t, dt) {
+  // Boba stand sign glow brightens when player is near
+  const dx = player.x - (bobaStand.x + bobaStand.w / 2);
+  const dy = player.y - (bobaStand.y + bobaStand.h);
+  const dist = Math.hypot(dx, dy);
+  const target = dist < 260 ? clamp(1 - dist / 260, 0, 1) : 0;
+  bobaStand.signGlow = Juice.lerp(bobaStand.signGlow, target, 0.08);
+  bobaStand.steamPhase += 0.02;
+
+  // Tonal flicker — every ~30s, the stand briefly turns "wrong"
+  bobaStand.wrongTimer--;
+  if (Input.wasPressed('action')) {
+    // manual trigger for demo
+    bobaStand.wrong = 1;
+    bobaStand.wrongTimer = 90;
+    Sound.wrong();
+  }
+  if (bobaStand.wrongTimer === 0 && bobaStand.wrong < 0.5) {
+    bobaStand.wrong = 1;
+    bobaStand.wrongTimer = 90;
+    Sound.wrong();
+  } else if (bobaStand.wrongTimer < 0) {
+    bobaStand.wrong = Math.max(0, bobaStand.wrong - 0.04);
+    if (bobaStand.wrong <= 0.01) {
+      bobaStand.wrong = 0;
+      bobaStand.wrongTimer = 1500 + Math.random() * 800;
+    }
+  }
+
+  // Streetlamp hand silhouette — fades in/out very subtly, mostly invisible
+  streetlamp.handPhase += 0.005;
+  const targetHand = (Math.sin(streetlamp.handPhase * 0.4) > 0.92) ? 0.65 : 0;
+  streetlamp.handFade = Juice.lerp(streetlamp.handFade, targetHand, 0.04);
+
+  // Balloon drift
+  balloon.x -= 0.08;
+  balloon.bobPhase += 0.02;
+  if (balloon.x < -50) balloon.x = WORLD_W + 50;
+
+  // HUD intro hint timer
+  if (hud.introHintT > 0) hud.introHintT--;
+}
+
+function updateParticles(t) {
+  for (const f of fireflies) {
+    f.x += f.vx; f.y += f.vy;
+    f.vx += (Math.random() - 0.5) * 0.05;
+    f.vy += (Math.random() - 0.5) * 0.05;
+    f.vx = clamp(f.vx, -0.6, 0.6);
+    f.vy = clamp(f.vy, -0.6, 0.6);
+    if (f.x < 0) f.x = WORLD_W;
+    if (f.x > WORLD_W) f.x = 0;
+    if (f.y < 200) f.y = WORLD_H - 200;
+    if (f.y > WORLD_H - 200) f.y = 200;
+  }
+  for (const m of spiritMotes) {
+    m.x += m.vx + Math.sin(t * 0.001 + m.phase) * 0.08;
+    m.y += m.vy;
+    if (m.y < 200) { m.y = WORLD_H - 200; m.x = Math.random() * WORLD_W; }
+    if (m.x < 0) m.x = WORLD_W;
+    if (m.x > WORLD_W) m.x = 0;
+  }
+  for (const f of fogPuffsBack) {
+    f.x += f.vx;
+    if (f.x < -f.r) f.x = WORLD_W + f.r;
+  }
+  for (const f of fogPuffsFront) {
+    f.x += f.vx;
+    if (f.x < -f.r) f.x = WORLD_W + f.r;
+  }
+  for (const d of dustMotes) {
+    d.x += d.vx; d.y += d.vy;
+    d.life++;
+    if (d.life > 240 || d.y < 200) {
+      d.x = Math.random() * WORLD_W;
+      d.y = WORLD_H - 100;
+      d.vx = (Math.random() - 0.5) * 0.18;
+      d.vy = -0.04 - Math.random() * 0.12;
+      d.life = 0;
+    }
+  }
+  burstParticles = burstParticles.filter(p => p.life > 0);
+  for (const p of burstParticles) {
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.92; p.vy *= 0.92; p.vy += 0.05;
+    p.life--;
+  }
+}
+
+
+/* ============================================================
+   MAIN LOOP — strict back-to-front render order
+   ============================================================ */
+let lastT = 0;
+
+function frame(t) {
+  const dt = Math.min(33, t - lastT);
+  lastT = t;
+
+  // ---- update ----
+  updatePlayer(t);
+  updateCamera();
+  updateWorld(t, dt);
+  updateParticles(t);
+
+  // ---- draw ----
+  const sh = Juice.getShakeOffset();
+  ctx.save();
+  ctx.translate(sh.x, sh.y);
+
+  // 1. Sky + ground gradient (smooth horizon)
+  drawSkyGradient();
+
+  // 2. Distant rides (parallax)
+  drawDistantRides(t);
+
+  // 3. Fog back layer
+  drawFogBack(t);
+
+  // 4. Mid silhouettes (other stands)
+  drawMidSilhouettes(t);
+
+  // 5. Concrete patches on the ground
+  drawConcretePatches();
+
+  // 6. Grass tufts
+  drawGrassTufts(t);
+
+  // 7. Litter scattered everywhere
+  drawLitter(t);
+
+  // 8. Cones (low props)
+  drawCones();
+
+  // 9. Trash cans
+  drawTrashCans(t);
+
+  // 10. Benches
+  drawBenches();
+
+  // 11. Lantern posts + string lights
+  drawLanternPosts(t);
+
+  // 12. Boba stand (the hero)
+  drawBobaStand(t);
+
+  // 13. Streetlamp
+  drawStreetlamp(t);
+
+  // 14. Balloon drifts (foreground)
+  drawBalloon(t);
+
+  // 15. Player
+  drawPlayer(t);
+
+  // 16. Light pools (additive — every glowing source casts here)
+  drawLightPools(t);
+
+  // 17. Fireflies (additive)
+  drawFireflies(t);
+
+  // 18. Spirit motes (additive, varied colors)
+  drawSpiritMotes(t);
+
+  // 19. Burst particles (additive)
+  drawBurstParticles();
+
+  // 20. Front fog layer
+  drawFogFront(t);
+
+  // 21. Dust motes (additive, foreground specks)
+  drawDustMotes();
+
+  // 22. Vignette (cinematic frame)
+  drawVignette();
+
+  ctx.restore();
+
+  // 23. UI (no shake, no atmosphere applied)
+  drawTitle(t);
+  drawHint(t);
+
+  Input.endFrame();
+  requestAnimationFrame(frame);
+}
+
+/* ---- Start ---- */
+Input.enableTouchControls();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
