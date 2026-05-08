@@ -30,10 +30,11 @@ const CANVAS_H = 500;
 const LETTERBOX_H = 30;
 
 const PAL = {
-  // Sky
-  skyTop: '#030108',
-  skyMid: '#0a0518',
-  skyLow: '#160a2e',
+  // Sky — vivid four-stop purple gradient so it reads as a presence
+  skyTop:   '#030108',
+  skyUpper: '#0a0415',
+  skyMid:   '#120630',
+  skyLow:   '#1e0a42',
 
   // Ground
   ground:      '#1a1410',
@@ -101,6 +102,13 @@ function mulberry32(seed) {
 
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
+function _hexA(hex, a) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
 export class FoodZone {
   constructor(canvas) {
     this.canvas = canvas;
@@ -141,11 +149,43 @@ export class FoodZone {
   }
 
   _buildAtmosphere() {
-    // -- Distant ride silhouettes (deep parallax) --
-    // Ferris wheel left, roller coaster right — drawn each frame
-    // procedurally, no array storage needed.
+    // -- Backdrop carnival silhouettes (parallax 0.3-0.7) --
+    // The carnival equivalent of Bigfoot's background tree system —
+    // 70 dark shapes scattered across the sky/back band, each with
+    // its own parallax depth so the world feels packed when scrolling.
+    const rngBd = mulberry32(2024);
+    this.backdropShapes = [];
+    const types = ['tent_peak', 'booth_roof', 'sign_post', 'ride_strut'];
+    for (let i = 0; i < 70; i++) {
+      this.backdropShapes.push({
+        x: rngBd() * WORLD_W,
+        y: rngBd() * 550,
+        type: types[Math.floor(rngBd() * types.length)],
+        depth: 0.3 + rngBd() * 0.4,
+        h: 40 + rngBd() * 120,
+        sway: rngBd() * Math.PI * 2,
+      });
+    }
 
-    // -- Far atmospheric tree/shape silhouettes at world edges --
+    // -- Ghost sparks (the carnival firefly) --
+    // 50 floating glow specks in Sloane's three accent colors. Each
+    // blinks on its own phase + speed so nothing strobes in unison.
+    this.sparks = [];
+    const sparkColors = ['#ff4dc8', '#a855ff', '#9bff5e'];
+    for (let i = 0; i < 50; i++) {
+      this.sparks.push({
+        x: Math.random() * WORLD_W,
+        y: Math.random() * WORLD_H,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.03 + Math.random() * 0.05,
+        color: sparkColors[Math.floor(Math.random() * sparkColors.length)],
+        size: 1 + Math.random(),
+      });
+    }
+
+    // -- Far atmospheric silhouettes at world edges (kept) --
     const rng = mulberry32(1337);
     this.farShapes = [];
     for (let i = 0; i < 22; i++) {
@@ -171,7 +211,7 @@ export class FoodZone {
       });
     }
 
-    // -- Scattered debris on the midway floor --
+    // -- Scattered debris on the midway --
     const rngD = mulberry32(7);
     this.debris = [];
     for (let i = 0; i < 200; i++) {
@@ -184,36 +224,68 @@ export class FoodZone {
       });
     }
 
-    // -- Overturned benches + abandoned trash cans --
-    this.benches = [
-      { x: 1100, y: 1200, rot: 0.18 },
-      { x: 2200, y: 950,  rot: -0.12 },
-      { x: 1700, y: 1380, rot: 0.05 },
+    // -- Tiny ground marks (subtle texture, 120 total) --
+    // Old paint marks, faded confetti, worn carnival lines. None
+    // is individually obvious; collectively they read as ground.
+    const rngGm = mulberry32(2222);
+    const markColors = [
+      'rgba(80, 60, 50, 0.4)',
+      'rgba(120, 100, 90, 0.3)',
+      'rgba(180, 120, 150, 0.18)',
+      'rgba(180, 200, 140, 0.15)',
     ];
-    this.trashcans = [
-      { x: 560,  y: 920 },
-      { x: 2350, y: 1450 },
-    ];
+    this.groundMarks = [];
+    for (let i = 0; i < 120; i++) {
+      this.groundMarks.push({
+        x: 30 + rngGm() * (WORLD_W - 60),
+        y: 650 + rngGm() * 750,
+        w: 2 + rngGm() * 2,
+        h: 2 + rngGm() * 2,
+        color: markColors[Math.floor(rngGm() * markColors.length)],
+        rot: rngGm() * Math.PI * 2,
+      });
+    }
+
+    // -- Old benches (18) — dark slabs, slight rotation --
+    const rngB = mulberry32(404);
+    this.benches = [];
+    for (let i = 0; i < 18; i++) {
+      this.benches.push({
+        x: 60 + rngB() * (WORLD_W - 120),
+        y: 650 + rngB() * 750,
+        rot: (rngB() - 0.5) * 0.3,
+      });
+    }
+
+    // -- Old trash cans (8) --
+    const rngT = mulberry32(808);
+    this.trashcans = [];
+    for (let i = 0; i < 8; i++) {
+      this.trashcans.push({
+        x: 60 + rngT() * (WORLD_W - 120),
+        y: 650 + rngT() * 750,
+      });
+    }
 
     // -- Drifting fog wisps along the ground plane --
     this.fogPuffs = [];
-    for (let i = 0; i < 36; i++) {
+    for (let i = 0; i < 16; i++) {
       this.fogPuffs.push({
         x: Math.random() * WORLD_W,
         y: 720 + Math.random() * 880,
-        r: 130 + Math.random() * 220,
+        r: 200 + Math.random() * 300,
         vx: -0.10 - Math.random() * 0.16,
-        alpha: 0.08 + Math.random() * 0.04,
+        alpha: 0.04 + Math.random() * 0.05,
         phase: Math.random() * Math.PI * 2,
       });
     }
 
-    // -- Dust motes rising slowly with independent phases --
+    // -- Dust motes — spread across the FULL world height --
     this.dustMotes = [];
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 80; i++) {
       this.dustMotes.push({
         x: Math.random() * WORLD_W,
-        y: 600 + Math.random() * 1300,
+        y: 100 + Math.random() * (WORLD_H - 200),
         vx: (Math.random() - 0.5) * 0.18,
         vy: -0.05 - Math.random() * 0.13,
         life: Math.random() * 240,
@@ -269,18 +341,36 @@ export class FoodZone {
       p.x += p.vx;
       if (p.x < -p.r) p.x = WORLD_W + p.r;
     }
-    // Dust motes rise + respawn near the ground
+    // Dust motes — drift slowly, respawn anywhere in the world
+    // when life expires. Replaces the old "respawn at ground, rise
+    // until y<420" cycle that clumped them in the lower half.
     for (const d of this.dustMotes) {
       d.x += d.vx;
       d.y += d.vy;
       d.life++;
-      if (d.life > 240 + Math.random() * 100 || d.y < 420) {
+      if (d.life > 240 + Math.random() * 100) {
         d.x = Math.random() * WORLD_W;
-        d.y = 1700 + Math.random() * 200;
+        d.y = 100 + Math.random() * (WORLD_H - 200);
         d.vx = (Math.random() - 0.5) * 0.18;
         d.vy = -0.05 - Math.random() * 0.13;
         d.life = 0;
       }
+    }
+
+    // Ghost sparks — gentle wandering drift, world-wraps at edges
+    for (const s of this.sparks) {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vx += (Math.random() - 0.5) * 0.04;
+      s.vy += (Math.random() - 0.5) * 0.04;
+      if (s.vx > 0.2)  s.vx = 0.2;
+      if (s.vx < -0.2) s.vx = -0.2;
+      if (s.vy > 0.2)  s.vy = 0.2;
+      if (s.vy < -0.2) s.vy = -0.2;
+      if (s.x < 0)        s.x = WORLD_W;
+      if (s.x > WORLD_W)  s.x = 0;
+      if (s.y < 0)        s.y = WORLD_H;
+      if (s.y > WORLD_H)  s.y = 0;
     }
 
     Juice.tickFreeze();
@@ -305,11 +395,17 @@ export class FoodZone {
     // 2. distant ride silhouettes (deep parallax)
     this._drawRideSilhouettes(t);
 
+    // 2.5 backdrop carnival silhouettes (per-shape parallax)
+    this._drawBackdropShapes(t);
+
     // 3. far atmospheric silhouettes at world edges
     this._drawFarShapes();
 
     // 4. ground
     this._drawGround();
+
+    // 4.5 subtle ground marks — paint, confetti, worn lines
+    this._drawGroundMarks();
 
     // 5. debris on the midway
     this._drawDebris();
@@ -325,6 +421,9 @@ export class FoodZone {
 
     // 11. lamp glow overlays (additive — screen blend)
     this._drawLampGlows(t);
+
+    // 11.5 ghost sparks (additive — screen blend)
+    this._drawSparks(t);
 
     // 12. vignette
     this._drawVignette();
@@ -352,34 +451,50 @@ export class FoodZone {
     // hint of dark sky behind the back row. Bigfoot used the same trick.
     const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
     g.addColorStop(0,    PAL.skyTop);
-    g.addColorStop(0.55, PAL.skyMid);
+    g.addColorStop(0.33, PAL.skyUpper);
+    g.addColorStop(0.66, PAL.skyMid);
     g.addColorStop(1,    PAL.skyLow);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
   }
 
   // ---------- Distant ride silhouettes (parallax 0.3) -----
+  // Atmospheric (not UI). Ferris wheel gets a 3-pass distance haze
+  // halo and 4 cardinal gondolas; coaster gets longer support
+  // towers and slightly higher contrast.
   _drawRideSilhouettes(t) {
     const { ctx } = this;
     const px = this.camera.x * 0.3;
 
-    // Ferris wheel — left side of the park
+    // ===== Ferris wheel — left side =====
     const fwx = 460 - px;
     const fwy = 300 - this.camera.y * 0.3;
+
     ctx.save();
-    ctx.strokeStyle = PAL.rideOutline;
-    ctx.fillStyle   = PAL.rideOutline;
-    ctx.lineWidth   = 1.5;
+    // Distance haze — same rim drawn 3× with decreasing alpha + thicker
+    for (let i = 2; i >= 0; i--) {
+      const alpha = 0.04 + (2 - i) * 0.04;
+      ctx.strokeStyle = `rgba(150, 130, 200, ${alpha})`;
+      ctx.lineWidth = 1 + i * 1.5;
+      ctx.beginPath();
+      ctx.arc(fwx, fwy, 70 + i * 5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Main wheel structure at 0.35 alpha
+    ctx.strokeStyle = 'rgba(150, 130, 200, 0.35)';
+    ctx.fillStyle   = 'rgba(150, 130, 200, 0.35)';
+    ctx.lineWidth = 1.5;
     // hub
     ctx.beginPath();
     ctx.arc(fwx, fwy, 4, 0, Math.PI * 2);
     ctx.fill();
-    // rim — slow rotation gives the wheel barely-perceptible life
-    const spin = t * 0.00006;
+    // rim
     ctx.beginPath();
     ctx.arc(fwx, fwy, 70, 0, Math.PI * 2);
     ctx.stroke();
-    // spokes
+    // spokes (8) — slow turn
+    const spin = t * 0.00006;
     for (let i = 0; i < 8; i++) {
       const a = spin + i * (Math.PI / 4);
       ctx.beginPath();
@@ -387,9 +502,9 @@ export class FoodZone {
       ctx.lineTo(fwx + Math.cos(a) * 70, fwy + Math.sin(a) * 70);
       ctx.stroke();
     }
-    // gondolas
-    for (let i = 0; i < 8; i++) {
-      const a = spin + i * (Math.PI / 4);
+    // 4 gondolas at cardinal points
+    for (let i = 0; i < 4; i++) {
+      const a = spin + i * (Math.PI / 2);
       const gx = fwx + Math.cos(a) * 70;
       const gy = fwy + Math.sin(a) * 70;
       ctx.fillRect(gx - 4, gy - 1, 8, 6);
@@ -402,33 +517,33 @@ export class FoodZone {
     ctx.stroke();
     ctx.restore();
 
-    // Roller coaster — right side
+    // ===== Roller coaster — right side =====
     const rx = 2380 - px;
     const ry = 360 - this.camera.y * 0.3;
     ctx.save();
-    ctx.strokeStyle = PAL.rideOutline;
-    ctx.lineWidth   = 2;
-    // a couple swooping arcs
+    ctx.strokeStyle = 'rgba(150, 130, 200, 0.38)';
+    ctx.lineWidth = 2;
+    // primary track
     ctx.beginPath();
     ctx.moveTo(rx - 200, ry + 60);
     ctx.bezierCurveTo(rx - 120, ry - 80, rx + 20, ry - 30, rx + 100, ry + 40);
     ctx.bezierCurveTo(rx + 160, ry + 80, rx + 220, ry + 20, rx + 280, ry + 70);
     ctx.stroke();
-    // a second track parallel below
+    // parallel track below
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(rx - 200, ry + 70);
     ctx.bezierCurveTo(rx - 120, ry - 70, rx + 20, ry - 20, rx + 100, ry + 50);
     ctx.bezierCurveTo(rx + 160, ry + 90, rx + 220, ry + 30, rx + 280, ry + 80);
     ctx.stroke();
-    // support pillars
+    // taller support tower verticals
     ctx.lineWidth = 1.5;
     for (let i = 0; i < 6; i++) {
       const sx = rx - 200 + i * 96;
       const sy = ry + 50 + Math.sin(i) * 20;
       ctx.beginPath();
       ctx.moveTo(sx, sy);
-      ctx.lineTo(sx, sy + 140);
+      ctx.lineTo(sx, sy + 180);
       ctx.stroke();
     }
     ctx.restore();
@@ -876,7 +991,8 @@ export class FoodZone {
     ctx.restore();
   }
 
-  // ---------- Overturned bench ---------------------------
+  // ---------- Old bench ----------------------------------
+  // ~40w × 16h dark slab w/ subtle grain hint, slight rotation.
   _drawBench(b) {
     const { ctx } = this;
     const wx = this._wx(b.x);
@@ -887,44 +1003,42 @@ export class FoodZone {
     ctx.rotate(b.rot);
     // ground shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(-16, 4, 32, 4);
-    // seat slab — dark wood
+    ctx.fillRect(-21, 6, 42, 4);
+    // dark slab body
     ctx.fillStyle = '#1a1208';
-    ctx.fillRect(-15, -3, 30, 6);
-    // grain highlight
+    ctx.fillRect(-20, -8, 40, 16);
+    // grain hints
     ctx.fillStyle = '#2a1f14';
-    ctx.fillRect(-14, -2, 28, 1);
-    // upturned legs
-    ctx.fillStyle = '#241a14';
-    ctx.fillRect(-12, -10, 3, 7);
-    ctx.fillRect( 9, -10, 3, 7);
+    ctx.fillRect(-19, -6, 38, 1);
+    ctx.fillRect(-19,  1, 38, 1);
     ctx.restore();
   }
 
   // ---------- Old trash can ------------------------------
+  // ~14w × 22h cylinder body w/ ellipse base, top rim, bands.
   _drawTrashCan(c) {
     const { ctx } = this;
     const wx = this._wx(c.x);
     const wy = this._wy(c.y);
     if (wx < -30 || wx > CANVAS_W + 30 || wy < -40 || wy > CANVAS_H + 40) return;
-    // ground shadow
+    // ground shadow ellipse
     ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(wx, wy + 2, 12, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(wx, wy + 2, 9, 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    // body
+    // body — 14 wide × 22 tall
     ctx.fillStyle = '#1a1410';
-    ctx.fillRect(wx - 10, wy - 28, 20, 28);
-    // top rim — slightly lighter
+    ctx.fillRect(wx - 7, wy - 22, 14, 22);
+    // top rim
     ctx.fillStyle = '#2a1f18';
-    ctx.fillRect(wx - 10, wy - 28, 20, 3);
-    // banding
+    ctx.fillRect(wx - 7, wy - 22, 14, 2);
+    // bands
     ctx.fillStyle = '#0e0908';
-    ctx.fillRect(wx - 10, wy - 20, 20, 1);
-    ctx.fillRect(wx - 10, wy - 10, 20, 1);
-    // a piece of trash poking out
+    ctx.fillRect(wx - 7, wy - 16, 14, 1);
+    ctx.fillRect(wx - 7, wy - 8,  14, 1);
+    // poking trash
     ctx.fillStyle = 'rgba(220, 210, 200, 0.45)';
-    ctx.fillRect(wx - 4, wy - 30, 4, 4);
+    ctx.fillRect(wx - 3, wy - 24, 3, 3);
   }
 
   // ---------- Lamp post -----------------------------------
@@ -932,36 +1046,36 @@ export class FoodZone {
     const { ctx } = this;
     const wx = this._wx(lamp.x);
     const wy = this._wy(lamp.y);
-    if (wx < -40 || wx > CANVAS_W + 40 || wy < -240 || wy > CANVAS_H + 40) return;
+    if (wx < -40 || wx > CANVAS_W + 40 || wy < -130 || wy > CANVAS_H + 40) return;
 
     // Real lamp asset — 40px wide × 210px tall, base at lamp.y, centered on lamp.x.
     if (lampLoaded) {
-      ctx.drawImage(lampImg, wx - 20, wy - 210, 40, 210);
+      ctx.drawImage(lampImg, wx - 11, wy - 120, 22, 120);
       return;
     }
 
     // Procedural placeholder until the image decodes (instant for data URLs).
     ctx.save();
     ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(wx - 1.5, wy - 90, 3, 90);
-    ctx.fillRect(wx - 5, wy - 4, 10, 4);
-    ctx.fillRect(wx - 6, wy - 84, 12, 3);
+    ctx.fillRect(wx - 1, wy - 108, 2, 108);
+    ctx.fillRect(wx - 4, wy - 3, 8, 3);
+    ctx.fillRect(wx - 5, wy - 104, 10, 2);
     ctx.fillStyle = '#1a1a18';
     ctx.beginPath();
-    ctx.moveTo(wx - 6, wy - 84);
-    ctx.lineTo(wx - 8, wy - 96);
-    ctx.lineTo(wx + 8, wy - 96);
-    ctx.lineTo(wx + 6, wy - 84);
+    ctx.moveTo(wx - 5, wy - 104);
+    ctx.lineTo(wx - 6, wy - 116);
+    ctx.lineTo(wx + 6, wy - 116);
+    ctx.lineTo(wx + 5, wy - 104);
     ctx.closePath();
     ctx.fill();
     const flicker = 0.85 + 0.15 * Math.sin(t * lamp.flickerSpeed + lamp.flicker);
     ctx.fillStyle = `rgba(255, 210, 130, ${0.85 * flicker})`;
     ctx.beginPath();
-    ctx.ellipse(wx, wy - 90, 5, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(wx, wy - 110, 4, 3, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = `rgba(255, 240, 200, ${0.95 * flicker})`;
     ctx.beginPath();
-    ctx.arc(wx, wy - 90, 2, 0, Math.PI * 2);
+    ctx.arc(wx, wy - 110, 1.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -992,13 +1106,100 @@ export class FoodZone {
 
       // Bulb halo (compact, at the top of the post)
       const hr = 38 * pulse * flicker;
-      const bg = ctx.createRadialGradient(wx, wy - 90, 0, wx, wy - 90, hr);
+      const bg = ctx.createRadialGradient(wx, wy - 110, 0, wx, wy - 110, hr);
       bg.addColorStop(0, `rgba(255, 230, 160, ${0.7 * flicker})`);
       bg.addColorStop(1, 'rgba(255, 200, 120, 0)');
       ctx.fillStyle = bg;
       ctx.beginPath();
-      ctx.arc(wx, wy - 90, hr, 0, Math.PI * 2);
+      ctx.arc(wx, wy - 110, hr, 0, Math.PI * 2);
       ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---------- Backdrop carnival shapes -------------------
+  // Each shape uses its own parallax depth — deeper = slower scroll
+  // and slightly desaturated (further away). 4 silhouette types.
+  _drawBackdropShapes(t) {
+    const { ctx } = this;
+    for (const s of this.backdropShapes) {
+      const sx = s.x - this.camera.x * s.depth;
+      const sy = s.y - this.camera.y * s.depth;
+      if (sx < -160 || sx > CANVAS_W + 160) continue;
+      if (sy < -300 || sy > CANVAS_H + 60) continue;
+      // depth → color ramp (deeper = bluer-darker, foreground = warmer-lighter)
+      const dt = (s.depth - 0.3) / 0.4;
+      const r = Math.round(21 + dt * 9);
+      const g = Math.round(10 + dt * 5);
+      const b = Math.round(40 + dt * 16);
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.strokeStyle = ctx.fillStyle;
+      const sway = Math.sin(t * 0.0008 + s.sway) * 1.2;
+      const h = s.h * (1 - dt * 0.3);
+      const w = h * 0.5;
+      const cx = sx + sway;
+
+      if (s.type === 'tent_peak') {
+        ctx.beginPath();
+        ctx.moveTo(cx, sy - h);
+        ctx.lineTo(cx - w, sy);
+        ctx.lineTo(cx + w, sy);
+        ctx.closePath();
+        ctx.fill();
+      } else if (s.type === 'booth_roof') {
+        const rh = h * 0.4;
+        const rw = w * 1.4;
+        ctx.fillRect(cx - rw - 2, sy - rh, rw * 2 + 4, 3);
+        ctx.fillRect(cx - rw,     sy - rh + 3, rw * 2, rh - 3);
+      } else if (s.type === 'sign_post') {
+        ctx.fillRect(cx - 1.5, sy - h, 3, h);
+        ctx.fillRect(cx - w * 0.7, sy - h - w * 0.5, w * 1.4, w * 0.5);
+      } else if (s.type === 'ride_strut') {
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - w, sy - h);
+        ctx.lineTo(cx, sy);
+        ctx.lineTo(cx + w, sy - h);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ---------- Subtle ground marks ------------------------
+  _drawGroundMarks() {
+    const { ctx } = this;
+    for (const m of this.groundMarks) {
+      const wx = this._wx(m.x), wy = this._wy(m.y);
+      if (wx < -10 || wx > CANVAS_W + 10 || wy < -10 || wy > CANVAS_H + 10) continue;
+      ctx.save();
+      ctx.translate(wx, wy);
+      ctx.rotate(m.rot);
+      ctx.fillStyle = m.color;
+      ctx.fillRect(-m.w / 2, -m.h / 2, m.w, m.h);
+      ctx.restore();
+    }
+  }
+
+  // ---------- Ghost sparks (additive pulses) -------------
+  _drawSparks(t) {
+    const { ctx } = this;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (const s of this.sparks) {
+      const wx = this._wx(s.x), wy = this._wy(s.y);
+      if (wx < -40 || wx > CANVAS_W + 40 || wy < -40 || wy > CANVAS_H + 40) continue;
+      const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * s.speed + s.phase));
+      const r = 4 + blink * 4;
+      const grad = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+      grad.addColorStop(0, _hexA(s.color, 0.85 * blink));
+      grad.addColorStop(1, _hexA(s.color, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(wx, wy, r, 0, Math.PI * 2);
+      ctx.fill();
+      // tiny solid core
+      ctx.fillStyle = _hexA(s.color, blink);
+      ctx.fillRect(wx - s.size / 2, wy - s.size / 2, s.size, s.size);
     }
     ctx.restore();
   }
