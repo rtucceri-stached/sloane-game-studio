@@ -69,13 +69,44 @@ We read the chats together. Talk to Sloane like a creative director you respect,
 
 ---
 
-## How We Build Games (The 3-Step Launch)
+## How We Work Now (Phase Workflow)
 
-Every new idea, you follow these three steps:
+The Artifact-chat 3-step launch no longer applies — we've graduated into a real Vite project with a real codebase.
 
-1. **Show It Working First** — Even if it's just a circle moving, show us we can play it right away.
-2. **Ask Sloane a Question** — One creative question to make the game more "us."
-3. **Tell Dad a Tech Trick** — One quick thing about how the magic works under the hood.
+- **Sloane brainstorms ideas in chat with Claude** (creative direction, visual calls, what feels fun).
+- **Dad implements complete phases in Claude Code** based on those ideas. Sloane is **not** shown half-built phases — she sees finished work and reacts.
+- Her reactions generate the next phase of ideas.
+- Each phase has a defined scope and finish line, written down before implementation starts.
+
+### Phase Log
+
+- **Phase 0.5 — Visual Foundation.** Mixed-media unified by global atmosphere stack. New `src/engine/atmosphere.js` module: `SkyGradient`, `Vignette`, `LightPool`, `FogSystem` (back+front), `DustMoteSystem`, `FireflySystem`, `GroundTexture`. Food-zone render order rebuilt to a strict 15-layer back-to-front pipeline. Boba stand redrawn (striped pink/matcha awning, recessed window with prep counter detail, steam wisps, neon BOBAAAAAH halo via `LightPool`). Camera tightened (`RENDER_SCALE 1.35`) so characters read at Bigfoot's bar.
+
+---
+
+## Visual Foundation Standards
+
+All worlds in this project — current food zone, future games zone, future rides zone — share one atmospheric foundation. Mixed-media assets (illustrated, photoreal, procedural) are unified by these passes, **not** by matching art styles.
+
+- **Every world runs the global atmosphere stack:** sky gradient, fog (back + front), vignette, dust motes, fireflies, ground texture. Defined in `src/engine/atmosphere.js`.
+- **Every glowing prop uses `LightPool`** from that module. No ad-hoc radial gradients sprinkled in the code — one helper, one look.
+- **Render order is strictly back-to-front, in this order:**
+  1. Sky gradient
+  2. Distant silhouettes (backdrop shapes, ride silhouettes)
+  3. `FogSystem.drawBack`
+  4. Ground texture (gradient + scuff marks, full ground)
+  5. Midground silhouettes / ride struts
+  6. Benches, trash cans, ground props
+  7. Boba stand (or any back-row stand)
+  8. Existing ghost sparks (back particles)
+  9. Player + any other characters
+  10. `LightPool` passes — every glowing prop
+  11. `FireflySystem` (additive)
+  12. `FogSystem.drawFront`
+  13. `DustMoteSystem` (additive)
+  14. Vignette
+  15. UI / HUD (outside world transform — no atmosphere applied)
+- **`games/bigfoot-and-ghost-ep1.html`** is the technical + visual reference. When a system needs to look like that, port from there.
 
 ---
 
@@ -142,29 +173,50 @@ Easy name for Sloane, real name for Dad.
 
 ```
 sloane-and-dad-games/
-├── CLAUDE.md              ← this file
+├── CLAUDE.md
 ├── README.md
+├── ABANDONED_PARK_PLAN.md         ← design source of truth for Game One
 ├── games/
-│   ├── _template/         ← starting point for every new game
+│   ├── _template/                 ← starting point for tiny single-file games
 │   │   └── index.html
-│   ├── 01-game-name/      ← actual games go here, numbered
-│   │   └── index.html
-│   └── ...
-├── shared/
-│   ├── input-manager.js   ← keyboard + touch (gamepad coming)
-│   ├── juice.js           ← screen shake, particles, easing
-│   ├── sound.js           ← procedural sound effects
-│   └── canvas.js          ← responsive canvas sizing
+│   ├── 01-abandoned-park/         ← Game One — full Vite project
+│   │   ├── index.html
+│   │   ├── package.json
+│   │   ├── vite.config.js
+│   │   ├── README.md
+│   │   ├── src/
+│   │   │   ├── main.js
+│   │   │   ├── engine/
+│   │   │   │   ├── input.js       ← keyboard + touch + gamepad
+│   │   │   │   ├── juice.js
+│   │   │   │   ├── sound.js
+│   │   │   │   ├── canvas.js
+│   │   │   │   ├── atmosphere.js  ← Phase 0.5 visual foundation
+│   │   │   │   ├── skeleton.js
+│   │   │   │   ├── assets.js
+│   │   │   │   └── save.js
+│   │   │   ├── world/             ← scenes (food-zone.js, …)
+│   │   │   ├── characters/
+│   │   │   └── stands/
+│   │   └── assets/
+│   │       ├── characters/  stands/  props/
+│   │       └── audio/{ambient,effects,music}
+│   ├── bigfoot-and-ghost-ep1.html ← visual + technical reference
+│   └── jims-boba-shop-{v1,v2}.html
+├── shared/                         ← legacy single-file artifact globals
+│   ├── input-manager.js
+│   ├── juice.js
+│   ├── sound.js
+│   └── canvas.js
 └── assets/
-    ├── art/               ← Sloane's drawings (eventually)
-    └── sounds/            ← real audio files (when we want them)
+    ├── art/
+    └── sounds/
 ```
 
 **Conventions:**
-- New games start by **copying `games/_template/`** and renaming the copy to `games/NN-kebab-case-name/`.
-- A game stays a single `index.html` until it genuinely needs to grow.
-- The four shared scripts are loaded via `<script src="../../shared/...">` — already wired up in the template.
-- When a game outgrows its single file, it can promote to a folder structure inside its own game directory.
+- New phases of Game One go inside `games/01-abandoned-park/src/`.
+- Single-file artifact games still copy from `games/_template/` and live as one `index.html`.
+- The legacy `shared/` modules are pinned for those artifacts — Game One has its own ES-module ports under `src/engine/`.
 
 ---
 

@@ -631,23 +631,19 @@ export class FoodZone {
 
   // ---------- Y-sorted entities ---------------------------
   _drawYSorted(t) {
+    // Stand renders separately at layer 7. This pass handles the
+    // close midway props + player so benches/lamps/trash cans land
+    // correctly behind/in-front of the player by world Y.
     const items = [];
-    // Stand foot (front edge sits at y + h)
-    items.push({
-      y: this.standJim.y + this.standJim.h,
-      draw: () => this._drawStand(t),
-    });
-    // Player feet
-    items.push({
-      y: this.player.y,
-      draw: () => this._drawPlayer(t),
-    });
-    // Lamps — base of the post is at lamp.y
+    items.push({ y: this.player.y, draw: () => this._drawPlayer(t) });
     for (const lamp of this.lamps) {
-      items.push({
-        y: lamp.y,
-        draw: () => this._drawLamp(lamp, t),
-      });
+      items.push({ y: lamp.y, draw: () => this._drawLamp(lamp, t) });
+    }
+    for (const b of this.benches) {
+      items.push({ y: b.y, draw: () => this._drawBench(b) });
+    }
+    for (const c of this.trashcans) {
+      items.push({ y: c.y, draw: () => this._drawTrashCan(c) });
     }
     items.sort((a, b) => a.y - b.y);
     for (const it of items) it.draw();
