@@ -545,7 +545,7 @@ export class FoodZone {
     const camY = this.camera.y;
 
     // Sky band — world y = 0 to SKY_BOTTOM (above the walkable area)
-    const SKY_BOTTOM = 700;
+    const SKY_BOTTOM = 1000;
     const skyTopScreen = -camY;
     const skyBottomScreen = SKY_BOTTOM - camY;
 
@@ -577,7 +577,7 @@ export class FoodZone {
     }
 
     // Solid ground fill — world y >= GROUND_TOP, always covers visible ground.
-    const GROUND_TOP = 580; // slight overlap with sky bottom for the bleed
+    const GROUND_TOP = 850; // slight overlap with sky bottom for the bleed
     const groundTopScreen = GROUND_TOP - camY;
     if (groundTopScreen < H) {
       ctx.fillStyle = PAL.groundDark;
