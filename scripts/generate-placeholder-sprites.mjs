@@ -181,8 +181,30 @@ function generatePlaceholder(charName, animation, direction, frameCount) {
     const cx = frame * FRAME_SIZE + FRAME_SIZE / 2;
     const y1 = Math.floor(H * 0.35);
     const y2 = y1 + 7 * scale + scale * 3;
-    drawText(rgba, W, H, title, Math.round(cx - textWidth(title, scale) / 2), y1, scale, 255, 255, 255);
-    drawText(rgba, W, H, slot, Math.round(cx - textWidth(slot, scale) / 2), y2, scale, 255, 255, 180);
+    drawText(
+      rgba,
+      W,
+      H,
+      title,
+      Math.round(cx - textWidth(title, scale) / 2),
+      y1,
+      scale,
+      255,
+      255,
+      255
+    );
+    drawText(
+      rgba,
+      W,
+      H,
+      slot,
+      Math.round(cx - textWidth(slot, scale) / 2),
+      y2,
+      scale,
+      255,
+      255,
+      180
+    );
   }
 
   return encodePng(W, H, rgba);
@@ -206,5 +228,7 @@ for (const [animation, frameCount] of Object.entries(ANIMATIONS)) {
     count++;
   }
 }
-console.log(`\nDone — ${count} placeholder PNGs written to public/sprites/characters/${CHARACTER_NAME}/`);
+console.log(
+  `\nDone — ${count} placeholder PNGs written to public/sprites/characters/${CHARACTER_NAME}/`
+);
 console.log('Next step: npm run build:manifest');

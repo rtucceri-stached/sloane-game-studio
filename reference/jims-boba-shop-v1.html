@@ -1,1075 +1,1197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Jim's Boba Shop</title>
-<style>
-  body { margin: 0; padding: 0; overflow: hidden; background: #0a0810; font-family: system-ui, sans-serif; }
-  #game { display: block; touch-action: none; cursor: pointer; }
-  #wrap { display: flex; align-items: center; justify-content: center; width: 100vw; height: 100vh; }
-</style>
-</head>
-<body>
-<div id="wrap"><canvas id="game" width="800" height="500"></canvas></div>
-<script>
-/* ============================================================
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Jim's Boba Shop</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #0a0810;
+        font-family: system-ui, sans-serif;
+      }
+      #game {
+        display: block;
+        touch-action: none;
+        cursor: pointer;
+      }
+      #wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrap"><canvas id="game" width="800" height="500"></canvas></div>
+    <script>
+      /* ============================================================
    SHARED LIBRARY BLOCKS — inlined for the Artifact.
    Dad: convert these back to <script src="../../shared/...">
    when saving into the project.
    ============================================================ */
 
-/* ---------- Input ---------- */
-const Input = (() => {
-  const keymap = {
-    'arrowleft':'left','a':'left','arrowright':'right','d':'right',
-    'arrowup':'up','w':'up','arrowdown':'down','s':'down',
-    ' ':'action','enter':'action','escape':'cancel'
-  };
-  const held = new Set(), pressed = new Set();
-  const pointer = { x: -999, y: -999, isDown: false, clicked: false };
-  let canvas = null;
+      /* ---------- Input ---------- */
+      const Input = (() => {
+        const keymap = {
+          arrowleft: 'left',
+          a: 'left',
+          arrowright: 'right',
+          d: 'right',
+          arrowup: 'up',
+          w: 'up',
+          arrowdown: 'down',
+          s: 'down',
+          ' ': 'action',
+          enter: 'action',
+          escape: 'cancel',
+        };
+        const held = new Set(),
+          pressed = new Set();
+        const pointer = { x: -999, y: -999, isDown: false, clicked: false };
+        let canvas = null;
 
-  window.addEventListener('keydown', e => {
-    const k = e.key.toLowerCase();
-    if (keymap[k] && !held.has(keymap[k])) pressed.add(keymap[k]);
-    if (keymap[k]) held.add(keymap[k]);
-  });
-  window.addEventListener('keyup', e => {
-    const k = e.key.toLowerCase();
-    if (keymap[k]) held.delete(keymap[k]);
-  });
-
-  function getPos(e) {
-    const r = canvas.getBoundingClientRect();
-    const sx = canvas.width / r.width, sy = canvas.height / r.height;
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: (cx - r.left) * sx, y: (cy - r.top) * sy };
-  }
-
-  function attachPointer(c) {
-    canvas = c;
-    const down = e => {
-      const p = getPos(e);
-      pointer.x = p.x; pointer.y = p.y;
-      pointer.isDown = true; pointer.clicked = true;
-      e.preventDefault();
-    };
-    const move = e => {
-      const p = getPos(e);
-      pointer.x = p.x; pointer.y = p.y;
-      e.preventDefault();
-    };
-    const up = () => { pointer.isDown = false; };
-    c.addEventListener('mousedown', down);
-    c.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-    c.addEventListener('touchstart', down, { passive: false });
-    c.addEventListener('touchmove', move, { passive: false });
-    c.addEventListener('touchend', up);
-  }
-
-  return {
-    isDown: a => held.has(a),
-    wasPressed: a => pressed.has(a),
-    enableTouchControls: () => {}, // build games use pointer; D-pad not needed
-    pointer,
-    attachPointer,
-    endFrame: () => { pressed.clear(); pointer.clicked = false; }
-  };
-})();
-
-/* ---------- Juice ---------- */
-const Juice = (() => {
-  let shakeAmt = 0, freezeFrames = 0;
-  return {
-    lerp: (a, b, t) => a + (b - a) * t,
-    shake: n => { shakeAmt = Math.max(shakeAmt, n); },
-    getShake: () => {
-      const x = (Math.random() - 0.5) * shakeAmt;
-      const y = (Math.random() - 0.5) * shakeAmt;
-      shakeAmt *= 0.85;
-      if (shakeAmt < 0.1) shakeAmt = 0;
-      return { x, y };
-    },
-    burst: (x, y, count, color) => {
-      const out = [];
-      for (let i = 0; i < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = 1 + Math.random() * 3;
-        out.push({
-          x, y,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s - 1,
-          life: 1, color,
-          size: 2 + Math.random() * 3
+        window.addEventListener('keydown', (e) => {
+          const k = e.key.toLowerCase();
+          if (keymap[k] && !held.has(keymap[k])) pressed.add(keymap[k]);
+          if (keymap[k]) held.add(keymap[k]);
         });
-      }
-      return out;
-    },
-    updateParticles(arr, dt) {
-      for (let i = arr.length - 1; i >= 0; i--) {
-        const p = arr[i];
-        p.x += p.vx; p.y += p.vy;
-        p.vy += 0.15; p.vx *= 0.96;
-        p.life -= dt * 1.5;
-        if (p.life <= 0) arr.splice(i, 1);
-      }
-    },
-    drawParticles(ctx, arr) {
-      for (const p of arr) {
-        ctx.globalAlpha = Math.max(0, p.life);
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    },
-    freeze: n => { freezeFrames = n; },
-    isFrozen: () => freezeFrames > 0,
-    tickFreeze: () => { if (freezeFrames > 0) freezeFrames--; }
-  };
-})();
+        window.addEventListener('keyup', (e) => {
+          const k = e.key.toLowerCase();
+          if (keymap[k]) held.delete(keymap[k]);
+        });
 
-/* ---------- Sound ---------- */
-const Sound = (() => {
-  let ctx = null, master = null, cozyGain = null, tensionGain = null;
-  let cozyStarted = false, tensionOsc = null;
+        function getPos(e) {
+          const r = canvas.getBoundingClientRect();
+          const sx = canvas.width / r.width,
+            sy = canvas.height / r.height;
+          const cx = e.touches ? e.touches[0].clientX : e.clientX;
+          const cy = e.touches ? e.touches[0].clientY : e.clientY;
+          return { x: (cx - r.left) * sx, y: (cy - r.top) * sy };
+        }
 
-  function ensure() {
-    if (ctx) return;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
-    cozyGain = ctx.createGain(); cozyGain.gain.value = 0; cozyGain.connect(master);
-    tensionGain = ctx.createGain(); tensionGain.gain.value = 0; tensionGain.connect(master);
-  }
+        function attachPointer(c) {
+          canvas = c;
+          const down = (e) => {
+            const p = getPos(e);
+            pointer.x = p.x;
+            pointer.y = p.y;
+            pointer.isDown = true;
+            pointer.clicked = true;
+            e.preventDefault();
+          };
+          const move = (e) => {
+            const p = getPos(e);
+            pointer.x = p.x;
+            pointer.y = p.y;
+            e.preventDefault();
+          };
+          const up = () => {
+            pointer.isDown = false;
+          };
+          c.addEventListener('mousedown', down);
+          c.addEventListener('mousemove', move);
+          window.addEventListener('mouseup', up);
+          c.addEventListener('touchstart', down, { passive: false });
+          c.addEventListener('touchmove', move, { passive: false });
+          c.addEventListener('touchend', up);
+        }
 
-  // Cozy ambient pad: detuned sines drifting under each other
-  function startCozy() {
-    if (cozyStarted) return;
-    ensure();
-    cozyStarted = true;
-    const notes = [220, 277.18, 329.63, 440]; // A C# E A — major-ish, cafe-y
-    notes.forEach((freq, i) => {
-      const o = ctx.createOscillator();
-      o.type = 'sine'; o.frequency.value = freq;
-      const g = ctx.createGain();
-      g.gain.value = 0.06 + i * 0.008;
-      // slow LFO for movement
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = 0.08 + i * 0.05;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 0.025;
-      lfo.connect(lfoG).connect(g.gain);
-      o.connect(g).connect(cozyGain);
-      o.start(); lfo.start();
-    });
-    const now = ctx.currentTime;
-    cozyGain.gain.setValueAtTime(0, now);
-    cozyGain.gain.linearRampToValueAtTime(0.55, now + 2.2);
-  }
+        return {
+          isDown: (a) => held.has(a),
+          wasPressed: (a) => pressed.has(a),
+          enableTouchControls: () => {}, // build games use pointer; D-pad not needed
+          pointer,
+          attachPointer,
+          endFrame: () => {
+            pressed.clear();
+            pointer.clicked = false;
+          },
+        };
+      })();
 
-  // Duck cozy temporarily during tension
-  function duckCozy(target, secs) {
-    if (!ctx) return;
-    const now = ctx.currentTime;
-    cozyGain.gain.cancelScheduledValues(now);
-    cozyGain.gain.setValueAtTime(cozyGain.gain.value, now);
-    cozyGain.gain.linearRampToValueAtTime(target, now + secs);
-  }
+      /* ---------- Juice ---------- */
+      const Juice = (() => {
+        let shakeAmt = 0,
+          freezeFrames = 0;
+        return {
+          lerp: (a, b, t) => a + (b - a) * t,
+          shake: (n) => {
+            shakeAmt = Math.max(shakeAmt, n);
+          },
+          getShake: () => {
+            const x = (Math.random() - 0.5) * shakeAmt;
+            const y = (Math.random() - 0.5) * shakeAmt;
+            shakeAmt *= 0.85;
+            if (shakeAmt < 0.1) shakeAmt = 0;
+            return { x, y };
+          },
+          burst: (x, y, count, color) => {
+            const out = [];
+            for (let i = 0; i < count; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const s = 1 + Math.random() * 3;
+              out.push({
+                x,
+                y,
+                vx: Math.cos(a) * s,
+                vy: Math.sin(a) * s - 1,
+                life: 1,
+                color,
+                size: 2 + Math.random() * 3,
+              });
+            }
+            return out;
+          },
+          updateParticles(arr, dt) {
+            for (let i = arr.length - 1; i >= 0; i--) {
+              const p = arr[i];
+              p.x += p.vx;
+              p.y += p.vy;
+              p.vy += 0.15;
+              p.vx *= 0.96;
+              p.life -= dt * 1.5;
+              if (p.life <= 0) arr.splice(i, 1);
+            }
+          },
+          drawParticles(ctx, arr) {
+            for (const p of arr) {
+              ctx.globalAlpha = Math.max(0, p.life);
+              ctx.fillStyle = p.color;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          },
+          freeze: (n) => {
+            freezeFrames = n;
+          },
+          isFrozen: () => freezeFrames > 0,
+          tickFreeze: () => {
+            if (freezeFrames > 0) freezeFrames--;
+          },
+        };
+      })();
 
-  // Build a low rumble + decay it cleanly
-  function tensionPulse(rampSec, holdSec) {
-    ensure();
-    const now = ctx.currentTime;
-    const o = ctx.createOscillator();
-    o.type = 'sawtooth'; o.frequency.value = 50;
-    const filt = ctx.createBiquadFilter();
-    filt.type = 'lowpass'; filt.frequency.value = 110;
-    o.connect(filt).connect(tensionGain);
-    o.start(now);
-    tensionGain.gain.cancelScheduledValues(now);
-    tensionGain.gain.setValueAtTime(0, now);
-    tensionGain.gain.linearRampToValueAtTime(0.45, now + rampSec);
-    tensionGain.gain.linearRampToValueAtTime(0, now + rampSec + holdSec + 0.6);
-    o.stop(now + rampSec + holdSec + 0.7);
-  }
+      /* ---------- Sound ---------- */
+      const Sound = (() => {
+        let ctx = null,
+          master = null,
+          cozyGain = null,
+          tensionGain = null;
+        let cozyStarted = false,
+          tensionOsc = null;
 
-  function play(name) {
-    ensure();
-    const now = ctx.currentTime;
-    if (name === 'coin') {
-      [880, 1320].forEach((f, i) => {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'triangle'; o.frequency.value = f;
-        g.gain.setValueAtTime(0.18, now + i * 0.06);
-        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.25);
-        o.connect(g).connect(master);
-        o.start(now + i * 0.06); o.stop(now + i * 0.06 + 0.3);
-      });
-    } else if (name === 'place') {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(190, now);
-      o.frequency.exponentialRampToValueAtTime(95, now + 0.14);
-      g.gain.setValueAtTime(0.32, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-      o.connect(g).connect(master);
-      o.start(now); o.stop(now + 0.25);
-    } else if (name === 'click') {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = 720;
-      g.gain.setValueAtTime(0.12, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-      o.connect(g).connect(master);
-      o.start(now); o.stop(now + 0.1);
-    } else if (name === 'reject') {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'square'; o.frequency.value = 130;
-      g.gain.setValueAtTime(0.12, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      o.connect(g).connect(master);
-      o.start(now); o.stop(now + 0.2);
-    } else if (name === 'iceclink') {
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 4);
-      }
-      const noise = ctx.createBufferSource(); noise.buffer = buf;
-      const filt = ctx.createBiquadFilter();
-      filt.type = 'highpass'; filt.frequency.value = 4500;
-      const g = ctx.createGain(); g.gain.value = 0.07;
-      noise.connect(filt).connect(g).connect(master);
-      noise.start();
-    } else if (name === 'shaker') {
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        const env = Math.sin((i / d.length) * Math.PI);
-        d[i] = (Math.random() * 2 - 1) * env * 0.5;
-      }
-      const noise = ctx.createBufferSource(); noise.buffer = buf;
-      const filt = ctx.createBiquadFilter();
-      filt.type = 'bandpass'; filt.frequency.value = 2200;
-      const g = ctx.createGain(); g.gain.value = 0.05;
-      noise.connect(filt).connect(g).connect(master);
-      noise.start();
-    } else if (name === 'scarehit') {
-      // sharp BAM
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) {
-        const env = Math.pow(1 - i / d.length, 1.5);
-        d[i] = (Math.random() * 2 - 1) * env;
-      }
-      const noise = ctx.createBufferSource(); noise.buffer = buf;
-      const filt = ctx.createBiquadFilter();
-      filt.type = 'lowpass'; filt.frequency.value = 800;
-      const g = ctx.createGain(); g.gain.value = 0.5;
-      noise.connect(filt).connect(g).connect(master);
-      noise.start();
-    }
-  }
+        function ensure() {
+          if (ctx) return;
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          master = ctx.createGain();
+          master.gain.value = 0.7;
+          master.connect(ctx.destination);
+          cozyGain = ctx.createGain();
+          cozyGain.gain.value = 0;
+          cozyGain.connect(master);
+          tensionGain = ctx.createGain();
+          tensionGain.gain.value = 0;
+          tensionGain.connect(master);
+        }
 
-  return { ensure, play, startCozy, duckCozy, tensionPulse };
-})();
+        // Cozy ambient pad: detuned sines drifting under each other
+        function startCozy() {
+          if (cozyStarted) return;
+          ensure();
+          cozyStarted = true;
+          const notes = [220, 277.18, 329.63, 440]; // A C# E A — major-ish, cafe-y
+          notes.forEach((freq, i) => {
+            const o = ctx.createOscillator();
+            o.type = 'sine';
+            o.frequency.value = freq;
+            const g = ctx.createGain();
+            g.gain.value = 0.06 + i * 0.008;
+            // slow LFO for movement
+            const lfo = ctx.createOscillator();
+            lfo.frequency.value = 0.08 + i * 0.05;
+            const lfoG = ctx.createGain();
+            lfoG.gain.value = 0.025;
+            lfo.connect(lfoG).connect(g.gain);
+            o.connect(g).connect(cozyGain);
+            o.start();
+            lfo.start();
+          });
+          const now = ctx.currentTime;
+          cozyGain.gain.setValueAtTime(0, now);
+          cozyGain.gain.linearRampToValueAtTime(0.55, now + 2.2);
+        }
 
-/* ---------- Canvas ---------- */
-const Canvas = (() => {
-  function fit(canvas, baseW, baseH) {
-    function resize() {
-      const margin = 16;
-      const aw = window.innerWidth - margin * 2;
-      const ah = window.innerHeight - margin * 2;
-      const ratio = baseW / baseH;
-      let w = aw, h = aw / ratio;
-      if (h > ah) { h = ah; w = ah * ratio; }
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-    }
-    resize();
-    window.addEventListener('resize', resize);
-  }
-  return { fit };
-})();
+        // Duck cozy temporarily during tension
+        function duckCozy(target, secs) {
+          if (!ctx) return;
+          const now = ctx.currentTime;
+          cozyGain.gain.cancelScheduledValues(now);
+          cozyGain.gain.setValueAtTime(cozyGain.gain.value, now);
+          cozyGain.gain.linearRampToValueAtTime(target, now + secs);
+        }
 
-/* ============================================================
+        // Build a low rumble + decay it cleanly
+        function tensionPulse(rampSec, holdSec) {
+          ensure();
+          const now = ctx.currentTime;
+          const o = ctx.createOscillator();
+          o.type = 'sawtooth';
+          o.frequency.value = 50;
+          const filt = ctx.createBiquadFilter();
+          filt.type = 'lowpass';
+          filt.frequency.value = 110;
+          o.connect(filt).connect(tensionGain);
+          o.start(now);
+          tensionGain.gain.cancelScheduledValues(now);
+          tensionGain.gain.setValueAtTime(0, now);
+          tensionGain.gain.linearRampToValueAtTime(0.45, now + rampSec);
+          tensionGain.gain.linearRampToValueAtTime(0, now + rampSec + holdSec + 0.6);
+          o.stop(now + rampSec + holdSec + 0.7);
+        }
+
+        function play(name) {
+          ensure();
+          const now = ctx.currentTime;
+          if (name === 'coin') {
+            [880, 1320].forEach((f, i) => {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.type = 'triangle';
+              o.frequency.value = f;
+              g.gain.setValueAtTime(0.18, now + i * 0.06);
+              g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.25);
+              o.connect(g).connect(master);
+              o.start(now + i * 0.06);
+              o.stop(now + i * 0.06 + 0.3);
+            });
+          } else if (name === 'place') {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(190, now);
+            o.frequency.exponentialRampToValueAtTime(95, now + 0.14);
+            g.gain.setValueAtTime(0.32, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            o.connect(g).connect(master);
+            o.start(now);
+            o.stop(now + 0.25);
+          } else if (name === 'click') {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.value = 720;
+            g.gain.setValueAtTime(0.12, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+            o.connect(g).connect(master);
+            o.start(now);
+            o.stop(now + 0.1);
+          } else if (name === 'reject') {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'square';
+            o.frequency.value = 130;
+            g.gain.setValueAtTime(0.12, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            o.connect(g).connect(master);
+            o.start(now);
+            o.stop(now + 0.2);
+          } else if (name === 'iceclink') {
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) {
+              d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 4);
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buf;
+            const filt = ctx.createBiquadFilter();
+            filt.type = 'highpass';
+            filt.frequency.value = 4500;
+            const g = ctx.createGain();
+            g.gain.value = 0.07;
+            noise.connect(filt).connect(g).connect(master);
+            noise.start();
+          } else if (name === 'shaker') {
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) {
+              const env = Math.sin((i / d.length) * Math.PI);
+              d[i] = (Math.random() * 2 - 1) * env * 0.5;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buf;
+            const filt = ctx.createBiquadFilter();
+            filt.type = 'bandpass';
+            filt.frequency.value = 2200;
+            const g = ctx.createGain();
+            g.gain.value = 0.05;
+            noise.connect(filt).connect(g).connect(master);
+            noise.start();
+          } else if (name === 'scarehit') {
+            // sharp BAM
+            const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) {
+              const env = Math.pow(1 - i / d.length, 1.5);
+              d[i] = (Math.random() * 2 - 1) * env;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buf;
+            const filt = ctx.createBiquadFilter();
+            filt.type = 'lowpass';
+            filt.frequency.value = 800;
+            const g = ctx.createGain();
+            g.gain.value = 0.5;
+            noise.connect(filt).connect(g).connect(master);
+            noise.start();
+          }
+        }
+
+        return { ensure, play, startCozy, duckCozy, tensionPulse };
+      })();
+
+      /* ---------- Canvas ---------- */
+      const Canvas = (() => {
+        function fit(canvas, baseW, baseH) {
+          function resize() {
+            const margin = 16;
+            const aw = window.innerWidth - margin * 2;
+            const ah = window.innerHeight - margin * 2;
+            const ratio = baseW / baseH;
+            let w = aw,
+              h = aw / ratio;
+            if (h > ah) {
+              h = ah;
+              w = ah * ratio;
+            }
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+          }
+          resize();
+          window.addEventListener('resize', resize);
+        }
+        return { fit };
+      })();
+
+      /* ============================================================
    JIM'S BOBA SHOP — v1: Opening Shot + Build Phase
    ============================================================ */
 
-/* Palette — anchored on Sloane's three favorites + horror accents */
-const PAL = {
-  skyHi:      '#fbcbd6',  // pink dawn
-  skyMid:     '#f4b8c5',  // strawberry pink
-  skyLo:      '#bfd7e8',  // powder blue
-  ground:     '#9b8fa3',
-  groundLo:   '#5d4f63',
-  pink:       '#f4b8c5',
-  pinkHi:     '#ffd6e0',
-  pinkDeep:   '#c87a8e',
-  matcha:     '#a8c69f',
-  matchaDeep: '#6e8c66',
-  powder:     '#bfd7e8',
-  powderDeep: '#7fa3b8',
-  cream:      '#fff5e8',
-  warm:       '#ffd089',
-  shadow:     '#1a1424',
-  bobaRed:    '#a8203b',
-  sickly:     '#8fae5a'
-};
+      /* Palette — anchored on Sloane's three favorites + horror accents */
+      const PAL = {
+        skyHi: '#fbcbd6', // pink dawn
+        skyMid: '#f4b8c5', // strawberry pink
+        skyLo: '#bfd7e8', // powder blue
+        ground: '#9b8fa3',
+        groundLo: '#5d4f63',
+        pink: '#f4b8c5',
+        pinkHi: '#ffd6e0',
+        pinkDeep: '#c87a8e',
+        matcha: '#a8c69f',
+        matchaDeep: '#6e8c66',
+        powder: '#bfd7e8',
+        powderDeep: '#7fa3b8',
+        cream: '#fff5e8',
+        warm: '#ffd089',
+        shadow: '#1a1424',
+        bobaRed: '#a8203b',
+        sickly: '#8fae5a',
+      };
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
-Canvas.fit(canvas, W, H);
-Input.attachPointer(canvas);
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width,
+        H = canvas.height;
+      Canvas.fit(canvas, W, H);
+      Input.attachPointer(canvas);
 
-/* Game state */
-let t = 0;
-let coins = 30;
-let selected = null;
-const placed = [];
-let particles = [];
-let needsTap = true;
-let audioStarted = false;
-let coinFlash = 0;
+      /* Game state */
+      let t = 0;
+      let coins = 30;
+      let selected = null;
+      const placed = [];
+      let particles = [];
+      let needsTap = true;
+      let audioStarted = false;
+      let coinFlash = 0;
 
-const ITEMS = {
-  counter: { cost: 5,  color: PAL.pink,    name: 'Counter',      w: 84, h: 18 },
-  machine: { cost: 10, color: PAL.matcha,  name: 'Boba Machine', w: 30, h: 50 },
-  table:   { cost: 3,  color: PAL.powder,  name: 'Table',        w: 30, h: 24 }
-};
+      const ITEMS = {
+        counter: { cost: 5, color: PAL.pink, name: 'Counter', w: 84, h: 18 },
+        machine: { cost: 10, color: PAL.matcha, name: 'Boba Machine', w: 30, h: 50 },
+        table: { cost: 3, color: PAL.powder, name: 'Table', w: 30, h: 24 },
+      };
 
-/* The shop interior — where you can place stuff */
-const SHOP = { x: 200, y: 198, w: 380, h: 110 };
+      /* The shop interior — where you can place stuff */
+      const SHOP = { x: 200, y: 198, w: 380, h: 110 };
 
-/* Build palette UI bar */
-const PB_Y = 440, PB_H = 60;
+      /* Build palette UI bar */
+      const PB_Y = 440,
+        PB_H = 60;
 
-/* Jim flicker scheduler — first scare hint at ~9s, then 18-32s gaps */
-let jimNextAt = 9;
-let jimActive = false;
-let jimDuration = 0;
-let tensionStarted = false;
+      /* Jim flicker scheduler — first scare hint at ~9s, then 18-32s gaps */
+      let jimNextAt = 9;
+      let jimActive = false;
+      let jimDuration = 0;
+      let tensionStarted = false;
 
-/* Cozy layer triggers */
-let nextIce = 4;
-let nextShaker = 7;
+      /* Cozy layer triggers */
+      let nextIce = 4;
+      let nextShaker = 7;
 
-/* Atmosphere — dust motes */
-const motes = [];
-for (let i = 0; i < 32; i++) {
-  motes.push({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    vx: (Math.random() - 0.5) * 0.25,
-    vy: -0.08 - Math.random() * 0.18,
-    size: 1 + Math.random() * 2,
-    phase: Math.random() * Math.PI * 2
-  });
-}
-
-/* Fog wisps drifting along the ground */
-const fog = [];
-for (let i = 0; i < 5; i++) {
-  fog.push({
-    x: Math.random() * W,
-    y: 332 + Math.random() * 70,
-    speed: 0.18 + Math.random() * 0.22,
-    width: 220 + Math.random() * 160,
-    alpha: 0.05 + Math.random() * 0.06
-  });
-}
-
-/* Start audio on first interaction (browser policy) */
-function startAudio() {
-  if (audioStarted) return;
-  audioStarted = true;
-  Sound.ensure();
-  Sound.startCozy();
-}
-window.addEventListener('pointerdown', startAudio, { once: true });
-window.addEventListener('keydown', startAudio, { once: true });
-
-/* ============ Input ============ */
-function handleInput() {
-  if (needsTap) {
-    if (Input.pointer.clicked) {
-      needsTap = false;
-      Sound.play('click');
-    }
-    return;
-  }
-
-  if (Input.pointer.clicked) {
-    const px = Input.pointer.x, py = Input.pointer.y;
-
-    // Build palette buttons
-    const items = Object.keys(ITEMS);
-    const slotW = 130;
-    const startX = W / 2 - (items.length * slotW) / 2;
-    let inPalette = false;
-    items.forEach((key, i) => {
-      const x = startX + i * slotW;
-      const y = PB_Y + 8;
-      if (px >= x && px <= x + slotW - 10 && py >= y && py <= y + PB_H - 16) {
-        selected = (selected === key) ? null : key;
-        Sound.play('click');
-        inPalette = true;
+      /* Atmosphere — dust motes */
+      const motes = [];
+      for (let i = 0; i < 32; i++) {
+        motes.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: -0.08 - Math.random() * 0.18,
+          size: 1 + Math.random() * 2,
+          phase: Math.random() * Math.PI * 2,
+        });
       }
-    });
 
-    // Place inside the shop
-    if (!inPalette && selected && py < PB_Y) {
-      if (px >= SHOP.x && px <= SHOP.x + SHOP.w &&
-          py >= SHOP.y && py <= SHOP.y + SHOP.h) {
-        const item = ITEMS[selected];
-        if (coins >= item.cost) {
-          // clamp inside the window
-          const cx = Math.max(SHOP.x + item.w/2, Math.min(SHOP.x + SHOP.w - item.w/2, px));
-          const cy = Math.max(SHOP.y + item.h/2, Math.min(SHOP.y + SHOP.h - item.h/2, py));
-          coins -= item.cost;
-          coinFlash = 1;
-          placed.push({ type: selected, x: cx, y: cy });
-          particles.push(...Juice.burst(cx, cy, 14, item.color));
-          Sound.play('place');
-          Sound.play('coin');
-          Juice.shake(3);
-        } else {
-          Sound.play('reject');
+      /* Fog wisps drifting along the ground */
+      const fog = [];
+      for (let i = 0; i < 5; i++) {
+        fog.push({
+          x: Math.random() * W,
+          y: 332 + Math.random() * 70,
+          speed: 0.18 + Math.random() * 0.22,
+          width: 220 + Math.random() * 160,
+          alpha: 0.05 + Math.random() * 0.06,
+        });
+      }
+
+      /* Start audio on first interaction (browser policy) */
+      function startAudio() {
+        if (audioStarted) return;
+        audioStarted = true;
+        Sound.ensure();
+        Sound.startCozy();
+      }
+      window.addEventListener('pointerdown', startAudio, { once: true });
+      window.addEventListener('keydown', startAudio, { once: true });
+
+      /* ============ Input ============ */
+      function handleInput() {
+        if (needsTap) {
+          if (Input.pointer.clicked) {
+            needsTap = false;
+            Sound.play('click');
+          }
+          return;
+        }
+
+        if (Input.pointer.clicked) {
+          const px = Input.pointer.x,
+            py = Input.pointer.y;
+
+          // Build palette buttons
+          const items = Object.keys(ITEMS);
+          const slotW = 130;
+          const startX = W / 2 - (items.length * slotW) / 2;
+          let inPalette = false;
+          items.forEach((key, i) => {
+            const x = startX + i * slotW;
+            const y = PB_Y + 8;
+            if (px >= x && px <= x + slotW - 10 && py >= y && py <= y + PB_H - 16) {
+              selected = selected === key ? null : key;
+              Sound.play('click');
+              inPalette = true;
+            }
+          });
+
+          // Place inside the shop
+          if (!inPalette && selected && py < PB_Y) {
+            if (px >= SHOP.x && px <= SHOP.x + SHOP.w && py >= SHOP.y && py <= SHOP.y + SHOP.h) {
+              const item = ITEMS[selected];
+              if (coins >= item.cost) {
+                // clamp inside the window
+                const cx = Math.max(
+                  SHOP.x + item.w / 2,
+                  Math.min(SHOP.x + SHOP.w - item.w / 2, px)
+                );
+                const cy = Math.max(
+                  SHOP.y + item.h / 2,
+                  Math.min(SHOP.y + SHOP.h - item.h / 2, py)
+                );
+                coins -= item.cost;
+                coinFlash = 1;
+                placed.push({ type: selected, x: cx, y: cy });
+                particles.push(...Juice.burst(cx, cy, 14, item.color));
+                Sound.play('place');
+                Sound.play('coin');
+                Juice.shake(3);
+              } else {
+                Sound.play('reject');
+              }
+            }
+          }
         }
       }
-    }
-  }
-}
-
-/* ============ Update ============ */
-function update(dt) {
-  handleInput();
-  if (needsTap) { Input.endFrame(); return; }
-
-  t += dt;
-  coinFlash = Math.max(0, coinFlash - dt * 2);
-
-  // Atmosphere
-  for (const m of motes) {
-    m.x += m.vx; m.y += m.vy; m.phase += dt * 2;
-    if (m.y < -10 || m.x < -10 || m.x > W + 10) {
-      m.x = Math.random() * W;
-      m.y = H + 10;
-    }
-  }
-  for (const f of fog) {
-    f.x += f.speed;
-    if (f.x > W + f.width) f.x = -f.width;
-  }
-
-  // Cozy event layer
-  if (audioStarted && !jimActive) {
-    nextIce -= dt;
-    if (nextIce <= 0) { Sound.play('iceclink'); nextIce = 2.5 + Math.random() * 4; }
-    nextShaker -= dt;
-    if (nextShaker <= 0) { Sound.play('shaker'); nextShaker = 5 + Math.random() * 5; }
-  }
-
-  // Jim scheduling — the build-up earns the payoff
-  if (!jimActive) {
-    jimNextAt -= dt;
-    if (jimNextAt < 1.4 && !tensionStarted && audioStarted) {
-      tensionStarted = true;
-      Sound.duckCozy(0.18, 1.2);   // cozy fades down
-      Sound.tensionPulse(1.2, 0.5); // hum builds
-    }
-    if (jimNextAt <= 0) {
-      jimActive = true;
-      jimDuration = 0.45 + Math.random() * 0.2;
-      Juice.shake(5);
-      if (audioStarted) Sound.play('scarehit');
-    }
-  } else {
-    jimDuration -= dt;
-    if (jimDuration <= 0) {
-      jimActive = false;
-      tensionStarted = false;
-      jimNextAt = 18 + Math.random() * 14;
-      if (audioStarted) Sound.duckCozy(0.55, 2.5); // cozy returns
-    }
-  }
-
-  Juice.updateParticles(particles, dt);
-  Input.endFrame();
-}
-
-/* ============ Drawing ============ */
-
-function drawSky() {
-  const g = ctx.createLinearGradient(0, 0, 0, 330);
-  g.addColorStop(0,    PAL.skyHi);
-  g.addColorStop(0.55, PAL.skyMid);
-  g.addColorStop(1,    PAL.skyLo);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, 330);
-
-  // Drifting clouds
-  ctx.globalAlpha = 0.32;
-  ctx.fillStyle = PAL.cream;
-  for (let i = 0; i < 5; i++) {
-    const cx = ((i * 200 + t * 6) % (W + 240)) - 120;
-    const cy = 38 + i * 16;
-    ctx.beginPath();
-    ctx.ellipse(cx,      cy, 60, 14, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + 30, cy + 4, 36, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-function drawGround() {
-  const g = ctx.createLinearGradient(0, 330, 0, 440);
-  g.addColorStop(0, PAL.ground);
-  g.addColorStop(1, PAL.groundLo);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 330, W, 110);
-
-  // Sidewalk tile lines
-  ctx.strokeStyle = 'rgba(0,0,0,0.14)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 6; i++) {
-    const x = i * (W / 6);
-    ctx.beginPath();
-    ctx.moveTo(x, 340); ctx.lineTo(x, 440);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(0, 340); ctx.lineTo(W, 340);
-  ctx.stroke();
-}
-
-function drawShop() {
-  const bx = 130, by = 90, bw = 540, bh = 240;
-
-  // Side wall (3D hint)
-  ctx.fillStyle = '#8b5a6c';
-  ctx.fillRect(bx + bw, by + 18, 14, bh - 18);
-
-  // Front facade
-  const fg = ctx.createLinearGradient(0, by, 0, by + bh);
-  fg.addColorStop(0, PAL.pinkHi);
-  fg.addColorStop(1, PAL.pink);
-  ctx.fillStyle = fg;
-  ctx.fillRect(bx, by, bw, bh);
-
-  // Roof trim
-  ctx.fillStyle = PAL.matcha;
-  ctx.fillRect(bx - 8, by - 12, bw + 16, 16);
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.fillRect(bx, by + 4, bw, 6);
-
-  // Sign
-  ctx.fillStyle = PAL.cream;
-  ctx.fillRect(bx + 90, by + 18, bw - 180, 38);
-  ctx.strokeStyle = PAL.pinkDeep;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(bx + 90, by + 18, bw - 180, 38);
-  ctx.fillStyle = PAL.shadow;
-  ctx.font = "italic bold 26px 'Cormorant Garamond', Georgia, serif";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText("Jim's Boba", W / 2, by + 38 + Math.sin(t * 1.4) * 0.6);
-
-  // Big window — shop interior
-  ctx.fillStyle = PAL.shadow;
-  ctx.fillRect(SHOP.x - 8, SHOP.y - 12, SHOP.w + 16, SHOP.h + 24);
-  const ig = ctx.createLinearGradient(0, SHOP.y, 0, SHOP.y + SHOP.h);
-  ig.addColorStop(0, '#3a2a36');
-  ig.addColorStop(1, '#241827');
-  ctx.fillStyle = ig;
-  ctx.fillRect(SHOP.x, SHOP.y, SHOP.w, SHOP.h);
-  // Glass shine
-  ctx.fillStyle = 'rgba(255,255,255,0.06)';
-  ctx.fillRect(SHOP.x, SHOP.y, SHOP.w, SHOP.h * 0.4);
-  // Window frame
-  ctx.strokeStyle = PAL.pinkDeep;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(SHOP.x - 4, SHOP.y - 8, SHOP.w + 8, SHOP.h + 16);
-
-  // Door
-  const dx = bx + bw - 78, dy = by + 140, dw = 50, dh = 100;
-  ctx.fillStyle = PAL.pinkDeep;
-  ctx.fillRect(dx, dy, dw, dh);
-  ctx.fillStyle = PAL.cream;
-  ctx.fillRect(dx + 5, dy + 8, dw - 10, dh - 16);
-  ctx.fillStyle = PAL.warm;
-  ctx.beginPath();
-  ctx.arc(dx + dw - 10, dy + dh / 2, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = PAL.shadow;
-  ctx.font = "10px system-ui";
-  ctx.textAlign = 'center';
-  ctx.fillText('CLOSED', dx + dw / 2, dy + 24);
-
-  // Upstairs window — Jim's haunt
-  const ux = bx + bw / 2 - 40, uy = by + 76;
-  ctx.fillStyle = PAL.shadow;
-  ctx.fillRect(ux - 4, uy - 4, 88, 56);
-
-  let upColor = '#7a6589';
-  if (jimActive) {
-    upColor = (Math.sin(t * 90) > 0) ? '#3a1228' : '#5a182c';
-  } else if (jimNextAt < 1.4) {
-    upColor = (Math.sin(t * 36) > 0.2) ? '#7a6589' : '#5a4570';
-  }
-  ctx.fillStyle = upColor;
-  ctx.fillRect(ux, uy, 80, 48);
-  ctx.strokeStyle = PAL.pinkDeep;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(ux + 40, uy); ctx.lineTo(ux + 40, uy + 48);
-  ctx.moveTo(ux, uy + 24); ctx.lineTo(ux + 80, uy + 24);
-  ctx.stroke();
-
-  if (jimActive) drawJim(ux + 40, uy + 30);
-
-  // Window box of flowers under the upstairs window
-  ctx.fillStyle = PAL.matchaDeep;
-  ctx.fillRect(ux - 6, uy + 48, 92, 8);
-  for (let i = 0; i < 5; i++) {
-    const fx = ux + 6 + i * 16;
-    ctx.fillStyle = i % 2 === 0 ? PAL.bobaRed : PAL.cream;
-    ctx.beginPath();
-    ctx.arc(fx, uy + 49, 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Awning
-  ctx.fillStyle = PAL.matcha;
-  for (let i = 0; i < 7; i++) {
-    const ax = SHOP.x - 4 + i * 56;
-    ctx.beginPath();
-    ctx.moveTo(ax, SHOP.y - 10);
-    ctx.lineTo(ax + 28, SHOP.y - 10);
-    ctx.lineTo(ax + 14, SHOP.y + 4);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.fillRect(SHOP.x - 4, SHOP.y - 12, SHOP.w + 8, 4);
-}
-
-function drawJim(cx, cy) {
-  // Demon silhouette in a boba tee + jeans
-  ctx.save();
-  ctx.fillStyle = '#0a0510';
-
-  // Torso (boba tee shape)
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 6, 22, 26, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Head
-  ctx.beginPath();
-  ctx.arc(cx, cy - 16, 14, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Horns
-  ctx.beginPath();
-  ctx.moveTo(cx - 9, cy - 24);
-  ctx.lineTo(cx - 14, cy - 36);
-  ctx.lineTo(cx - 4, cy - 26);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(cx + 9, cy - 24);
-  ctx.lineTo(cx + 14, cy - 36);
-  ctx.lineTo(cx + 4, cy - 26);
-  ctx.closePath();
-  ctx.fill();
-
-  // Tee shirt patch — slightly different shade across chest
-  ctx.fillStyle = '#1a0e18';
-  ctx.fillRect(cx - 18, cy - 4, 36, 18);
-
-  // BOBA on the tee
-  ctx.fillStyle = '#3d2630';
-  ctx.font = "bold 7px sans-serif";
-  ctx.textAlign = 'center';
-  ctx.fillText('BOBA', cx, cy + 7);
-
-  // Glowing eyes
-  for (const ex of [-5, 5]) {
-    const grd = ctx.createRadialGradient(cx + ex, cy - 17, 0, cx + ex, cy - 17, 7);
-    grd.addColorStop(0,    '#ff3050');
-    grd.addColorStop(0.45, 'rgba(255,40,60,0.55)');
-    grd.addColorStop(1,    'rgba(255,40,60,0)');
-    ctx.fillStyle = grd;
-    ctx.fillRect(cx + ex - 9, cy - 24, 18, 14);
-  }
-  ctx.fillStyle = '#ff6075';
-  ctx.beginPath();
-  ctx.arc(cx - 5, cy - 17, 1.7, 0, Math.PI * 2);
-  ctx.arc(cx + 5, cy - 17, 1.7, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Jagged grin hint
-  ctx.strokeStyle = '#ff3050';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(cx - 6, cy - 9);
-  ctx.lineTo(cx - 3, cy - 7);
-  ctx.lineTo(cx, cy - 9);
-  ctx.lineTo(cx + 3, cy - 7);
-  ctx.lineTo(cx + 6, cy - 9);
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function drawStreetlamp() {
-  const x = 60;
-  ctx.fillStyle = PAL.shadow;
-  ctx.fillRect(x - 3, 130, 6, 200);
-  ctx.fillRect(x - 12, 326, 24, 6);
-  ctx.fillStyle = '#3a2030';
-  ctx.beginPath();
-  ctx.moveTo(x - 14, 130); ctx.lineTo(x + 14, 130);
-  ctx.lineTo(x + 10, 110); ctx.lineTo(x - 10, 110);
-  ctx.closePath();
-  ctx.fill();
-
-  // Flicker — light is alive
-  const flick = 0.92 + Math.sin(t * 7) * 0.04 + Math.random() * 0.04;
-
-  // Additive ground glow
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  const lampGlow = ctx.createRadialGradient(x, 130, 0, x, 330, 230);
-  lampGlow.addColorStop(0,   `rgba(255, 220, 150, ${0.55 * flick})`);
-  lampGlow.addColorStop(0.5, `rgba(255, 200, 130, ${0.18 * flick})`);
-  lampGlow.addColorStop(1,   'rgba(255, 200, 130, 0)');
-  ctx.fillStyle = lampGlow;
-  ctx.fillRect(0, 100, 330, 350);
-
-  // Bulb hotspot
-  const bulbGrad = ctx.createRadialGradient(x, 122, 0, x, 122, 32);
-  bulbGrad.addColorStop(0, `rgba(255, 245, 200, ${flick})`);
-  bulbGrad.addColorStop(1, 'rgba(255, 220, 150, 0)');
-  ctx.fillStyle = bulbGrad;
-  ctx.beginPath();
-  ctx.arc(x, 122, 32, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawPlanters() {
-  // Right of door
-  const px = 670, py = 318;
-  ctx.fillStyle = PAL.matchaDeep;
-  ctx.fillRect(px, py, 26, 14);
-  ctx.fillStyle = PAL.matcha;
-  ctx.beginPath();
-  ctx.arc(px + 8, py + 3, 5, 0, Math.PI * 2);
-  ctx.arc(px + 17, py + 4, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = PAL.pinkHi;
-  ctx.beginPath();
-  ctx.arc(px + 13, py - 1, 3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Left of door
-  const qx = 100, qy = 320;
-  ctx.fillStyle = PAL.matchaDeep;
-  ctx.fillRect(qx, qy, 22, 12);
-  ctx.fillStyle = PAL.matcha;
-  ctx.beginPath();
-  ctx.arc(qx + 6, qy + 2, 4, 0, Math.PI * 2);
-  ctx.arc(qx + 14, qy + 3, 5, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawPlacedItems() {
-  // Sort by Y so closer items render on top
-  const sorted = [...placed].sort((a, b) => a.y - b.y);
-  for (const p of sorted) {
-    const it = ITEMS[p.type];
-    if (p.type === 'counter') {
-      ctx.fillStyle = it.color;
-      ctx.fillRect(p.x - it.w/2, p.y - it.h/2, it.w, it.h);
-      ctx.fillStyle = PAL.pinkDeep;
-      ctx.fillRect(p.x - it.w/2, p.y + it.h/2 - 4, it.w, 4);
-      ctx.fillStyle = PAL.cream;
-      ctx.fillRect(p.x - it.w/2 + 4, p.y - it.h/2 + 2, it.w - 8, 3);
-      // Tiny hearts
-      ctx.fillStyle = PAL.bobaRed;
-      ctx.font = "8px sans-serif";
-      ctx.textAlign = 'center';
-      ctx.fillText('♥', p.x, p.y + 2);
-    } else if (p.type === 'machine') {
-      ctx.fillStyle = it.color;
-      ctx.fillRect(p.x - it.w/2, p.y - it.h/2, it.w, it.h);
-      ctx.fillStyle = PAL.matchaDeep;
-      ctx.fillRect(p.x - it.w/2, p.y + it.h/2 - 6, it.w, 6);
-      ctx.fillStyle = PAL.cream;
-      ctx.fillRect(p.x - it.w/2 + 5, p.y - it.h/2 + 6, it.w - 10, 18);
-      // Liquid level — bobs gently
-      const bob = Math.sin(t * 2.4 + p.x * 0.1) * 1.2;
-      ctx.fillStyle = PAL.matchaDeep;
-      ctx.fillRect(p.x - it.w/2 + 5, p.y - it.h/2 + 14 + bob, it.w - 10, 10 - bob);
-      // Buttons
-      ctx.fillStyle = PAL.bobaRed;
-      ctx.beginPath();
-      ctx.arc(p.x - 8, p.y + 12, 1.5, 0, Math.PI * 2);
-      ctx.arc(p.x + 8, p.y + 12, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (p.type === 'table') {
-      ctx.fillStyle = PAL.powderDeep;
-      ctx.fillRect(p.x - 3, p.y, 6, it.h/2);
-      ctx.fillStyle = it.color;
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, it.w/2, it.h/3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.beginPath();
-      ctx.ellipse(p.x - 4, p.y - 3, it.w/3, it.h/8, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-}
-
-function drawAtmosphere() {
-  // Dust motes, drifting
-  for (const m of motes) {
-    const a = 0.18 + Math.sin(m.phase) * 0.1;
-    ctx.fillStyle = `rgba(255, 230, 240, ${a})`;
-    ctx.beginPath();
-    ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // Fog along the ground
-  for (const f of fog) {
-    const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.width / 2);
-    g.addColorStop(0, `rgba(255, 230, 240, ${f.alpha})`);
-    g.addColorStop(1, 'rgba(255, 230, 240, 0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(f.x - f.width/2, f.y - 30, f.width, 60);
-  }
-}
-
-function drawScarePulse() {
-  if (jimActive) {
-    ctx.fillStyle = 'rgba(168, 32, 59, 0.1)';
-    ctx.fillRect(0, 0, W, H);
-  }
-}
-
-function drawPlacementGhost() {
-  if (!selected) return;
-  const px = Input.pointer.x, py = Input.pointer.y;
-  if (px < SHOP.x || px > SHOP.x + SHOP.w || py < SHOP.y || py > SHOP.y + SHOP.h) return;
-  const it = ITEMS[selected];
-  ctx.globalAlpha = coins >= it.cost ? 0.55 : 0.25;
-  ctx.fillStyle = it.color;
-  const cx = Math.max(SHOP.x + it.w/2, Math.min(SHOP.x + SHOP.w - it.w/2, px));
-  const cy = Math.max(SHOP.y + it.h/2, Math.min(SHOP.y + SHOP.h - it.h/2, py));
-  ctx.fillRect(cx - it.w/2, cy - it.h/2, it.w, it.h);
-  ctx.strokeStyle = coins >= it.cost ? PAL.cream : PAL.bobaRed;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(cx - it.w/2, cy - it.h/2, it.w, it.h);
-  ctx.globalAlpha = 1;
-}
-
-function drawTutorialHint() {
-  if (placed.length > 0) return;
-  ctx.save();
-  ctx.fillStyle = `rgba(255, 230, 240, ${0.35 + Math.sin(t * 2) * 0.1})`;
-  ctx.font = "italic 14px 'Cormorant Garamond', Georgia, serif";
-  ctx.textAlign = 'center';
-  if (!selected) {
-    ctx.fillText('pick something below to build →', W / 2, SHOP.y + SHOP.h / 2);
-  } else {
-    ctx.fillText('click in here to place it', W / 2, SHOP.y + SHOP.h / 2);
-  }
-  ctx.restore();
-}
-
-function drawVignette() {
-  const g = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, Math.max(W, H) * 0.7);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, 'rgba(0,0,0,0.55)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-}
-
-function drawHUD() {
-  // Coin counter top right
-  const cx = W - 100, cy = 30;
-  ctx.fillStyle = 'rgba(20, 12, 28, 0.7)';
-  ctx.fillRect(cx - 12, cy - 18, 100, 32);
-  ctx.strokeStyle = PAL.pinkDeep;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(cx - 12, cy - 18, 100, 32);
-
-  // Coin
-  ctx.fillStyle = PAL.warm;
-  ctx.beginPath();
-  ctx.arc(cx + 5, cy - 2, 9, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#b58030';
-  ctx.beginPath();
-  ctx.arc(cx + 5, cy - 2, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = PAL.warm;
-  ctx.font = 'bold 10px system-ui';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('¢', cx + 5, cy - 2);
-
-  // Number — flashes when changed
-  const flashColor = coinFlash > 0 ?
-    `rgba(255, 230, ${Math.floor(120 + coinFlash * 100)}, 1)` : PAL.cream;
-  ctx.fillStyle = flashColor;
-  ctx.font = 'bold 20px system-ui';
-  ctx.textAlign = 'left';
-  ctx.fillText(coins, cx + 22, cy - 2);
-}
-
-function drawPalette() {
-  // Bar background
-  ctx.fillStyle = 'rgba(20, 12, 28, 0.92)';
-  ctx.fillRect(0, PB_Y, W, PB_H);
-  ctx.strokeStyle = PAL.pinkDeep;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, PB_Y); ctx.lineTo(W, PB_Y);
-  ctx.stroke();
-
-  ctx.fillStyle = PAL.cream;
-  ctx.font = "bold 11px system-ui";
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText("BUILD", 14, PB_Y + 18);
-
-  const items = Object.keys(ITEMS);
-  const slotW = 130;
-  const startX = W / 2 - (items.length * slotW) / 2;
-
-  items.forEach((key, i) => {
-    const it = ITEMS[key];
-    const x = startX + i * slotW;
-    const y = PB_Y + 8;
-    const w = slotW - 10, h = PB_H - 16;
-
-    const isSel = selected === key;
-    const canBuy = coins >= it.cost;
-
-    ctx.fillStyle = isSel ? 'rgba(255, 220, 230, 0.18)' : 'rgba(255,255,255,0.04)';
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = isSel ? PAL.pinkHi : 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = isSel ? 2 : 1;
-    ctx.strokeRect(x, y, w, h);
-
-    // Icon
-    ctx.fillStyle = canBuy ? it.color : '#555';
-    if (key === 'machine') {
-      ctx.fillRect(x + 12, y + 9, 14, 24);
-      ctx.fillStyle = canBuy ? PAL.cream : '#444';
-      ctx.fillRect(x + 14, y + 13, 10, 8);
-    } else if (key === 'table') {
-      ctx.beginPath();
-      ctx.ellipse(x + 19, y + 22, 11, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = canBuy ? PAL.powderDeep : '#444';
-      ctx.fillRect(x + 17, y + 22, 4, 8);
-    } else {
-      ctx.fillRect(x + 8, y + 16, 22, 10);
-    }
-
-    ctx.fillStyle = canBuy ? PAL.cream : '#888';
-    ctx.font = "bold 12px system-ui";
-    ctx.textAlign = 'left';
-    ctx.fillText(it.name, x + 38, y + 18);
-
-    ctx.fillStyle = canBuy ? PAL.warm : '#666';
-    ctx.font = "11px system-ui";
-    ctx.fillText('¢ ' + it.cost, x + 38, y + 32);
-  });
-
-  // Status text on the right
-  ctx.fillStyle = PAL.pinkHi;
-  ctx.font = "italic 11px 'Cormorant Garamond', Georgia, serif";
-  ctx.textAlign = 'right';
-  if (selected) {
-    ctx.fillText('selected: ' + ITEMS[selected].name + '  —  click in the shop', W - 14, PB_Y + 34);
-  } else {
-    ctx.fillText('build your shop before opening', W - 14, PB_Y + 34);
-  }
-}
-
-function drawTapOverlay() {
-  if (!needsTap) return;
-  ctx.fillStyle = 'rgba(8, 4, 14, 0.78)';
-  ctx.fillRect(0, 0, W, H);
-
-  // Title
-  ctx.fillStyle = PAL.pinkHi;
-  ctx.font = "italic bold 44px 'Cormorant Garamond', Georgia, serif";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText("Jim's Boba Shop", W/2, H/2 - 30);
-
-  // Subtitle
-  ctx.fillStyle = PAL.cream;
-  ctx.font = "italic 16px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText('a kawaii horror shop sim', W/2, H/2 + 4);
-
-  // Tap prompt — pulses
-  const a = 0.7 + Math.sin(t * 3) * 0.3;
-  ctx.fillStyle = `rgba(255, 230, 240, ${a})`;
-  ctx.font = "14px system-ui";
-  ctx.fillText('— tap to begin —', W/2, H/2 + 50);
-}
-
-/* ============ Render ============ */
-function render() {
-  ctx.save();
-  const sh = Juice.getShake();
-  ctx.translate(sh.x, sh.y);
-
-  drawSky();
-  drawGround();
-  drawStreetlamp();
-  drawShop();
-  drawPlacedItems();
-  drawPlanters();
-  drawAtmosphere();
-  Juice.drawParticles(ctx, particles);
-  drawScarePulse();
-  drawPlacementGhost();
-  drawTutorialHint();
-  drawVignette();
-  drawHUD();
-  drawPalette();
-  drawTapOverlay();
-
-  ctx.restore();
-}
-
-/* ============ Loop ============ */
-let lastT = performance.now();
-function loop(now) {
-  const dt = Math.min(0.05, (now - lastT) / 1000);
-  lastT = now;
-  if (!Juice.isFrozen()) update(dt);
-  Juice.tickFreeze();
-  render();
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-</script>
-</body>
+
+      /* ============ Update ============ */
+      function update(dt) {
+        handleInput();
+        if (needsTap) {
+          Input.endFrame();
+          return;
+        }
+
+        t += dt;
+        coinFlash = Math.max(0, coinFlash - dt * 2);
+
+        // Atmosphere
+        for (const m of motes) {
+          m.x += m.vx;
+          m.y += m.vy;
+          m.phase += dt * 2;
+          if (m.y < -10 || m.x < -10 || m.x > W + 10) {
+            m.x = Math.random() * W;
+            m.y = H + 10;
+          }
+        }
+        for (const f of fog) {
+          f.x += f.speed;
+          if (f.x > W + f.width) f.x = -f.width;
+        }
+
+        // Cozy event layer
+        if (audioStarted && !jimActive) {
+          nextIce -= dt;
+          if (nextIce <= 0) {
+            Sound.play('iceclink');
+            nextIce = 2.5 + Math.random() * 4;
+          }
+          nextShaker -= dt;
+          if (nextShaker <= 0) {
+            Sound.play('shaker');
+            nextShaker = 5 + Math.random() * 5;
+          }
+        }
+
+        // Jim scheduling — the build-up earns the payoff
+        if (!jimActive) {
+          jimNextAt -= dt;
+          if (jimNextAt < 1.4 && !tensionStarted && audioStarted) {
+            tensionStarted = true;
+            Sound.duckCozy(0.18, 1.2); // cozy fades down
+            Sound.tensionPulse(1.2, 0.5); // hum builds
+          }
+          if (jimNextAt <= 0) {
+            jimActive = true;
+            jimDuration = 0.45 + Math.random() * 0.2;
+            Juice.shake(5);
+            if (audioStarted) Sound.play('scarehit');
+          }
+        } else {
+          jimDuration -= dt;
+          if (jimDuration <= 0) {
+            jimActive = false;
+            tensionStarted = false;
+            jimNextAt = 18 + Math.random() * 14;
+            if (audioStarted) Sound.duckCozy(0.55, 2.5); // cozy returns
+          }
+        }
+
+        Juice.updateParticles(particles, dt);
+        Input.endFrame();
+      }
+
+      /* ============ Drawing ============ */
+
+      function drawSky() {
+        const g = ctx.createLinearGradient(0, 0, 0, 330);
+        g.addColorStop(0, PAL.skyHi);
+        g.addColorStop(0.55, PAL.skyMid);
+        g.addColorStop(1, PAL.skyLo);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, 330);
+
+        // Drifting clouds
+        ctx.globalAlpha = 0.32;
+        ctx.fillStyle = PAL.cream;
+        for (let i = 0; i < 5; i++) {
+          const cx = ((i * 200 + t * 6) % (W + 240)) - 120;
+          const cy = 38 + i * 16;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, 60, 14, 0, 0, Math.PI * 2);
+          ctx.ellipse(cx + 30, cy + 4, 36, 10, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawGround() {
+        const g = ctx.createLinearGradient(0, 330, 0, 440);
+        g.addColorStop(0, PAL.ground);
+        g.addColorStop(1, PAL.groundLo);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 330, W, 110);
+
+        // Sidewalk tile lines
+        ctx.strokeStyle = 'rgba(0,0,0,0.14)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 6; i++) {
+          const x = i * (W / 6);
+          ctx.beginPath();
+          ctx.moveTo(x, 340);
+          ctx.lineTo(x, 440);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, 340);
+        ctx.lineTo(W, 340);
+        ctx.stroke();
+      }
+
+      function drawShop() {
+        const bx = 130,
+          by = 90,
+          bw = 540,
+          bh = 240;
+
+        // Side wall (3D hint)
+        ctx.fillStyle = '#8b5a6c';
+        ctx.fillRect(bx + bw, by + 18, 14, bh - 18);
+
+        // Front facade
+        const fg = ctx.createLinearGradient(0, by, 0, by + bh);
+        fg.addColorStop(0, PAL.pinkHi);
+        fg.addColorStop(1, PAL.pink);
+        ctx.fillStyle = fg;
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Roof trim
+        ctx.fillStyle = PAL.matcha;
+        ctx.fillRect(bx - 8, by - 12, bw + 16, 16);
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(bx, by + 4, bw, 6);
+
+        // Sign
+        ctx.fillStyle = PAL.cream;
+        ctx.fillRect(bx + 90, by + 18, bw - 180, 38);
+        ctx.strokeStyle = PAL.pinkDeep;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bx + 90, by + 18, bw - 180, 38);
+        ctx.fillStyle = PAL.shadow;
+        ctx.font = "italic bold 26px 'Cormorant Garamond', Georgia, serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText("Jim's Boba", W / 2, by + 38 + Math.sin(t * 1.4) * 0.6);
+
+        // Big window — shop interior
+        ctx.fillStyle = PAL.shadow;
+        ctx.fillRect(SHOP.x - 8, SHOP.y - 12, SHOP.w + 16, SHOP.h + 24);
+        const ig = ctx.createLinearGradient(0, SHOP.y, 0, SHOP.y + SHOP.h);
+        ig.addColorStop(0, '#3a2a36');
+        ig.addColorStop(1, '#241827');
+        ctx.fillStyle = ig;
+        ctx.fillRect(SHOP.x, SHOP.y, SHOP.w, SHOP.h);
+        // Glass shine
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(SHOP.x, SHOP.y, SHOP.w, SHOP.h * 0.4);
+        // Window frame
+        ctx.strokeStyle = PAL.pinkDeep;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(SHOP.x - 4, SHOP.y - 8, SHOP.w + 8, SHOP.h + 16);
+
+        // Door
+        const dx = bx + bw - 78,
+          dy = by + 140,
+          dw = 50,
+          dh = 100;
+        ctx.fillStyle = PAL.pinkDeep;
+        ctx.fillRect(dx, dy, dw, dh);
+        ctx.fillStyle = PAL.cream;
+        ctx.fillRect(dx + 5, dy + 8, dw - 10, dh - 16);
+        ctx.fillStyle = PAL.warm;
+        ctx.beginPath();
+        ctx.arc(dx + dw - 10, dy + dh / 2, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = PAL.shadow;
+        ctx.font = '10px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('CLOSED', dx + dw / 2, dy + 24);
+
+        // Upstairs window — Jim's haunt
+        const ux = bx + bw / 2 - 40,
+          uy = by + 76;
+        ctx.fillStyle = PAL.shadow;
+        ctx.fillRect(ux - 4, uy - 4, 88, 56);
+
+        let upColor = '#7a6589';
+        if (jimActive) {
+          upColor = Math.sin(t * 90) > 0 ? '#3a1228' : '#5a182c';
+        } else if (jimNextAt < 1.4) {
+          upColor = Math.sin(t * 36) > 0.2 ? '#7a6589' : '#5a4570';
+        }
+        ctx.fillStyle = upColor;
+        ctx.fillRect(ux, uy, 80, 48);
+        ctx.strokeStyle = PAL.pinkDeep;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ux + 40, uy);
+        ctx.lineTo(ux + 40, uy + 48);
+        ctx.moveTo(ux, uy + 24);
+        ctx.lineTo(ux + 80, uy + 24);
+        ctx.stroke();
+
+        if (jimActive) drawJim(ux + 40, uy + 30);
+
+        // Window box of flowers under the upstairs window
+        ctx.fillStyle = PAL.matchaDeep;
+        ctx.fillRect(ux - 6, uy + 48, 92, 8);
+        for (let i = 0; i < 5; i++) {
+          const fx = ux + 6 + i * 16;
+          ctx.fillStyle = i % 2 === 0 ? PAL.bobaRed : PAL.cream;
+          ctx.beginPath();
+          ctx.arc(fx, uy + 49, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Awning
+        ctx.fillStyle = PAL.matcha;
+        for (let i = 0; i < 7; i++) {
+          const ax = SHOP.x - 4 + i * 56;
+          ctx.beginPath();
+          ctx.moveTo(ax, SHOP.y - 10);
+          ctx.lineTo(ax + 28, SHOP.y - 10);
+          ctx.lineTo(ax + 14, SHOP.y + 4);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(SHOP.x - 4, SHOP.y - 12, SHOP.w + 8, 4);
+      }
+
+      function drawJim(cx, cy) {
+        // Demon silhouette in a boba tee + jeans
+        ctx.save();
+        ctx.fillStyle = '#0a0510';
+
+        // Torso (boba tee shape)
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 6, 22, 26, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head
+        ctx.beginPath();
+        ctx.arc(cx, cy - 16, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Horns
+        ctx.beginPath();
+        ctx.moveTo(cx - 9, cy - 24);
+        ctx.lineTo(cx - 14, cy - 36);
+        ctx.lineTo(cx - 4, cy - 26);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cx + 9, cy - 24);
+        ctx.lineTo(cx + 14, cy - 36);
+        ctx.lineTo(cx + 4, cy - 26);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tee shirt patch — slightly different shade across chest
+        ctx.fillStyle = '#1a0e18';
+        ctx.fillRect(cx - 18, cy - 4, 36, 18);
+
+        // BOBA on the tee
+        ctx.fillStyle = '#3d2630';
+        ctx.font = 'bold 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BOBA', cx, cy + 7);
+
+        // Glowing eyes
+        for (const ex of [-5, 5]) {
+          const grd = ctx.createRadialGradient(cx + ex, cy - 17, 0, cx + ex, cy - 17, 7);
+          grd.addColorStop(0, '#ff3050');
+          grd.addColorStop(0.45, 'rgba(255,40,60,0.55)');
+          grd.addColorStop(1, 'rgba(255,40,60,0)');
+          ctx.fillStyle = grd;
+          ctx.fillRect(cx + ex - 9, cy - 24, 18, 14);
+        }
+        ctx.fillStyle = '#ff6075';
+        ctx.beginPath();
+        ctx.arc(cx - 5, cy - 17, 1.7, 0, Math.PI * 2);
+        ctx.arc(cx + 5, cy - 17, 1.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Jagged grin hint
+        ctx.strokeStyle = '#ff3050';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 6, cy - 9);
+        ctx.lineTo(cx - 3, cy - 7);
+        ctx.lineTo(cx, cy - 9);
+        ctx.lineTo(cx + 3, cy - 7);
+        ctx.lineTo(cx + 6, cy - 9);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawStreetlamp() {
+        const x = 60;
+        ctx.fillStyle = PAL.shadow;
+        ctx.fillRect(x - 3, 130, 6, 200);
+        ctx.fillRect(x - 12, 326, 24, 6);
+        ctx.fillStyle = '#3a2030';
+        ctx.beginPath();
+        ctx.moveTo(x - 14, 130);
+        ctx.lineTo(x + 14, 130);
+        ctx.lineTo(x + 10, 110);
+        ctx.lineTo(x - 10, 110);
+        ctx.closePath();
+        ctx.fill();
+
+        // Flicker — light is alive
+        const flick = 0.92 + Math.sin(t * 7) * 0.04 + Math.random() * 0.04;
+
+        // Additive ground glow
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const lampGlow = ctx.createRadialGradient(x, 130, 0, x, 330, 230);
+        lampGlow.addColorStop(0, `rgba(255, 220, 150, ${0.55 * flick})`);
+        lampGlow.addColorStop(0.5, `rgba(255, 200, 130, ${0.18 * flick})`);
+        lampGlow.addColorStop(1, 'rgba(255, 200, 130, 0)');
+        ctx.fillStyle = lampGlow;
+        ctx.fillRect(0, 100, 330, 350);
+
+        // Bulb hotspot
+        const bulbGrad = ctx.createRadialGradient(x, 122, 0, x, 122, 32);
+        bulbGrad.addColorStop(0, `rgba(255, 245, 200, ${flick})`);
+        bulbGrad.addColorStop(1, 'rgba(255, 220, 150, 0)');
+        ctx.fillStyle = bulbGrad;
+        ctx.beginPath();
+        ctx.arc(x, 122, 32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawPlanters() {
+        // Right of door
+        const px = 670,
+          py = 318;
+        ctx.fillStyle = PAL.matchaDeep;
+        ctx.fillRect(px, py, 26, 14);
+        ctx.fillStyle = PAL.matcha;
+        ctx.beginPath();
+        ctx.arc(px + 8, py + 3, 5, 0, Math.PI * 2);
+        ctx.arc(px + 17, py + 4, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = PAL.pinkHi;
+        ctx.beginPath();
+        ctx.arc(px + 13, py - 1, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Left of door
+        const qx = 100,
+          qy = 320;
+        ctx.fillStyle = PAL.matchaDeep;
+        ctx.fillRect(qx, qy, 22, 12);
+        ctx.fillStyle = PAL.matcha;
+        ctx.beginPath();
+        ctx.arc(qx + 6, qy + 2, 4, 0, Math.PI * 2);
+        ctx.arc(qx + 14, qy + 3, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawPlacedItems() {
+        // Sort by Y so closer items render on top
+        const sorted = [...placed].sort((a, b) => a.y - b.y);
+        for (const p of sorted) {
+          const it = ITEMS[p.type];
+          if (p.type === 'counter') {
+            ctx.fillStyle = it.color;
+            ctx.fillRect(p.x - it.w / 2, p.y - it.h / 2, it.w, it.h);
+            ctx.fillStyle = PAL.pinkDeep;
+            ctx.fillRect(p.x - it.w / 2, p.y + it.h / 2 - 4, it.w, 4);
+            ctx.fillStyle = PAL.cream;
+            ctx.fillRect(p.x - it.w / 2 + 4, p.y - it.h / 2 + 2, it.w - 8, 3);
+            // Tiny hearts
+            ctx.fillStyle = PAL.bobaRed;
+            ctx.font = '8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('♥', p.x, p.y + 2);
+          } else if (p.type === 'machine') {
+            ctx.fillStyle = it.color;
+            ctx.fillRect(p.x - it.w / 2, p.y - it.h / 2, it.w, it.h);
+            ctx.fillStyle = PAL.matchaDeep;
+            ctx.fillRect(p.x - it.w / 2, p.y + it.h / 2 - 6, it.w, 6);
+            ctx.fillStyle = PAL.cream;
+            ctx.fillRect(p.x - it.w / 2 + 5, p.y - it.h / 2 + 6, it.w - 10, 18);
+            // Liquid level — bobs gently
+            const bob = Math.sin(t * 2.4 + p.x * 0.1) * 1.2;
+            ctx.fillStyle = PAL.matchaDeep;
+            ctx.fillRect(p.x - it.w / 2 + 5, p.y - it.h / 2 + 14 + bob, it.w - 10, 10 - bob);
+            // Buttons
+            ctx.fillStyle = PAL.bobaRed;
+            ctx.beginPath();
+            ctx.arc(p.x - 8, p.y + 12, 1.5, 0, Math.PI * 2);
+            ctx.arc(p.x + 8, p.y + 12, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.type === 'table') {
+            ctx.fillStyle = PAL.powderDeep;
+            ctx.fillRect(p.x - 3, p.y, 6, it.h / 2);
+            ctx.fillStyle = it.color;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, it.w / 2, it.h / 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.ellipse(p.x - 4, p.y - 3, it.w / 3, it.h / 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawAtmosphere() {
+        // Dust motes, drifting
+        for (const m of motes) {
+          const a = 0.18 + Math.sin(m.phase) * 0.1;
+          ctx.fillStyle = `rgba(255, 230, 240, ${a})`;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Fog along the ground
+        for (const f of fog) {
+          const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.width / 2);
+          g.addColorStop(0, `rgba(255, 230, 240, ${f.alpha})`);
+          g.addColorStop(1, 'rgba(255, 230, 240, 0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(f.x - f.width / 2, f.y - 30, f.width, 60);
+        }
+      }
+
+      function drawScarePulse() {
+        if (jimActive) {
+          ctx.fillStyle = 'rgba(168, 32, 59, 0.1)';
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      function drawPlacementGhost() {
+        if (!selected) return;
+        const px = Input.pointer.x,
+          py = Input.pointer.y;
+        if (px < SHOP.x || px > SHOP.x + SHOP.w || py < SHOP.y || py > SHOP.y + SHOP.h) return;
+        const it = ITEMS[selected];
+        ctx.globalAlpha = coins >= it.cost ? 0.55 : 0.25;
+        ctx.fillStyle = it.color;
+        const cx = Math.max(SHOP.x + it.w / 2, Math.min(SHOP.x + SHOP.w - it.w / 2, px));
+        const cy = Math.max(SHOP.y + it.h / 2, Math.min(SHOP.y + SHOP.h - it.h / 2, py));
+        ctx.fillRect(cx - it.w / 2, cy - it.h / 2, it.w, it.h);
+        ctx.strokeStyle = coins >= it.cost ? PAL.cream : PAL.bobaRed;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - it.w / 2, cy - it.h / 2, it.w, it.h);
+        ctx.globalAlpha = 1;
+      }
+
+      function drawTutorialHint() {
+        if (placed.length > 0) return;
+        ctx.save();
+        ctx.fillStyle = `rgba(255, 230, 240, ${0.35 + Math.sin(t * 2) * 0.1})`;
+        ctx.font = "italic 14px 'Cormorant Garamond', Georgia, serif";
+        ctx.textAlign = 'center';
+        if (!selected) {
+          ctx.fillText('pick something below to build →', W / 2, SHOP.y + SHOP.h / 2);
+        } else {
+          ctx.fillText('click in here to place it', W / 2, SHOP.y + SHOP.h / 2);
+        }
+        ctx.restore();
+      }
+
+      function drawVignette() {
+        const g = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, Math.max(W, H) * 0.7);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, 'rgba(0,0,0,0.55)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      function drawHUD() {
+        // Coin counter top right
+        const cx = W - 100,
+          cy = 30;
+        ctx.fillStyle = 'rgba(20, 12, 28, 0.7)';
+        ctx.fillRect(cx - 12, cy - 18, 100, 32);
+        ctx.strokeStyle = PAL.pinkDeep;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - 12, cy - 18, 100, 32);
+
+        // Coin
+        ctx.fillStyle = PAL.warm;
+        ctx.beginPath();
+        ctx.arc(cx + 5, cy - 2, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#b58030';
+        ctx.beginPath();
+        ctx.arc(cx + 5, cy - 2, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = PAL.warm;
+        ctx.font = 'bold 10px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('¢', cx + 5, cy - 2);
+
+        // Number — flashes when changed
+        const flashColor =
+          coinFlash > 0 ? `rgba(255, 230, ${Math.floor(120 + coinFlash * 100)}, 1)` : PAL.cream;
+        ctx.fillStyle = flashColor;
+        ctx.font = 'bold 20px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(coins, cx + 22, cy - 2);
+      }
+
+      function drawPalette() {
+        // Bar background
+        ctx.fillStyle = 'rgba(20, 12, 28, 0.92)';
+        ctx.fillRect(0, PB_Y, W, PB_H);
+        ctx.strokeStyle = PAL.pinkDeep;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, PB_Y);
+        ctx.lineTo(W, PB_Y);
+        ctx.stroke();
+
+        ctx.fillStyle = PAL.cream;
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('BUILD', 14, PB_Y + 18);
+
+        const items = Object.keys(ITEMS);
+        const slotW = 130;
+        const startX = W / 2 - (items.length * slotW) / 2;
+
+        items.forEach((key, i) => {
+          const it = ITEMS[key];
+          const x = startX + i * slotW;
+          const y = PB_Y + 8;
+          const w = slotW - 10,
+            h = PB_H - 16;
+
+          const isSel = selected === key;
+          const canBuy = coins >= it.cost;
+
+          ctx.fillStyle = isSel ? 'rgba(255, 220, 230, 0.18)' : 'rgba(255,255,255,0.04)';
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = isSel ? PAL.pinkHi : 'rgba(255,255,255,0.15)';
+          ctx.lineWidth = isSel ? 2 : 1;
+          ctx.strokeRect(x, y, w, h);
+
+          // Icon
+          ctx.fillStyle = canBuy ? it.color : '#555';
+          if (key === 'machine') {
+            ctx.fillRect(x + 12, y + 9, 14, 24);
+            ctx.fillStyle = canBuy ? PAL.cream : '#444';
+            ctx.fillRect(x + 14, y + 13, 10, 8);
+          } else if (key === 'table') {
+            ctx.beginPath();
+            ctx.ellipse(x + 19, y + 22, 11, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = canBuy ? PAL.powderDeep : '#444';
+            ctx.fillRect(x + 17, y + 22, 4, 8);
+          } else {
+            ctx.fillRect(x + 8, y + 16, 22, 10);
+          }
+
+          ctx.fillStyle = canBuy ? PAL.cream : '#888';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'left';
+          ctx.fillText(it.name, x + 38, y + 18);
+
+          ctx.fillStyle = canBuy ? PAL.warm : '#666';
+          ctx.font = '11px system-ui';
+          ctx.fillText('¢ ' + it.cost, x + 38, y + 32);
+        });
+
+        // Status text on the right
+        ctx.fillStyle = PAL.pinkHi;
+        ctx.font = "italic 11px 'Cormorant Garamond', Georgia, serif";
+        ctx.textAlign = 'right';
+        if (selected) {
+          ctx.fillText(
+            'selected: ' + ITEMS[selected].name + '  —  click in the shop',
+            W - 14,
+            PB_Y + 34
+          );
+        } else {
+          ctx.fillText('build your shop before opening', W - 14, PB_Y + 34);
+        }
+      }
+
+      function drawTapOverlay() {
+        if (!needsTap) return;
+        ctx.fillStyle = 'rgba(8, 4, 14, 0.78)';
+        ctx.fillRect(0, 0, W, H);
+
+        // Title
+        ctx.fillStyle = PAL.pinkHi;
+        ctx.font = "italic bold 44px 'Cormorant Garamond', Georgia, serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText("Jim's Boba Shop", W / 2, H / 2 - 30);
+
+        // Subtitle
+        ctx.fillStyle = PAL.cream;
+        ctx.font = "italic 16px 'Cormorant Garamond', Georgia, serif";
+        ctx.fillText('a kawaii horror shop sim', W / 2, H / 2 + 4);
+
+        // Tap prompt — pulses
+        const a = 0.7 + Math.sin(t * 3) * 0.3;
+        ctx.fillStyle = `rgba(255, 230, 240, ${a})`;
+        ctx.font = '14px system-ui';
+        ctx.fillText('— tap to begin —', W / 2, H / 2 + 50);
+      }
+
+      /* ============ Render ============ */
+      function render() {
+        ctx.save();
+        const sh = Juice.getShake();
+        ctx.translate(sh.x, sh.y);
+
+        drawSky();
+        drawGround();
+        drawStreetlamp();
+        drawShop();
+        drawPlacedItems();
+        drawPlanters();
+        drawAtmosphere();
+        Juice.drawParticles(ctx, particles);
+        drawScarePulse();
+        drawPlacementGhost();
+        drawTutorialHint();
+        drawVignette();
+        drawHUD();
+        drawPalette();
+        drawTapOverlay();
+
+        ctx.restore();
+      }
+
+      /* ============ Loop ============ */
+      let lastT = performance.now();
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastT) / 1000);
+        lastT = now;
+        if (!Juice.isFrozen()) update(dt);
+        Juice.tickFreeze();
+        render();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    </script>
+  </body>
 </html>
