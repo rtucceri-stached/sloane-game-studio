@@ -129,26 +129,47 @@ export const LightPool = {
   },
 };
 
+interface FogConfig {
+  colorBack?: string;
+  colorFront?: string;
+  parallaxBack?: number;
+  parallaxFront?: number;
+}
+
 // -- FogSystem ----------------------------------------------
-// Two layers — back fog (denser, slower, 0.92 parallax) sits
-// behind midground; front fog (lighter, faster, 0.85 parallax)
-// sits in front of player. Each puff has its own breathing phase.
+// Two layers — back fog (denser, slower) sits behind midground;
+// front fog (lighter, faster) sits in front of player. Each puff
+// has its own breathing phase. Color and parallax are configurable
+// so each scene can tune the look without duplicating the system.
 export class FogSystem {
   back: FogPuff[];
   front: FogPuff[];
   worldW: number;
   worldH: number;
+  colorBack: string;
+  colorFront: string;
+  parallaxBack: number;
+  parallaxFront: number;
 
   constructor() {
     this.back = [];
     this.front = [];
     this.worldW = 0;
     this.worldH = 0;
+    this.colorBack = 'rgba(180, 160, 220,';
+    this.colorFront = 'rgba(180, 160, 220,';
+    this.parallaxBack = 0.92;
+    this.parallaxFront = 0.85;
   }
 
-  init(worldW: number, worldH: number, count: number = 24): void {
+  init(worldW: number, worldH: number, count: number = 24, config?: FogConfig): void {
     this.worldW = worldW;
     this.worldH = worldH;
+    if (config?.colorBack) this.colorBack = config.colorBack;
+    if (config?.colorFront) this.colorFront = config.colorFront;
+    if (config?.parallaxBack !== undefined) this.parallaxBack = config.parallaxBack;
+    if (config?.parallaxFront !== undefined) this.parallaxFront = config.parallaxFront;
+
     const backN = Math.round(count * 0.66);
     const frontN = count - backN;
 
@@ -189,10 +210,10 @@ export class FogSystem {
   }
 
   drawBack(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
-    this._drawLayer(ctx, this.back, cam, t, 0.92, visW, visH);
+    this._drawLayer(ctx, this.back, cam, t, this.parallaxBack, visW, visH, this.colorBack);
   }
   drawFront(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
-    this._drawLayer(ctx, this.front, cam, t, 0.85, visW, visH);
+    this._drawLayer(ctx, this.front, cam, t, this.parallaxFront, visW, visH, this.colorFront);
   }
   _drawLayer(
     ctx: CanvasRenderingContext2D,
@@ -201,7 +222,8 @@ export class FogSystem {
     t: number,
     parallax: number,
     visW: number,
-    visH: number
+    visH: number,
+    color: string
   ): void {
     ctx.save();
     for (const f of list) {
@@ -212,8 +234,8 @@ export class FogSystem {
       const breathe = 0.85 + 0.15 * Math.sin(t * 0.0009 + f.phase);
       const r = f.r * breathe;
       const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
-      g.addColorStop(0, `rgba(180, 160, 220, ${f.alpha})`);
-      g.addColorStop(1, 'rgba(180, 160, 220, 0)');
+      g.addColorStop(0, `${color} ${f.alpha})`);
+      g.addColorStop(1, `${color} 0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(wx, wy, r, 0, Math.PI * 2);
