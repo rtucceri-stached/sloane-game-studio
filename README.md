@@ -1,43 +1,30 @@
-# Sloane and Dad's Game Studio
+# Abandoned Park
 
-A father-daughter game development project. Sloane (10) is Creative Director, Dad is Tech Lead, Claude is the coding buddy.
+A young food critic explores an abandoned amusement park at night. Ghosts run the food stands. One item per stand is cursed — eat the wrong thing and a 5-second chase begins. Find the ghost sheet to flip the chase; catch the ghost to clear the stand.
 
-## Start here
+Cute-and-a-little-wrong in tone.
 
-If this is your first time, in this order:
+---
 
-1. **`CLAUDE.md`** — the project brain. Who we are, what we're building, our toolbox, visual standards, the roadmap.
-2. **`LOCAL_DEV.md`** — Dad's operational reference. Commands, prompts, day-to-day workflow, troubleshooting.
-3. **Run the Day One Creative Interview** (instructions in `LOCAL_DEV.md`). It's a 15-minute chat with Sloane that captures her tastes — colors, aesthetic, references, what she'd want to wow her friends with — so every game we build feels like hers from the start.
-
-## Playing a game
-
-Each game lives in `games/NN-game-name/index.html`. Most games can just be opened directly in a browser by double-clicking the file.
-
-Once a game uses real audio or image files from `assets/`, browsers block local file access — you'll need a tiny local server:
+## Run locally
 
 ```bash
-cd games/your-game-name
-npx serve
-# OR if you prefer Python:
-python3 -m http.server
+npm install
+npm run dev
 ```
 
-Then open the URL it prints (usually `http://localhost:3000` or `http://localhost:8000`).
+Open http://localhost:5173 in the browser. Stop with Ctrl+C.
 
-## Folder layout
+---
 
-```
-games/      → one folder per game (start each new game by copying _template/)
-shared/     → reusable code: Input Manager, Juice, Sound, Canvas helpers
-assets/     → art and sound files (Sloane's drawings eventually go in art/)
-```
+## Docs
 
-## Workflow
+- **[CLAUDE.md](CLAUDE.md)** — project brain: design principles, engineering quality bar, Blender pipeline, asset strategy, full project structure
+- **[LOCAL_DEV.md](LOCAL_DEV.md)** — operational reference: all commands, VS Code setup, Git LFS, Husky, common errors
+- **[ABANDONED_PARK_PLAN.md](ABANDONED_PARK_PLAN.md)** — game design doc: lore, mechanics, art direction, build roadmap
 
-1. **Brainstorm + build with Sloane in chat with Claude** → playable Artifact in seconds.
-2. **Save it** into `games/NN-game-name/` via Claude Code when she loves it.
-3. **Polish** (refactoring, debugging, multi-file growth) → Claude Code in this directory. It auto-reads `CLAUDE.md` and knows the project conventions.
-4. **Repeat.** Every new game is a new chat with Sloane.
+---
 
-The whole thing is designed so creative work happens in chat (where it's fun for Sloane) and file work happens in Claude Code (where it's clean for Dad).
+## Stack
+
+Vite · TypeScript · Canvas 2D · Web Audio · Git LFS (for `.blend` source files)

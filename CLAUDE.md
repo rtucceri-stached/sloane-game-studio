@@ -1,33 +1,40 @@
-# Sloane and Dad's Game Studio 🎮
+# Abandoned Park — Project Brain
 
-Hi Claude! This is our brain. Read this first whenever we start a new chat so you remember who we are and what we're making.
-
----
-
-## Our Team
-
-- **Sloane** (age 10, but reads/thinks more like 13) — Creative Director. She has the ideas, picks the colors, and decides what's fun.
-- **Dad** — Tech Lead. He handles the computer stuff and helps Sloane's ideas come alive.
-- **Claude** — Our coding buddy. You build what we ask for and explain it nicely.
-
-We read the chats together. Talk to Sloane like a creative director you respect, not a little kid. Don't be condescending or saccharine. Real curiosity, real reactions, real conversation.
+Read this first in every Claude Code session. It is the authoritative context for this project.
 
 ---
 
-## Currently Building 🎮
+## Project Identity
 
-- **Game One:** *Abandoned Park* — `games/01-abandoned-park/` — **Live:** https://sloane-abandoned-park.netlify.app
-- **One-line pitch:** young food critic explores an abandoned amusement park at night; ghosts run the stands, one item per stand is cursed, eat wrong → 5-second chase, find the ghost sheet to flip the chase, catch the ghost to clear the stand.
-- **Where Jim went:** he runs the **Bobaaaaah** stand — the tutorial stand. (His earlier "Jim's Boba Shop" concept evolved into this; the boba shop is now lore inside the bigger park.)
-- **Source of truth for design:** **`ABANDONED_PARK_PLAN.md`** at the project root. Lore, mechanics, art direction, audio direction, tech stack, project layout, build roadmap, and open questions all live there. Read that first when working on the game.
-- **Stack:** Vite + vanilla JS + Canvas 2D + Web Audio. Multi-file project, ES modules. `shared/` modules were ported into `src/engine/` as named exports.
-- **Status:** Phase 1a — scaffolding done. Engine wired (input, juice, sound, canvas). Stubs for skeleton, assets, save. Hello-world canvas renders the title. No gameplay yet. Atmosphere lock (Phase 2) is next.
+**Abandoned Park** — one project, one game.
+
+A young food critic explores an abandoned amusement park at night. Ghosts run the food stands. One item per stand is cursed — eat the wrong thing and a 5-second chase begins. Find the ghost sheet to flip the chase; catch the ghost to clear the stand. Cute-and-a-little-wrong in tone throughout.
+
+- **Live (paused):** https://sloane-abandoned-park.netlify.app
+- **Design source of truth:** `ABANDONED_PARK_PLAN.md` — lore, mechanics, art direction, audio, tech stack, build roadmap. Read it first when working on game logic or design.
+- **Stack:** Vite + TypeScript + Canvas 2D + Web Audio. ES modules. Project root IS the npm project.
+- **Where Jim went:** he runs the Bobaaaaah stand — the tutorial stand. His earlier "Jim's Boba Shop" concept evolved into this; the boba shop is lore inside the bigger park.
 
 ---
 
-## Sloane's World 🌈
+## How We Work
 
-*(Filled in by the Sloane Creative Interview — see LOCAL_DEV.md for how to run it. These are INGREDIENTS in her creative pantry, not rules every game must follow.)*
+- **Dad** — sole builder. Engineering-team-quality bar. No timeline pressure.
+- **Sloane** — Creative Director. Sets vision, reviews completed zones (Food → Games → Rides → possibly outside-park). Not shown half-built work — she sees finished zones and reacts.
+- **Claude** — builds what the prompts specify, to the engineering quality bar below.
+
+Zone reviews generate the next zone's direction. Each zone has a defined scope and finish line before implementation starts.
+
+### Phase Log
+
+- **Phase 0.5 — Visual Foundation.** Atmosphere stack (sky gradient, fog, vignette, dust, fireflies, ground). Food-zone render pipeline ported verbatim from reference artifact. Boba stand: Boba_Hut.png image asset with white-to-alpha pass.
+- **Session A — Project Pivot + Tooling Setup.** (2026-05-08) Flattened structure to project root. TypeScript, ESLint, Prettier, Husky, lint-staged, Git LFS, manifest generation script. Rewrote all docs. Session B: code cleanup + typed systems.
+
+---
+
+## Sloane's World
+
+*(These are INGREDIENTS in her creative pantry — not rules every design decision must follow.)*
 
 - **Favorite Colors:** strawberry pink, matcha green, powder blue. Soft, dreamy, cafe-window energy.
 - **Aesthetic & Vibes:** kawaii horror, stores, food. Cute-and-a-little-wrong. Think a too-cute shop with something off about it.
@@ -51,46 +58,52 @@ We read the chats together. Talk to Sloane like a creative director you respect,
 
 ## Sloane Studio Design Principles
 
-*(Filled in by the Sloane Creative Interview. These are CRAFT principles — how we make games that feel intentional, regardless of subject. They are NOT content rules about what every game must contain.)*
+*(CRAFT principles — how we make games feel intentional, regardless of subject. NOT content rules.)*
 
-1. **Palette first, always.** Every game opens with a defined `PAL = {...}` block of 6–10 colors. Anchor on her current favorites (strawberry pink, matcha green, powder blue) OR invent a fresh palette that fits the game's world. No random hex values in the code.
+1. **Palette first, always.** Every world opens with a defined `PAL = {...}` block of 6–10 colors. Anchor on her current favorites (strawberry pink, matcha green, powder blue) OR invent a fresh palette that fits the world. No random hex values in the code.
 
 2. **Tone is a dial, not a switch.** Sloane's instinct is cute-and-a-little-wrong — sweetness with something off. Build atmosphere that holds *both* at once: soft palette + flickering candle, cozy shop + lights that buzz, friendly font + slightly too-long shadows. The contrast is the feeling.
 
 3. **The build-up earns the payoff.** When a game has a scare, surprise, or big moment, the seconds *before* it matter as much as the moment itself. Foreshadow with sound and light shifts. The player should feel it coming half a second before it hits — that's the "DAD LOOK!" window.
 
-4. **The core verb is sacred.** Whatever moment-to-moment action she identified for a given game (right now: prep, serve, build, decorate), the player's hands should be doing that thing constantly and satisfyingly. Cozy busy-hands play means lots of small, immediate, tactile actions with feedback.
+4. **The core verb is sacred.** Whatever moment-to-moment action she identified for a given zone, the player's hands should be doing that thing constantly and satisfyingly. Cozy busy-hands play means lots of small, immediate, tactile actions with feedback.
 
-5. **Progression you can see.** She wants levels, coins, options, unlocks. Every game should have a visible economy — earn something, spend it on something, see the result on screen. Numbers going up isn't enough; the *world* should change as she progresses.
+5. **Progression you can see.** She wants levels, coins, options, unlocks. Every zone should have a visible economy — earn something, spend it on something, see the result on screen. Numbers going up isn't enough; the *world* should change as she progresses.
 
-6. **Characters Sloane invented get drawn procedurally, not as emoji.** Jim doesn't get a 👹. Jim gets a hand-drawn demon with a boba tee shirt and jeans, on canvas, with care. Her characters are the studio's flagships — they look like ours.
+6. **Hero characters come from Blender, not emoji.** Jim doesn't get a 👹. Jim gets a rigged Blender model, cel-shaded, rendered at 4 directions. Her characters are the project's flagships — they look like ours. The Blender pipeline spec is in this file.
 
-7. **Sound is half the game.** Every game has two sound layers running together: a **cozy ambient layer** (small constant sounds tied to the core verb — shaking, clinking, footsteps, hums) and an **event layer** (sharp feedback on every meaningful action — coins, completions, arrivals, scares). Music is part of the tone dial: when something's about to shift, the music shifts first. Silence is a tool — when the cozy layer suddenly cuts out, the player knows something's coming. No game ships without intentional sound design.
-
----
-
-## How We Work Now (Phase Workflow)
-
-The Artifact-chat 3-step launch no longer applies — we've graduated into a real Vite project with a real codebase.
-
-- **Sloane brainstorms ideas in chat with Claude** (creative direction, visual calls, what feels fun).
-- **Dad implements complete phases in Claude Code** based on those ideas. Sloane is **not** shown half-built phases — she sees finished work and reacts.
-- Her reactions generate the next phase of ideas.
-- Each phase has a defined scope and finish line, written down before implementation starts.
-
-### Phase Log
-
-- **Phase 0.5 — Visual Foundation.** Mixed-media unified by global atmosphere stack. New `src/engine/atmosphere.js` module: `SkyGradient`, `Vignette`, `LightPool`, `FogSystem` (back+front), `DustMoteSystem`, `FireflySystem`, `GroundTexture`. Food-zone render order rebuilt to a strict 15-layer back-to-front pipeline. Boba stand redrawn (striped pink/matcha awning, recessed window with prep counter detail, steam wisps, neon BOBAAAAAH halo via `LightPool`). Camera tightened (`RENDER_SCALE 1.35`) so characters read at Bigfoot's bar.
+7. **Sound is half the game.** Every zone has two sound layers running together: a **cozy ambient layer** (small constant sounds tied to the core verb — shaking, clinking, footsteps, hums) and an **event layer** (sharp feedback on every meaningful action — coins, completions, arrivals, scares). Music is part of the tone dial: when something's about to shift, the music shifts first. Silence is a tool — when the cozy layer suddenly cuts out, the player knows something's coming. No zone ships without intentional sound design.
 
 ---
 
-## Visual Foundation Standards
+## Visual Standards (NON-NEGOTIABLE)
 
-All worlds in this project — current food zone, future games zone, future rides zone — share one atmospheric foundation. Mixed-media assets (illustrated, photoreal, procedural) are unified by these passes, **not** by matching art styles.
+This game looks *intentional*, not like programmer art. **Atmosphere over assets.**
 
-- **Every world runs the global atmosphere stack:** sky gradient, fog (back + front), vignette, dust motes, fireflies, ground texture. Defined in `src/engine/atmosphere.js`.
-- **Every glowing prop uses `LightPool`** from that module. No ad-hoc radial gradients sprinkled in the code — one helper, one look.
-- **Render order is strictly back-to-front, in this order:**
+**Every zone starts with these:**
+
+- **Defined palette.** Pick 6–10 colors at the top as a `PAL = {...}` object. Every color in the game comes from it. No random hex values sprinkled in code.
+- **Gradient backgrounds**, never flat fills.
+- **Vignette overlay** — soft darkness on the edges.
+- **Real lighting** — candles, lamps, magic glows emit radial gradients onto nearby surfaces. Use `globalCompositeOperation = 'screen'` for additive light pools.
+- **Drifting atmosphere** — fog, dust motes, ambient particles even when nothing is happening. The screen is never fully still.
+- **Animation everywhere** — flickers, sways, bobs, pulses. Stillness reads as broken or boring.
+- **Layered composition.** Always render strictly back-to-front (see render order below).
+- **Typography that matches the world.** Serif (Cormorant Garamond, Playfair) for elegant/spooky/old. Sans (Inter, system-ui) for modern/clean. **Never** the browser default for in-game text.
+
+**Effort hierarchy when time is limited:**
+1. Atmosphere first (palette, gradient, vignette, lighting) — 70% of "looks good" is here.
+2. Animated set dressing (flickering candles, drifting fog, swaying plants, dust motes).
+3. Character presence (main character drawn with care, soft shadow, glow when interactive).
+4. Polish (particle effects on every meaningful event, transition flourishes, title screen).
+
+### Visual Foundation — Render Order
+
+All zones share this atmosphere stack and render pipeline:
+
+- **Every zone runs the global atmosphere stack:** sky gradient, fog (back + front), vignette, dust motes, fireflies, ground texture. Defined in `src/engine/atmosphere.ts`.
+- **Every glowing prop uses `LightPool`** from that module. No ad-hoc radial gradients — one helper, one look.
+- **Render order is strictly back-to-front:**
   1. Sky gradient
   2. Distant silhouettes (backdrop shapes, ride silhouettes)
   3. `FogSystem.drawBack`
@@ -106,209 +119,192 @@ All worlds in this project — current food zone, future games zone, future ride
   13. `DustMoteSystem` (additive)
   14. Vignette
   15. UI / HUD (outside world transform — no atmosphere applied)
-- **`games/bigfoot-and-ghost-ep1.html`** is the technical + visual reference. When a system needs to look like that, port from there.
+- **`reference/bigfoot-and-ghost/index.html`** is the visual + technical reference. When a system needs to look like that, port from there.
 
 ---
 
-## When Sloane Has a Big Idea 🌟
+## Engineering Quality Bar
 
-Sometimes Sloane will dream up something way bigger than what we can build in a single chat — like *"a real GPS scavenger hunt around our neighborhood"* or *"a multiplayer game I play with my cousin in another city."* When that happens:
+Every file, every PR must meet these 14 rules:
 
-1. **Get excited with her, no caveats.** Her enthusiasm is the engine of this project. Never crush an idea, even gently.
-2. **Find the playable kernel.** Every big idea has a small core that's the actual *fun*. Ask Sloane a creative question to nail down what feels most fun about it — then build *that* part.
-3. **Build the small version today.** Get something playable on screen this session, even if it's only 10% of the dream. She gets to play her own idea right away.
-4. **Be honest about the bigger version, in the right spirit.** Frame it as *"we will, and here's the path"* — never *"we can't."*
-5. **Park it in Big Dream Goals.** Add the bigger version to the roadmap below so it has a permanent home and we work toward it.
-
-Wild ideas like this are exactly what'll eventually push us to graduate from single-file Artifacts into a real codebase. That's a feature — her ambition is the engine that pulls us forward.
-
----
-
-## 🎨 Visual Standards (NON-NEGOTIABLE)
-
-Sloane's games look *intentional*, not like programmer art. **Atmosphere over assets.** A canvas with thoughtful lighting and motion will look more striking than one stuffed with random emoji.
-
-**Every game starts with these:**
-
-- **Defined palette.** Pick 6–10 colors at the top of the script as a `PAL = {...}` object. Every color in the game comes from it. Anchor on Sloane's favorites. No random hex values sprinkled in code.
-- **Gradient backgrounds**, never flat fills. The simplest way to make a scene feel like a place.
-- **Vignette overlay** — soft darkness on the edges. Cinematic depth, free.
-- **Real lighting** — candles, lamps, magic glows emit radial gradients onto nearby surfaces. Use `globalCompositeOperation = 'screen'` for additive light pools that feel warm.
-- **Drifting atmosphere** — fog, dust motes, ambient particles even when nothing is happening. The screen is never fully still.
-- **Animation everywhere** — flickers, sways, bobs, pulses. Stillness reads as broken or boring. Even decorative props move slightly.
-- **Layered composition.** Always render in this order: background gradient → wallpaper/pattern → midground props → furniture → interactive elements → player → particles → lighting overlay → vignette → UI.
-- **Typography that matches the world.** Serif (Cormorant Garamond, Playfair) for elegant/spooky/old. Sans (Inter, system-ui) for modern/clean. Display fonts for menus. **Never** the browser default for in-game text.
-
-**Beyond emoji.** Emoji are great quick placeholders, but a Sloane game shouldn't stay all-emoji forever. Once a game has direction, draw the *star characters* procedurally so they feel like ours — the giraffe detective gets a fedora and ossicones, not just 🦒.
-
-**Effort hierarchy when time is limited:**
-1. **Atmosphere first** (palette, gradient, vignette, lighting). 70% of "looks good" is here.
-2. **Animated set dressing** (flickering candles, drifting fog, swaying plants, dust motes).
-3. **Character presence** (main character drawn with care, soft shadow, glow when interactive).
-4. **Polish** (particle effects on every meaningful event, transition flourishes, title screen).
-
-If we can't hit all four, we hit the first ones first — and the game still looks worlds better than flat rectangles.
-
-The `_template/index.html` demo is the technical bones; the **`sloanes-haunted-house-v2`** game is the visual reference. Build to that bar.
+1. **Error overlay on screen** — runtime errors visible in-game (implemented in Session B).
+2. **Module boundaries** — each system in its own file, no engine ↔ game cross-imports.
+3. **Tight save-and-commit loop** — every working state gets a Git commit.
+4. **One change at a time when debugging** — never stack multiple hypotheses.
+5. **File header comments** — top of every file, 2–3 lines on what it does.
+6. **Inline comments explain *why*, not *what*** — non-obvious constraints, invariants, workarounds only.
+7. **No dead code** — delete, don't comment out.
+8. **Graceful asset failures** — fallback + report via overlay (Session B).
+9. **No magic numbers** — named constants (`UPPER_SNAKE_CASE`).
+10. **Functions stay readable** — if it doesn't fit on one screen or can't be summarized in one sentence, refactor.
+11. **Naming:** files `kebab-case`, JS/TS `camelCase`, constants `UPPER_SNAKE_CASE`.
+12. **ESLint + Prettier on save** — enforced by Husky pre-commit hook.
+13. **TypeScript throughout** — strict mode; `any` only with a `// TODO: type` comment.
+14. **Pre-commit hook** — Husky + lint-staged; a broken commit gets blocked.
 
 ---
 
-## Our Toolbox 🧰
+## Blender Pipeline
 
-Easy name for Sloane, real name for Dad.
+Hero characters, ghosts, and hero stands are Blender-rendered sprites. The engine handles atmosphere on top — the Blender models use neutral lighting.
+
+### Camera and render settings
+- **Camera angle:** 30° isometric tilt (top-down-ish, slight front face)
+- **Character directions:** 4 (front, back, left, right) — axis-aligned movement only
+- **Scale:** chunky, Cult of the Lamb-ish — characters read at a distance
+- **Shading:** cel/toon with neutral, flat lighting — atmosphere (fog, vignette, light pools) is added by the engine at runtime
+- **Output:** PNG + alpha, no background
+
+### Frame counts and resolutions
+| Asset type | Idle | Walk | Resolution |
+|---|---|---|---|
+| Hero characters | 6 frames | 12 frames | 512 × 512 px |
+| Ghosts | 6 frames | 12 frames | 512 × 512 px |
+| Hero stands | static | — | 1536 × 1536 px |
+| Props | static | — | 384 × 384 px |
+
+### Naming and file layout
+- **Kebab-case** everywhere: `critic-1`, `jim-ghost`, `bobaaaaah-stand`
+- **Source `.blend` files:** `blender/characters/`, `blender/ghosts/`, `blender/stands/`, `blender/props/`
+- **Rendered PNGs:** `public/sprites/characters/`, `public/sprites/ghosts/`, etc. — mirrored folder structure
+- **Sprite anchor:** bottom-center (character's feet = anchor point)
+- **Naming pattern:** `{name}/{animation}/{direction}.png` — e.g. `critic-1/walk/front.png`
+
+### Git LFS
+`.blend` files are tracked via Git LFS (configured in `.gitattributes`). When cloning fresh, install Git LFS first: `git lfs install && git lfs pull`.
+
+### Claude Desktop connector
+Blender rendering is scripted via a Claude Desktop MCP connector. See LOCAL_DEV.md for setup.
+
+### After rendering
+Run `npm run build:manifest` to regenerate `src/assets/manifest.ts`. Import from there — never hardcode sprite paths.
+
+---
+
+## Asset Loading Strategy
+
+**Hybrid:** static files served from `public/sprites/`, accessed in code via a typed manifest.
+
+- `public/sprites/` — runtime sprite assets. Served at `/sprites/...` by Vite dev server and copied to `dist/` on build.
+- `src/assets/manifest.ts` — auto-generated by `npm run build:manifest`. Typed const object: `Sprites.characters['critic-1'].idle.front`. Import this; never hardcode paths.
+- `assets/sprites/` — source-resolution art files (pre-render, design reference). Not served at runtime.
+- `assets/audio/` — audio source files. Referenced via ES module imports.
+- `assets/design/` — reference images, floor plan sketches. Design use only.
+
+Regenerate manifest any time sprites change.
+
+---
+
+## Two-Character Mechanics
+
+Players can switch between two characters; switching is mostly cosmetic but has light mechanical differences:
+
+- **Character 1 — Scout/Stealth:** detects clues at longer range; fits into small hide spots that Character 2 cannot.
+- **Character 2 — Enforcer:** moves faster while wearing the ghost sheet; has longer reach when catching ghosts.
+
+Both characters share the same world state, inventory, and stand progression. The switch is a style choice with minor tactical edge, not a hard gate.
+
+---
+
+## Project Structure
+
+```
+abandoned-park/                    ← project root = npm project
+├── CLAUDE.md                      ← this file
+├── ABANDONED_PARK_PLAN.md         ← game design doc
+├── LOCAL_DEV.md                   ← operational reference for Dad
+├── README.md
+├── netlify.toml
+├── package.json
+├── vite.config.js
+├── tsconfig.json
+├── eslint.config.js
+├── .prettierrc.json
+├── .gitattributes                 ← Git LFS tracking for .blend
+├── index.html
+├── src/
+│   ├── main.ts                    ← entry, RAF loop
+│   ├── assets/
+│   │   └── manifest.ts            ← auto-generated sprite manifest
+│   ├── engine/                    ← reusable systems
+│   │   ├── input.ts               ← keyboard + touch + gamepad
+│   │   ├── juice.ts
+│   │   ├── sound.ts
+│   │   ├── canvas.ts
+│   │   ├── atmosphere.ts          ← visual foundation systems
+│   │   ├── skeleton.ts
+│   │   ├── assets.ts
+│   │   └── save.ts
+│   ├── world/
+│   │   └── food-zone.ts           ← Food Zone scene
+│   ├── characters/
+│   └── stands/
+├── assets/
+│   ├── sprites/                   ← source-res art (pre-render, design reference)
+│   │   ├── characters/
+│   │   ├── stands/
+│   │   └── props/
+│   ├── audio/
+│   │   ├── ambient/
+│   │   ├── effects/
+│   │   └── music/
+│   └── design/                    ← reference images, floor plan sketches
+├── public/
+│   ├── Boba_Hut.png               ← runtime image (served at /Boba_Hut.png)
+│   └── sprites/                   ← runtime sprite assets (served at /sprites/...)
+├── blender/                       ← source .blend files (Git LFS)
+│   ├── _rigs/
+│   ├── characters/
+│   ├── ghosts/
+│   ├── stands/
+│   └── props/
+├── reference/                     ← archived single-file prototypes (read-only)
+│   ├── bigfoot-and-ghost/
+│   ├── abandoned-park-visual-foundation.html
+│   └── jims-boba-shop-{v1,v2}.html
+└── scripts/
+    └── build-manifest.mjs         ← sprite manifest generator
+```
+
+---
+
+## Toolbox
 
 | Easy Name | Real Name | What It Does |
 |---|---|---|
 | The Drawing Window | HTML5 `<canvas>` | Where the game shows up |
 | The Game Brain | `requestAnimationFrame` loop @ 60fps | Makes things move smoothly |
-| The Listener | Input Manager (`shared/input-manager.js`) | Hears what buttons / taps we press |
-| The Sound Box | Sound module (`shared/sound.js`) | Makes beeps, boops, and music — no audio files needed |
-| The Stretchy Window | Canvas helper (`shared/canvas.js`) | Makes games fit any screen, including phones |
-| The Picture Box | Canvas drawing (procedural) | Shows our characters and scenes |
-| The Juice | Juice library (`shared/juice.js`) | Particles, screen shake, easing — makes games feel fun |
+| The Listener | `src/engine/input.ts` | Keyboard + touch + Bluetooth gamepad |
+| The Sound Box | `src/engine/sound.ts` | Procedural audio — no audio files needed |
+| The Stretchy Window | `src/engine/canvas.ts` | Makes the game fit any screen |
+| The Picture Box | Canvas 2D procedural + Blender sprites | Renders scenes and characters |
+| The Juice | `src/engine/juice.ts` | Particles, screen shake, easing |
+| The Sculptor | Blender + Claude Desktop | Creates and renders hero characters |
+| The Sprite List | `src/assets/manifest.ts` | Typed index of all runtime sprites |
 
 ---
 
-## Project Layout 📁
-
-```
-sloane-and-dad-games/
-├── CLAUDE.md
-├── README.md
-├── ABANDONED_PARK_PLAN.md         ← design source of truth for Game One
-├── games/
-│   ├── _template/                 ← starting point for tiny single-file games
-│   │   └── index.html
-│   ├── 01-abandoned-park/         ← Game One — full Vite project
-│   │   ├── index.html
-│   │   ├── package.json
-│   │   ├── vite.config.js
-│   │   ├── README.md
-│   │   ├── src/
-│   │   │   ├── main.js
-│   │   │   ├── engine/
-│   │   │   │   ├── input.js       ← keyboard + touch + gamepad
-│   │   │   │   ├── juice.js
-│   │   │   │   ├── sound.js
-│   │   │   │   ├── canvas.js
-│   │   │   │   ├── atmosphere.js  ← Phase 0.5 visual foundation
-│   │   │   │   ├── skeleton.js
-│   │   │   │   ├── assets.js
-│   │   │   │   └── save.js
-│   │   │   ├── world/             ← scenes (food-zone.js, …)
-│   │   │   ├── characters/
-│   │   │   └── stands/
-│   │   └── assets/
-│   │       ├── characters/  stands/  props/
-│   │       └── audio/{ambient,effects,music}
-│   ├── bigfoot-and-ghost-ep1.html ← visual + technical reference
-│   └── jims-boba-shop-{v1,v2}.html
-├── shared/                         ← legacy single-file artifact globals
-│   ├── input-manager.js
-│   ├── juice.js
-│   ├── sound.js
-│   └── canvas.js
-└── assets/
-    ├── art/
-    └── sounds/
-```
-
-**Conventions:**
-- New phases of Game One go inside `games/01-abandoned-park/src/`.
-- Single-file artifact games still copy from `games/_template/` and live as one `index.html`.
-- The legacy `shared/` modules are pinned for those artifacts — Game One has its own ES-module ports under `src/engine/`.
-
----
-
-## ⚠️ Important Rule: Always Use the Input Manager
-
-Even for tiny games. **Never** wire keyboard events straight into game logic.
-
-The Input Manager exposes named actions:
-- `Input.isDown('left')`, `Input.isDown('right')`, `Input.isDown('up')`, `Input.isDown('down')`
-- `Input.isDown('action')`, `Input.wasPressed('action')`
-- `Input.enableTouchControls()` → on-screen D-pad + action button (auto-shows on phones only)
-- `Input.endFrame()` → call once at the end of every update
-
-Currently supports:
-- ✅ Keyboard (Arrow keys, WASD, Space, Enter, Escape)
-- ✅ Touch (virtual D-pad + action button)
-
-Coming later:
-- 🎮 Bluetooth game controllers (Gamepad API) — the Input Manager hides the difference
-
-This way, when we add controllers, no game needs to be rewritten. 🎉
-
----
-
-## How We Make Games Feel Fun (Not Boring) ✨
-
-Visual atmosphere is half the battle (see Visual Standards above). The other half is **juice** — feedback on every meaningful event.
-
-- **Easing** on movement → `Juice.lerp(current, target, 0.2)` instead of snap-to
-- **Squash and stretch** when things land or get hit
-- **Particles** on impact → `particles.push(...Juice.burst(x, y, 12, PAL.pinkHi))` — pull color from the palette, never random
-- **Screen shake** on big moments → `Juice.shake(8)`
-- **Sound for every important action** → `Sound.play('jump' | 'hit' | 'coin' | 'powerup' | 'explosion' | 'click' | 'win' | 'lose' | 'sparkle')`
-- **Hit-stop** on big impacts → `Juice.freeze(6)` then guard updates with `if (!Juice.isFrozen())`
-
-A boring game has things teleporting silently into static scenes. A fun game has *atmosphere + juice.*
-
----
-
-## Common Commands 💻
-
-For Claude Code / terminal:
-
-```bash
-# Make a new game
-cp -r games/_template games/01-my-game-name
-
-# Run a game in the browser (needed once games use audio/images)
-cd games/01-my-game-name
-npx serve              # then open http://localhost:3000
-
-# Alternative if Node isn't handy
-python3 -m http.server # then open http://localhost:8000
-```
-
----
-
-## Our Big Dream Goals 🌟
-
-The roadmap. Check things off as we hit them.
+## Big Dream Goals
 
 - [ ] Play with Bluetooth controllers
-- [ ] Put a game on Dad's phone
-- [ ] Put a game on Sloane's phone
-- [ ] Use Sloane's hand-drawn art as the characters
+- [ ] Put the game on Dad's phone
+- [ ] Put the game on Sloane's phone
+- [x] Use Sloane's artwork as characters (Blender pipeline set up — Session A)
 - [ ] Add real recorded music and sound effects
-- [ ] Make a game with multiple levels and a save file
-- [ ] Make a 2-player game (Sloane vs Dad)
-- [ ] Graduate from a single-file Artifact to a real project (Vite + maybe Kaboom.js or Phaser)
+- [ ] Multiple zones with progression and save file
+- [x] Graduate from single-file Artifact to a real Vite project (done)
+- [x] 2-player design (planned — 2 characters, not 2 screens)
+- [ ] Outside-park content if it all plays out well
+- [ ] Migrate to Cloudflare Pages when we resume deploys
 
 ---
 
-## Games We've Made 🏆
+## Progress Log
 
-*(We add to this list every time we finish one!)*
+Newest at the top.
 
-1. *Coming soon…*
-
----
-
-## Progress Log 📓
-
-Newest at the top. After every big chat, add a **Sloane & Dad Progress Report** here:
-
-```
-### [Date] — [Game Name]
-**Built:** What we made this session
-**Sloane Decided:** Creative choices she made
-**Dad Learned:** Technical thing covered
-**Next Up:** What we want to do next time
-```
-
----
-
-*(empty for now — we'll fill it as we go!)*
+### 2026-05-08 — Session A: Project Pivot + Tooling Setup
+**Built:** Flattened `games/01-abandoned-park/` to project root. TypeScript conversion (basic, Session B does the real pass). ESLint (flat config, ESLint 10) + Prettier. Husky + lint-staged pre-commit hook. Git LFS for `.blend`. Manifest generation script. Blender source folder scaffolded. Rewrote CLAUDE.md, README.md, LOCAL_DEV.md to project framing.
+**Sloane Decided:** Creative Director role. Zone review structure (Food → Games → Rides). Two-character mechanic confirmed.
+**Dad Learned:** ESLint 10 uses flat config (not `.eslintrc`); Windows file locks require PowerShell for stubborn deletions.
+**Next Up:** Session B — error overlay, typed engine systems, food zone code cleanup.
