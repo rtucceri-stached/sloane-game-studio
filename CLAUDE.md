@@ -12,8 +12,9 @@ A young food critic explores an abandoned amusement park at night. Ghosts run th
 
 - **Live (paused):** https://sloane-abandoned-park.netlify.app
 - **Design source of truth:** `ABANDONED_PARK_PLAN.md` — lore, mechanics, art direction, audio, tech stack, build roadmap. Read it first when working on game logic or design.
+- **Working agreement:** `WORKING_WITH_ME.md` — interaction rules, response format, project landmines. Read every session.
 - **Stack:** Vite + TypeScript + Canvas 2D + Web Audio. ES modules. Project root IS the npm project.
-- **Where Paul shows up:** Paul appears periodically throughout the park, in unexpected places — never as a stand operator. He's a recurring magic-appearance figure (see his entry under Sloane's World below). The earlier "Jim runs the Bobaaaaah stand" framing was character drift; stand operators are ghosts, one per location, each its own per-stand design. The boba shop ghost is a separate future design — TBD who.
+- **Where Jim went:** he was Sloane's earlier-conceived demon character running a boba shop. The boba stand is now Bobaaaaah, run by a ghost (per "stand operators are ghosts" lock-in). Jim's Boba Shop is lore inside the bigger park.
 
 ---
 
@@ -28,24 +29,32 @@ Zone reviews generate the next zone's direction. Each zone has a defined scope a
 ### Phase Log
 
 - **Phase 0.5 — Visual Foundation.** Atmosphere stack (sky gradient, fog, vignette, dust, fireflies, ground). Food-zone render pipeline ported verbatim from reference artifact. Boba stand: Boba_Hut.png image asset with white-to-alpha pass.
-- **Session A — Project Pivot + Tooling Setup.** (2026-05-08) Flattened structure to project root. TypeScript, ESLint, Prettier, Husky, lint-staged, Git LFS, manifest generation script. Rewrote all docs. Session B: code cleanup + typed systems.
+- **Sessions A–D — Tooling, code quality, atmosphere refactor, Blender pipeline scaffolding.** (2026-05-08) See Progress Log below for per-session detail.
+- **Phase 1 — Asset Pipeline Pivot.** (2026-05-09) Programmatic Blender modeling via MCP proven not viable for hero characters. Pipeline updated: AI image-to-3D (TRELLIS) for source meshes → Mixamo for humanoid rigging → Blender for import + sprite render. Doc files updated (CLAUDE.md, README.md, LOCAL_DEV.md restructured, WORKING_WITH_ME.md created).
+
+### Locked-in characters
+
+- **Critic 1** — the food critic. Long wavy brown hair, brown tee, gray apron, jeans, sneakers. Walks; needs idle + walk animations. Reference image at `assets/sprites/characters/critic-1/reference.png`.
+- **Erma** — Sloane's cat in-game. White-and-grey siamese with top hat + monocle. Quadruped (Mixamo's auto-rigger is humanoid-only — needs a separate rig path: DeepMotion, manual rig in Blender, or the source AI tool's animation feature). Reference at `assets/sprites/characters/erma/reference.png`.
+- **Paul** — recurring-appearance figure, NOT a stand operator. 3D static mesh, no rig, no animation. Engine code places him periodically in unexpected world positions to recreate a "magic appearance" experience. Green knit sweater + shorts with blue star patches, plastic doll proportions, bare feet. Reference at `assets/sprites/characters/paul/reference.png`.
+- **Stand operators are ghosts** — locked rule. Boba shop ghost (separate design from Paul) runs the Bobaaaaah stand. Each stand has its own ghost.
 
 ---
 
 ## Sloane's World
 
-_(These are INGREDIENTS in her creative pantry — not rules every design decision must follow.)_
+*(These are INGREDIENTS in her creative pantry — not rules every design decision must follow.)*
 
 - **Favorite Colors:** strawberry pink, matcha green, powder blue. Soft, dreamy, cafe-window energy.
 - **Aesthetic & Vibes:** kawaii horror, stores, food. Cute-and-a-little-wrong. Think a too-cute shop with something off about it.
 - **Stories & Worlds She's Into Right Now:**
-  - _Scream_ — Ghostface specifically. The iconic stylish villain.
-  - _Scary Boba Shop_ (game) — a boba shop that gets scarier with each order. The escalation structure.
-  - _Fear Street_ — the singing demon girl. "She's a creep."
+  - *Scream* — Ghostface specifically. The iconic stylish villain.
+  - *Scary Boba Shop* (game) — a boba shop that gets scarier with each order. The escalation structure.
+  - *Fear Street* — the singing demon girl. "She's a creep."
 - **Characters She's Invented:**
-  - **Paul** — looks exactly like a specific doll Sloane grew up with. On a long road trip when Sloane was little, Dad would stage Paul somewhere ahead each morning so she'd "find" him as they explored — she thought he was magic. In the game, Paul shows up periodically throughout the park, in unexpected places, just like he used to in her life. He is NOT a stand operator. He is visually locked: green knit sweater + shorts with blue star patches, plastic doll proportions, painted-on facial features, bare feet. Future Claude: do not "improve" him toward a more conventionally cel-shaded character — the doll quality is the point. The cute-and-a-little-wrong tone of the project lives inside this character.
+  - **Jim** — a scary demon who wears an old boba tee shirt and jeans. Name's Jim. The mundane name + dad-clothes against the demon part is the whole joke. Looks like he might work there.
 - **Creatures She Loves:** Fear Street demons, Ghostface. Stylish horror villains with a specific iconic look — not random monsters.
-- **A Moment That Hit Her Hard:** the jumpscares from _The Conjuring_. Specifically the scare itself — the BAM payoff, not the build-up.
+- **A Moment That Hit Her Hard:** the jumpscares from *The Conjuring*. Specifically the scare itself — the BAM payoff, not the build-up.
 - **How She Likes to Play (the core verb):** running a place. Store simulators, building, food prep. Cozy busy-hands play — stocking, serving, arranging.
 - **What Makes Games Boring vs "One More":**
   - Boring: no levels, no progression.
@@ -58,19 +67,19 @@ _(These are INGREDIENTS in her creative pantry — not rules every design decisi
 
 ## Sloane Studio Design Principles
 
-_(CRAFT principles — how we make games feel intentional, regardless of subject. NOT content rules.)_
+*(CRAFT principles — how we make games feel intentional, regardless of subject. NOT content rules.)*
 
 1. **Palette first, always.** Every world opens with a defined `PAL = {...}` block of 6–10 colors. Anchor on her current favorites (strawberry pink, matcha green, powder blue) OR invent a fresh palette that fits the world. No random hex values in the code.
 
-2. **Tone is a dial, not a switch.** Sloane's instinct is cute-and-a-little-wrong — sweetness with something off. Build atmosphere that holds _both_ at once: soft palette + flickering candle, cozy shop + lights that buzz, friendly font + slightly too-long shadows. The contrast is the feeling.
+2. **Tone is a dial, not a switch.** Sloane's instinct is cute-and-a-little-wrong — sweetness with something off. Build atmosphere that holds *both* at once: soft palette + flickering candle, cozy shop + lights that buzz, friendly font + slightly too-long shadows. The contrast is the feeling.
 
-3. **The build-up earns the payoff.** When a game has a scare, surprise, or big moment, the seconds _before_ it matter as much as the moment itself. Foreshadow with sound and light shifts. The player should feel it coming half a second before it hits — that's the "DAD LOOK!" window.
+3. **The build-up earns the payoff.** When a game has a scare, surprise, or big moment, the seconds *before* it matter as much as the moment itself. Foreshadow with sound and light shifts. The player should feel it coming half a second before it hits — that's the "DAD LOOK!" window.
 
 4. **The core verb is sacred.** Whatever moment-to-moment action she identified for a given zone, the player's hands should be doing that thing constantly and satisfyingly. Cozy busy-hands play means lots of small, immediate, tactile actions with feedback.
 
-5. **Progression you can see.** She wants levels, coins, options, unlocks. Every zone should have a visible economy — earn something, spend it on something, see the result on screen. Numbers going up isn't enough; the _world_ should change as she progresses.
+5. **Progression you can see.** She wants levels, coins, options, unlocks. Every zone should have a visible economy — earn something, spend it on something, see the result on screen. Numbers going up isn't enough; the *world* should change as she progresses.
 
-6. **Hero characters come from Blender, not emoji.** The food critic doesn't get a placeholder circle. She gets a rigged Blender model, cel-shaded, rendered at 4 directions. Her characters are the project's flagships — they look like ours. The Blender pipeline spec is in this file.
+6. **Hero characters and stands come from a 3D pipeline, not procedural code.** Source meshes from AI image-to-3D (TRELLIS, Meshy, Tripo, etc.) generated from Sloane's reference images, rigged in Mixamo for humanoids, then imported into Blender for sprite rendering. Her characters are the project's flagships — they look like ours. The full pipeline spec is below.
 
 7. **Sound is half the game.** Every zone has two sound layers running together: a **cozy ambient layer** (small constant sounds tied to the core verb — shaking, clinking, footsteps, hums) and an **event layer** (sharp feedback on every meaningful action — coins, completions, arrivals, scares). Music is part of the tone dial: when something's about to shift, the music shifts first. Silence is a tool — when the cozy layer suddenly cuts out, the player knows something's coming. No zone ships without intentional sound design.
 
@@ -78,7 +87,7 @@ _(CRAFT principles — how we make games feel intentional, regardless of subject
 
 ## Visual Standards (NON-NEGOTIABLE)
 
-This game looks _intentional_, not like programmer art. **Atmosphere over assets.**
+This game looks *intentional*, not like programmer art. **Atmosphere over assets.**
 
 **Every zone starts with these:**
 
@@ -92,7 +101,6 @@ This game looks _intentional_, not like programmer art. **Atmosphere over assets
 - **Typography that matches the world.** Serif (Cormorant Garamond, Playfair) for elegant/spooky/old. Sans (Inter, system-ui) for modern/clean. **Never** the browser default for in-game text.
 
 **Effort hierarchy when time is limited:**
-
 1. Atmosphere first (palette, gradient, vignette, lighting) — 70% of "looks good" is here.
 2. Animated set dressing (flickering candles, drifting fog, swaying plants, dust motes).
 3. Character presence (main character drawn with care, soft shadow, glow when interactive).
@@ -133,7 +141,7 @@ Every file, every PR must meet these 14 rules:
 3. **Tight save-and-commit loop** — every working state gets a Git commit.
 4. **One change at a time when debugging** — never stack multiple hypotheses.
 5. **File header comments** — top of every file, 2–3 lines on what it does.
-6. **Inline comments explain _why_, not _what_** — non-obvious constraints, invariants, workarounds only.
+6. **Inline comments explain *why*, not *what*** — non-obvious constraints, invariants, workarounds only.
 7. **No dead code** — delete, don't comment out.
 8. **Graceful asset failures** — fallback + report via overlay (Session B).
 9. **No magic numbers** — named constants (`UPPER_SNAKE_CASE`).
@@ -145,33 +153,44 @@ Every file, every PR must meet these 14 rules:
 
 ---
 
-## Blender Pipeline
+## Asset Pipeline
 
-Hero characters, ghosts, and hero stands are Blender-rendered sprites. The engine handles atmosphere on top — the Blender models use neutral lighting.
+Hero characters, stands, props, and any other 3D-sourced asset go through this chain. Blender's role is **import + render**, not modeling.
 
-### Camera and render settings
+### Pipeline overview
+
+1. **Source mesh generation** — AI image-to-3D (TRELLIS local install preferred; Meshy / Tripo / similar as alternatives) takes a 2D reference image and produces a textured 3D mesh as `.glb`. For Mixamo compatibility, generate the character in T-pose where the source AI tool supports it.
+2. **Rigging (humanoid characters only)** — Convert `.glb` to `.fbx` via Blender export (Mixamo accepts FBX/OBJ/ZIP, not GLB). Upload to Mixamo, place markers (chin, wrists, elbows, knees, groin), auto-rig, browse animation library, download as FBX with animations baked in.
+3. **Render** — Blender (driven by Claude Desktop via the MCP connector) imports the rigged FBX, sets up cameras + neutral lighting, and renders sprite strips to PNG.
+4. **Manifest** — `npm run build:manifest` regenerates `src/assets/manifest.ts` so the engine can find the new sprites.
+
+### Camera and render settings (in Blender)
 
 - **Camera angle:** 30° isometric tilt (top-down-ish, slight front face)
 - **Character directions:** 4 (front, back, left, right) — axis-aligned movement only
-- **Scale:** chunky, Cult of the Lamb-ish — characters read at a distance
-- **Shading:** cel/toon with neutral, flat lighting — atmosphere (fog, vignette, light pools) is added by the engine at runtime
+- **Lighting:** neutral, flat — atmosphere (fog, vignette, light pools) is added by the engine at runtime
 - **Output:** PNG + alpha, no background
 
 ### Frame counts and resolutions
 
-| Asset type      | Idle     | Walk      | Resolution     |
-| --------------- | -------- | --------- | -------------- |
-| Hero characters | 6 frames | 12 frames | 512 × 512 px   |
-| Ghosts          | 6 frames | 12 frames | 512 × 512 px   |
-| Hero stands     | static   | —         | 1536 × 1536 px |
-| Props           | static   | —         | 384 × 384 px   |
+| Asset type | Idle | Walk | Resolution |
+|---|---|---|---|
+| Hero characters | 6 frames | 12 frames | 512 × 512 px |
+| Ghosts | 6 frames | 12 frames | 512 × 512 px |
+| Hero stands | static | — | 1536 × 1536 px |
+| Props | static | — | 384 × 384 px |
 
-**Frame layout:** frames are concatenated into a horizontal sprite strip in a single PNG per direction per animation (left-to-right, frame 0 leftmost). One PNG = one direction × one animation. The engine indexes into the strip at runtime based on animation time. Strip width = frame_count × 512; strip height = 512.
+### Special cases
+
+- **Erma (quadruped):** Mixamo's auto-rigger is humanoid-only. Erma needs a separate rig path: DeepMotion (paid, supports quadrupeds), manual rigging in Blender via MCP, or the source AI tool's animation feature if it supports quadrupeds.
+- **Paul (3D static):** No animation, no rig. AI image-to-3D mesh imported into Blender and rendered as a static sprite from the right angle(s). Engine code places him at varying world positions to recreate the periodic-appearance experience.
+- **Stands and props:** No rig needed. AI image-to-3D mesh → Blender import → render at the resolution above.
 
 ### Naming and file layout
 
-- **Kebab-case** everywhere: `critic-1`, `paul`, `bobaaaaah-stand`
-- **Source `.blend` files:** `blender/characters/`, `blender/ghosts/`, `blender/stands/`, `blender/props/`
+- **Kebab-case** everywhere: `critic-1`, `erma`, `paul`, `bobaaaaah-stand`
+- **`.blend` source files:** `blender/characters/`, `blender/ghosts/`, `blender/stands/`, `blender/props/` (Git LFS)
+- **Source `.glb`/`.fbx` files from AI tools:** path TBD — decide once we're moving real characters through and can see what we want versioned
 - **Rendered PNGs:** `public/sprites/characters/`, `public/sprites/ghosts/`, etc. — mirrored folder structure
 - **Sprite anchor:** bottom-center (character's feet = anchor point)
 - **Naming pattern:** `{name}/{animation}/{direction}.png` — e.g. `critic-1/walk/front.png`
@@ -182,7 +201,7 @@ Hero characters, ghosts, and hero stands are Blender-rendered sprites. The engin
 
 ### Claude Desktop connector
 
-Blender rendering is scripted via a Claude Desktop MCP connector. See LOCAL_DEV.md for setup.
+Blender rendering is scripted via a Claude Desktop MCP connector (Anthropic's official Blender connector). See `LOCAL_DEV.md` for installation; the Blender connector section there is being revised separately.
 
 ### After rendering
 
@@ -208,16 +227,10 @@ Regenerate manifest any time sprites change.
 
 Players can switch between two characters; switching is mostly cosmetic but has light mechanical differences:
 
-- **Character 1 — Critic 1 / Scout-Stealth:** the food critic. Detects clues at longer range; fits into small hide spots Erma can't.
-- **Character 2 — Erma / Enforcer:** Sloane's cat. White-and-grey siamese, top hat, monocle — elegant-but-mischievous kawaii-horror energy. Faster while wearing the ghost sheet (a cat in a sheet IS a ghost — shorthand earned), longer reach when catching ghosts. Reference image at `assets/sprites/characters/erma/`. Erma's rig is its own quadruped build, NOT a variant of Critic 1's human rig — different topology, walk cycle, proportions. Plan accordingly when she gets rendered.
+- **Character 1 — Scout/Stealth:** detects clues at longer range; fits into small hide spots that Character 2 cannot.
+- **Character 2 — Enforcer:** moves faster while wearing the ghost sheet; has longer reach when catching ghosts.
 
 Both characters share the same world state, inventory, and stand progression. The switch is a style choice with minor tactical edge, not a hard gate.
-
----
-
-## Stand Operators
-
-**Stand operators are ghosts.** Every food stand, every game stand, every ride is run by a ghost — one per location, each its own per-stand design. These ghosts are distinct from Paul, who is not a stand operator. The boba shop ghost is the first one we'll need to design, in its own future session.
 
 ---
 
@@ -226,6 +239,7 @@ Both characters share the same world state, inventory, and stand progression. Th
 ```
 abandoned-park/                    ← project root = npm project
 ├── CLAUDE.md                      ← this file
+├── WORKING_WITH_ME.md             ← interaction rules + landmines
 ├── ABANDONED_PARK_PLAN.md         ← game design doc
 ├── LOCAL_DEV.md                   ← operational reference for Dad
 ├── README.md
@@ -285,17 +299,19 @@ abandoned-park/                    ← project root = npm project
 
 ## Toolbox
 
-| Easy Name           | Real Name                              | What It Does                             |
-| ------------------- | -------------------------------------- | ---------------------------------------- |
-| The Drawing Window  | HTML5 `<canvas>`                       | Where the game shows up                  |
-| The Game Brain      | `requestAnimationFrame` loop @ 60fps   | Makes things move smoothly               |
-| The Listener        | `src/engine/input.ts`                  | Keyboard + touch + Bluetooth gamepad     |
-| The Sound Box       | `src/engine/sound.ts`                  | Procedural audio — no audio files needed |
-| The Stretchy Window | `src/engine/canvas.ts`                 | Makes the game fit any screen            |
-| The Picture Box     | Canvas 2D procedural + Blender sprites | Renders scenes and characters            |
-| The Juice           | `src/engine/juice.ts`                  | Particles, screen shake, easing          |
-| The Sculptor        | Blender + Claude Desktop               | Creates and renders hero characters      |
-| The Sprite List     | `src/assets/manifest.ts`               | Typed index of all runtime sprites       |
+| Easy Name | Real Name | What It Does |
+|---|---|---|
+| The Drawing Window | HTML5 `<canvas>` | Where the game shows up |
+| The Game Brain | `requestAnimationFrame` loop @ 60fps | Makes things move smoothly |
+| The Listener | `src/engine/input.ts` | Keyboard + touch + Bluetooth gamepad |
+| The Sound Box | `src/engine/sound.ts` | Procedural audio — no audio files needed |
+| The Stretchy Window | `src/engine/canvas.ts` | Makes the game fit any screen |
+| The Picture Box | Canvas 2D procedural + 3D-rendered sprites | Renders scenes and characters |
+| The Juice | `src/engine/juice.ts` | Particles, screen shake, easing |
+| The Mesh Generator | TRELLIS (or Meshy / Tripo) | Turns Sloane's reference images into 3D meshes |
+| The Rigger | Mixamo (web service) | Auto-rigs humanoid meshes + provides animation library |
+| The Renderer | Blender + Claude Desktop (MCP) | Imports rigged meshes and renders sprite strips |
+| The Sprite List | `src/assets/manifest.ts` | Typed index of all runtime sprites |
 
 ---
 
@@ -304,7 +320,7 @@ abandoned-park/                    ← project root = npm project
 - [ ] Play with Bluetooth controllers
 - [ ] Put the game on Dad's phone
 - [ ] Put the game on Sloane's phone
-- [x] Use Sloane's artwork as characters (Blender pipeline set up — Session A)
+- [x] Use Sloane's artwork as characters (pipeline pivoted to AI image-to-3D + Mixamo + Blender — Phase 1)
 - [ ] Add real recorded music and sound effects
 - [ ] Multiple zones with progression and save file
 - [x] Graduate from single-file Artifact to a real Vite project (done)
@@ -318,30 +334,58 @@ abandoned-park/                    ← project root = npm project
 
 Newest at the top.
 
-### 2026-05-08 — Session D: Blender Pipeline Setup + Critic 1 Prep
+### 2026-05-09 — Phase 1: Asset Pipeline Pivot + Documentation Day
 
-**Built:** Docs sweep — Jim→Paul rename throughout CLAUDE.md and ABANDONED_PARK_PLAN.md. Paul character locked (the real doll Sloane grew up finding on road trips — NOT a stand operator; recurring magic-appearance figure throughout the park). Erma locked as Character 2 (white-and-grey siamese, top hat, monocle; own quadruped rig, NOT a Critic 1 variant). Stand-operators-are-ghosts rule canonized in both docs — boba shop ghost is a separate future TBD design. Blender install walkthrough added to LOCAL_DEV.md (blender.org LTS, Windows defaults, verify splash screen). `blender-mcp` MCP connector walkthrough added (officially Anthropic-supported; `uv`/`uvx` runner, `addon.py` Blender-side addon, `claude_desktop_config.json` registration, smoke test). Frame layout spec locked in CLAUDE.md Blender Pipeline (horizontal strips, frame 0 leftmost, strip width = count × 512). `scripts/generate-placeholder-sprites.mjs` — zero-dep PNG generator (Node.js built-in zlib + raw PNG encoding, inline 5×7 bitmap font); generates magenta-and-black checker strips for `public/sprites/characters/critic-1/` (idle: 6-frame × 4 directions, walk: 12-frame × 4 directions). `npm run build:manifest` → `src/assets/manifest.ts` regenerated with typed critic-1 entries. Dormant sprite render path added to `src/world/food-zone.ts` (`USE_SPRITE_PLAYER = false`; when flipped, `_drawPlayerSprite()` draws from manifest strips at bottom-center anchor, lazy-loads images, indexes frame by game time).
-**Sloane Decided:** Critic 1 renders first. Character 2 slot is Erma — Sloane's cat (siamese, top hat, monocle); cat means own quadruped rig, not a Critic 1 variant. Paul replaces Jim entirely — he is the specific doll from road trips, locked visual (green knit sweater, blue star shorts, bare feet, painted face, doll proportions). Paul is NOT a stand operator. Stand operators are ghosts, one per location, each its own per-stand design; boba shop ghost is a separate TBD future design.
-**Dad Learned:** `blender-mcp` uses `uvx` as the runner — install `uv` first (PowerShell one-liner), not pip. The Blender addon is a single `addon.py` file installed via Blender's Preferences → Add-ons, not the Extension Store. Sprite strips: all frames in one PNG, engine indexes by `Math.floor((t/60)*fps) % frameCount` — no separate files per frame. `USE_SPRITE_PLAYER = false` pattern keeps dormant code in-tree without any runtime cost — flip to `true` in Session E after real renders land.
-**Next Up:** Dad installs Blender + blender-mcp per LOCAL_DEV.md walkthroughs. Drives Claude Desktop with the Blender MCP to build base human rig, model + animate + render Critic 1 (4-direction idle 6-frame and walk 12-frame sprites) into `public/sprites/characters/critic-1/`. Then Session E (small Claude Code session): replace magenta placeholders with real renders, flip `USE_SPRITE_PLAYER` to `true`, tune anchor + scale, ship Critic 1 in-game.
+**Built:** Verified the official Anthropic Blender MCP connector with a smoke test. Determined that programmatic Blender modeling via MCP cannot produce hero characters (output reads as "balding bearded blob guy" rather than Critic 1 — primitive joining can't approximate hair, faces, or organic shape). Pipeline updated to AI image-to-3D (TRELLIS) for source meshes → Mixamo for rigging humanoids → Blender for import + render. Erma confirmed quadruped (no Mixamo path). Paul confirmed 3D static. WORKING_WITH_ME.md created. README.md updated to add WORKING_WITH_ME link + Sloane credit line. LOCAL_DEV.md restructured: daily-use stuff at top, technical reference below, landmines section seeded with today's hits. CLAUDE.md updated to reflect the new pipeline.
+
+**Sloane Decided:** (No new creative input this session.)
+
+**Dad Learned:** GLB vs FBX (Mixamo accepts FBX/OBJ/ZIP, not GLB; Blender exports FBX). T-pose is required for Mixamo's auto-rigger; AI image-to-3D outputs default to casual standing pose. Mixamo's auto-rigger is humanoid-only.
+
+**Next Up:** Get TRELLIS 2 running locally on the RTX 5070. Generate Critic 1 in T-pose. Run her through Mixamo for the first rigged + animated render.
+
+### 2026-05-08 — Session D: Blender Pipeline Scaffolding
+
+**Built:** Sprite manifest generation via `scripts/generate-placeholder-sprites.mjs`. Dormant sprite render path in `src/world/food-zone.ts` behind `USE_SPRITE_PLAYER` flag (currently `false`). LOCAL_DEV.md expanded with Blender install + MCP connector setup walkthrough. Frame layout spec: 6 frames idle (3072×512), 12 frames walk (6144×512), horizontal strip per direction.
+
+**Sloane Decided:** (No new creative input this session.)
+
+**Dad Learned:** Frame layout for sprite strips. The difference between Claude Code (CLI) and Claude Desktop (chat with MCP).
+
+**Next Up:** Render the first character through the pipeline.
+
+### 2026-05-08 — Housekeeping
+
+**Built:** Added `.claude/` to `.gitignore`. Prettier sweep cleared 1522 ESLint warnings to 0. Added `* text=auto eol=lf` to `.gitattributes` (durable line-ending fix; Git's `autocrlf` would have re-converted to CRLF without it).
+
+**Next Up:** Continue character pipeline work.
 
 ### 2026-05-08 — Session C: Runtime Resilience + Atmosphere Refactor + Set-Piece Strip
 
 **Built:** Error overlay (`src/engine/error-overlay.ts`) — catches `window.onerror` and `unhandledrejection`, draws on canvas, D-key dismiss. Asset loader graceful fallback — failed images return magenta-and-black checker canvas; failed audio returns silent AudioBuffer; both report via ErrorOverlay. Color grading layer (`src/engine/color-grading.ts`) — global tint with eased transitions. FogSystem extended with configurable color + parallax so food-zone can tune without duplicating. Atmosphere refactor — food-zone.ts now uses `FogSystem`, `FireflySystem`, `DustMoteSystem` from engine; zero inline duplication. Spirit motes kept inline (ghost-mechanic-specific, not a general engine concern). Stripped all procedural set pieces: streetlamp, distant rides, mid silhouettes, lantern posts, benches, trash cans, cones, balloon, concrete patches, grass tufts, litter, procedural player draw. Player draw → placeholder circle with facing indicator. PAL reduced from ~100 entries to ~40 (stripped set-piece-only colors, kept design palette). Clean slate ready for Blender.
+
 **Sloane Decided:** (No new creative input this session.)
+
 **Dad Learned:**
+
 **Next Up:** Session D — Blender pipeline setup + first hero asset render (replaces player placeholder).
 
 ### 2026-05-08 — Session B: Typing Pass + Code Cleanup
 
 **Built:** Full TypeScript strict-mode pass — zero `tsc --noEmit` errors across all 10 source files. Interfaces added for every major data shape (Player, Camera, Bone, Animation, SaveState, particles, atmosphere primitives, all food-zone scene objects). Dead discriminated-union `DistantRide` type. Magic number audit — all hex values confirmed in PAL, one missing color (`standWrongGlow`) added. Unused param names prefixed `_` to silence ESLint. `tsc --noEmit` added as first step of the Husky pre-commit hook. `LOCAL_DEV.md` expanded: daily workflow steps, common workflow runbooks, richer error recovery.
+
 **Sloane Decided:** (No new creative input this session — pure engineering work.)
+
 **Dad Learned:** TypeScript `strictPropertyInitialization` requires explicit class property declarations; constructor assignments alone don't count. Discriminated unions let TS narrow optional shape fields inside `switch`/`if` branches.
+
 **Next Up:** Session C — runtime resilience, atmosphere refactor, strip procedural set pieces.
 
 ### 2026-05-08 — Session A: Project Pivot + Tooling Setup
 
 **Built:** Flattened `games/01-abandoned-park/` to project root. TypeScript conversion (basic, Session B does the real pass). ESLint (flat config, ESLint 10) + Prettier. Husky + lint-staged pre-commit hook. Git LFS for `.blend`. Manifest generation script. Blender source folder scaffolded. Rewrote CLAUDE.md, README.md, LOCAL_DEV.md to project framing.
+
 **Sloane Decided:** (No new creative input this session — pure tooling work.)
+
 **Dad Learned:** ESLint 10 uses flat config (not `.eslintrc`); Windows file locks require PowerShell for stubborn deletions.
+
 **Next Up:** Session B — error overlay, typed engine systems, food zone code cleanup.
