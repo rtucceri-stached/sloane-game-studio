@@ -6,6 +6,7 @@
  * src/world/ and route through here.
  * ============================================================ */
 
+import { ErrorOverlay } from './engine/error-overlay.js';
 import { Canvas } from './engine/canvas.js';
 import { Input } from './engine/input.js';
 import { FoodZone } from './world/food-zone.js';
@@ -15,12 +16,16 @@ import './engine/skeleton.js';
 import './engine/assets.js';
 import './engine/save.js';
 
+// Init error overlay first so it catches any setup errors.
+ErrorOverlay.init();
+
 const CANVAS_W = 960;
 const CANVAS_H = 600;
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 Canvas.fit(canvas, CANVAS_W, CANVAS_H);
 
+const ctx = canvas.getContext('2d')!;
 const scene = new FoodZone(canvas);
 
 Input.enableTouchControls();
@@ -31,6 +36,8 @@ function frame(now: number): void {
   lastT = now;
   scene.update(dt);
   scene.render();
+  // Error overlay drawn last — always on top, no world transform.
+  ErrorOverlay.draw(ctx, CANVAS_W, CANVAS_H);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
