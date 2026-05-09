@@ -27,6 +27,52 @@ git lfs pull
 
 ---
 
+## Daily workflow
+
+Every coding session follows the same four steps:
+
+1. Open a terminal and `cd` to `E:\AI Projects\Sloane`
+2. Run `npm run dev` — the dev server starts and prints a URL like `http://localhost:5173`
+3. Open that URL in your browser — the game canvas appears
+4. Edit code in VS Code → Vite hot-reloads automatically — no page refresh needed
+5. Stop the server when done: press **Ctrl+C** in the terminal
+
+---
+
+## Common workflows
+
+### Starting fresh after being away
+
+```bash
+cd "E:\AI Projects\Sloane"
+git status           # see what changed
+git pull             # get latest from remote (if working with a remote)
+npm install          # pick up any new packages
+npm run dev          # start the game
+```
+
+### Committing your work
+
+```bash
+git status                        # see which files changed
+git add src/world/food-zone.ts    # stage specific files (or use . for all)
+git commit -m "what and why"      # write a clear message
+git push                          # push to remote
+```
+
+The pre-commit hook runs `tsc --noEmit` (TypeScript type check) and then `lint-staged` (Prettier + ESLint) automatically. If the commit is blocked, read the error and fix it before trying again.
+
+### Merging a branch to main
+
+```bash
+git checkout main          # switch to main
+git merge my-branch        # merge your work in
+git push                   # push the updated main
+git branch -d my-branch    # delete the branch (optional cleanup)
+```
+
+---
+
 ## Commands
 
 | Command | What it does |
@@ -93,10 +139,15 @@ ESLint extension: install **ESLint** (dbaeumer.vscode-eslint). Auto-fixes will r
 
 ## Husky — pre-commit linting
 
-Husky runs `npx lint-staged` before every commit. lint-staged runs Prettier + ESLint on all staged `.ts` files.
+Husky runs two checks automatically before every commit:
+
+1. **`npx tsc --noEmit`** — TypeScript type check across the whole project. If there are type errors anywhere, the commit is blocked.
+2. **`npx lint-staged`** — runs Prettier (auto-format) and ESLint on all staged `.ts` files.
+
+Both must pass for the commit to go through.
 
 - **If a commit is blocked:** read the error output, fix the issue, re-stage, and try again.
-- **To bypass in an emergency:** `git commit --no-verify` (use sparingly — this skips the quality gate).
+- **To bypass in an emergency:** `git commit --no-verify` (use sparingly — this skips both checks).
 
 ---
 
@@ -166,19 +217,36 @@ img.src = '/assets/sprites/characters/critic-1.png';
 
 ## Common errors
 
-**`'npm' is not recognized`** — Node.js not on PATH. Install LTS from nodejs.org, restart terminal.
+**`'npm' is not recognized`**
+Node.js isn't installed or isn't on your PATH.
+Fix: install the LTS version from [nodejs.org](https://nodejs.org), then close and reopen your terminal.
 
-**`ENOENT: no such file, package.json`** — wrong folder. Run commands from the project root (`E:\AI Projects\Sloane`).
+**`ENOENT: no such file or directory, package.json`**
+You're in the wrong folder.
+Fix: `cd "E:\AI Projects\Sloane"` and try again.
 
-**Page blank, no terminal errors** — open browser console (F12). Usually a JS syntax error, missing import, or asset 404.
+**Page is blank, no errors in the terminal**
+A runtime error is silently failing in the browser.
+Fix: press **F12** to open DevTools, click the **Console** tab, and read the red error. Common causes: TypeScript syntax error, a missing `import`, or an asset 404.
 
-**`Module not found` on fresh clone** — run `npm install`.
+**`Cannot find module '…'` on a fresh clone**
+Dependencies aren't installed yet.
+Fix: `npm install`, then `npm run dev`.
 
-**Port 5173 in use** — Vite auto-bumps to 5174, 5175, etc. Use whatever the terminal prints.
+**Port 5173 is already in use**
+Another dev server is already running.
+Fix: Vite auto-bumps to 5174, 5175, etc. — just use whatever URL the terminal prints. Or stop the old server first (find the terminal running it and press Ctrl+C).
 
-**Commit blocked by Husky** — lint or format error. Read the output, fix and re-stage.
+**Commit blocked by Husky**
+The pre-commit hook caught a TypeScript type error, lint error, or formatting issue.
+Fix: read the error output carefully, fix the problem in the file it names, `git add` that file again, then `git commit` again. Common sub-cases:
+- *TS error* — fix the type mismatch the error describes
+- *ESLint error* — fix the rule violation (usually an unused variable or wrong equality operator)
+- *Prettier* — run `npm run format` to auto-fix, then re-stage
 
-**`git lfs` command not found** — install Git LFS from https://git-lfs.com, then `git lfs install`.
+**`git lfs` command not found**
+Git LFS isn't installed on this machine.
+Fix: install from [git-lfs.com](https://git-lfs.com), then run `git lfs install` once, then `git lfs pull`.
 
 ---
 

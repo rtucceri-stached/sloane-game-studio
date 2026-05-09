@@ -12,11 +12,62 @@
  * 2400×1700 world; we scale ~1.44× by area for 2880×2040.
  * ============================================================ */
 
+interface FogPuff {
+  x: number;
+  y: number;
+  r: number;
+  vx: number;
+  alpha: number;
+  phase: number;
+}
+
+interface AtmDustMote {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  size: number;
+  phase: number;
+}
+
+interface AtmFirefly {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  phase: number;
+  speed: number;
+  depth: number;
+}
+
+interface GroundMark {
+  x: number;
+  y: number;
+  rx: number;
+  ry: number;
+  rot: number;
+  color: string;
+}
+
+interface SkyPalette {
+  skyTop?: string;
+  skyUpper?: string;
+  skyMid?: string;
+  skyLow?: string;
+  horizonBleed?: string;
+}
+
+interface Cam {
+  x: number;
+  y: number;
+}
+
 // -- SkyGradient --------------------------------------------
 // Top-to-bottom palette gradient with a horizon bleed band so
 // the sky-to-ground transition is soft, not a hard seam.
 export const SkyGradient = {
-  draw(ctx, palette, W, H) {
+  draw(ctx: CanvasRenderingContext2D, palette: SkyPalette, W: number, H: number): void {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, palette.skyTop || '#030108');
     g.addColorStop(0.33, palette.skyUpper || '#0a0415');
@@ -40,7 +91,7 @@ export const SkyGradient = {
 // -- Vignette -----------------------------------------------
 // Radial dark overlay. Drawn last in world space, before UI.
 export const Vignette = {
-  draw(ctx, W, H, intensity = 0.78) {
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number, intensity: number = 0.78): void {
     const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.85);
     g.addColorStop(0, 'rgba(0, 0, 0, 0)');
     g.addColorStop(1, `rgba(0, 0, 0, ${intensity})`);
@@ -53,7 +104,14 @@ export const Vignette = {
 // Additive radial gradient using globalCompositeOperation='screen'.
 // THE helper every glowing prop should use — no ad-hoc radials.
 export const LightPool = {
-  draw(ctx, x, y, radius, color, intensity = 1.0) {
+  draw(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    radius: number,
+    color: string,
+    intensity: number = 1.0
+  ): void {
     const r = parseInt(color.slice(1, 3), 16);
     const g = parseInt(color.slice(3, 5), 16);
     const b = parseInt(color.slice(5, 7), 16);
@@ -76,6 +134,11 @@ export const LightPool = {
 // behind midground; front fog (lighter, faster, 0.85 parallax)
 // sits in front of player. Each puff has its own breathing phase.
 export class FogSystem {
+  back: FogPuff[];
+  front: FogPuff[];
+  worldW: number;
+  worldH: number;
+
   constructor() {
     this.back = [];
     this.front = [];
@@ -83,7 +146,7 @@ export class FogSystem {
     this.worldH = 0;
   }
 
-  init(worldW, worldH, count = 24) {
+  init(worldW: number, worldH: number, count: number = 24): void {
     this.worldW = worldW;
     this.worldH = worldH;
     const backN = Math.round(count * 0.66);
@@ -114,7 +177,7 @@ export class FogSystem {
     }
   }
 
-  update(dt) {
+  update(_dt: number): void {
     for (const f of this.back) {
       f.x += f.vx;
       if (f.x < -f.r) f.x = this.worldW + f.r;
@@ -125,13 +188,21 @@ export class FogSystem {
     }
   }
 
-  drawBack(ctx, cam, t, visW, visH) {
+  drawBack(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
     this._drawLayer(ctx, this.back, cam, t, 0.92, visW, visH);
   }
-  drawFront(ctx, cam, t, visW, visH) {
+  drawFront(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
     this._drawLayer(ctx, this.front, cam, t, 0.85, visW, visH);
   }
-  _drawLayer(ctx, list, cam, t, parallax, visW, visH) {
+  _drawLayer(
+    ctx: CanvasRenderingContext2D,
+    list: FogPuff[],
+    cam: Cam,
+    t: number,
+    parallax: number,
+    visW: number,
+    visH: number
+  ): void {
     ctx.save();
     for (const f of list) {
       const wx = f.x - cam.x * parallax;
@@ -156,13 +227,17 @@ export class FogSystem {
 // Tiny 1–2px sparks drifting up + sideways. ~120 motes for our
 // 2880×2040 world. Recycle when they exit the world bounds.
 export class DustMoteSystem {
+  motes: AtmDustMote[];
+  worldW: number;
+  worldH: number;
+
   constructor() {
     this.motes = [];
     this.worldW = 0;
     this.worldH = 0;
   }
 
-  init(worldW, worldH, count = 120) {
+  init(worldW: number, worldH: number, count: number = 120): void {
     this.worldW = worldW;
     this.worldH = worldH;
     this.motes = [];
@@ -179,7 +254,7 @@ export class DustMoteSystem {
     }
   }
 
-  update(dt) {
+  update(_dt: number): void {
     for (const m of this.motes) {
       m.x += m.vx;
       m.y += m.vy;
@@ -200,7 +275,7 @@ export class DustMoteSystem {
     }
   }
 
-  draw(ctx, cam, t, visW, visH) {
+  draw(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
     ctx.save();
     for (const m of this.motes) {
       const wx = m.x - cam.x;
@@ -219,13 +294,17 @@ export class DustMoteSystem {
 // via sin(t * speed + phase), wandering vx/vy. Renders at layer
 // 11 (after lights, before front fog). Ports the Bigfoot pattern.
 export class FireflySystem {
+  flies: AtmFirefly[];
+  worldW: number;
+  worldH: number;
+
   constructor() {
     this.flies = [];
     this.worldW = 0;
     this.worldH = 0;
   }
 
-  init(worldW, worldH, count = 80) {
+  init(worldW: number, worldH: number, count: number = 80): void {
     this.worldW = worldW;
     this.worldH = worldH;
     this.flies = [];
@@ -242,7 +321,7 @@ export class FireflySystem {
     }
   }
 
-  update(dt) {
+  update(_dt: number): void {
     for (const f of this.flies) {
       f.x += f.vx;
       f.y += f.vy;
@@ -259,7 +338,7 @@ export class FireflySystem {
     }
   }
 
-  draw(ctx, cam, t, visW, visH) {
+  draw(ctx: CanvasRenderingContext2D, cam: Cam, t: number, visW: number, visH: number): void {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     for (const f of this.flies) {
@@ -287,11 +366,17 @@ export class FireflySystem {
 // the entire walkable area + a soft camera-centered radial darken
 // so the player's footing reads. Stable layout via seeded RNG.
 export class GroundTexture {
+  marks: GroundMark[];
+  worldW: number;
+  worldH: number;
+
   constructor() {
     this.marks = [];
+    this.worldW = 0;
+    this.worldH = 0;
   }
 
-  init(worldW, worldH, count = 200) {
+  init(worldW: number, worldH: number, count: number = 200): void {
     this.worldW = worldW;
     this.worldH = worldH;
     this.marks = [];
@@ -321,7 +406,7 @@ export class GroundTexture {
     }
   }
 
-  draw(ctx, cam, visW, visH) {
+  draw(ctx: CanvasRenderingContext2D, cam: Cam, visW: number, visH: number): void {
     ctx.save();
     for (const m of this.marks) {
       const wx = m.x - cam.x;

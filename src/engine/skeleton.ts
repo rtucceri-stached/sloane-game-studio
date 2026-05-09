@@ -11,22 +11,66 @@
  *   // each frame: anim.update(dt); rig.getAllTransforms();
  * ============================================================ */
 
-const lerp = (a, b, u) => a + (b - a) * u;
+interface BoneDef {
+  name: string;
+  x?: number;
+  y?: number;
+  rotation?: number;
+  children?: BoneDef[];
+}
+
+interface Bone {
+  name: string;
+  parent: string | null;
+  defaultX: number;
+  defaultY: number;
+  defaultRotation: number;
+  x: number;
+  y: number;
+  rotation: number;
+}
+
+export interface BoneTransform {
+  x: number;
+  y: number;
+  rotation: number;
+}
+
+export interface BonePose {
+  rotation?: number;
+  x?: number;
+  y?: number;
+}
+
+interface Keyframe {
+  time: number;
+  pose: Record<string, BonePose>;
+}
+
+interface Animation {
+  duration: number;
+  loop?: boolean;
+  keyframes: Keyframe[];
+}
+
+export type AnimationLibrary = Record<string, Animation>;
+
+const lerp = (a: number, b: number, u: number): number => a + (b - a) * u;
 
 // -- Skeleton -------------------------------------------------
 // Holds the bone hierarchy and the current pose. Pure data —
 // no animation logic lives here.
 export class Skeleton {
-  // Build a flat Map<name, bone> from a nested rig definition.
-  // Each bone tracks its default (rest) transform so reset() can
-  // restore it before the Animator overwrites it each frame.
-  constructor(definition) {
+  bones: Map<string, Bone>;
+  rootName: string;
+
+  constructor(definition: BoneDef) {
     this.bones = new Map();
     this.rootName = definition.name;
     this._walk(definition, null);
   }
 
-  _walk(def, parentName) {
+  _walk(def: BoneDef, parentName: string | null): void {
     const bone = {
       name: def.name,
       parent: parentName,
@@ -58,14 +102,14 @@ export class Skeleton {
   // Pose shape: { boneName: { rotation?, x?, y? }, ... }
   // Bones not in the pose are left untouched, missing fields
   // are left at whatever value reset() / a prior pose set them to.
-  applyPose(pose) {
+  applyPose(pose: Record<string, BonePose>): void {
     for (const name in pose) {
       const bone = this.bones.get(name);
       if (!bone) continue;
       const set = pose[name];
-      if ('rotation' in set) bone.rotation = set.rotation;
-      if ('x' in set) bone.x = set.x;
-      if ('y' in set) bone.y = set.y;
+      if ('rotation' in set) bone.rotation = set.rotation!;
+      if ('x' in set) bone.x = set.x!;
+      if ('y' in set) bone.y = set.y!;
     }
   }
 
@@ -73,13 +117,14 @@ export class Skeleton {
   // space. World rotation = sum of local rotations down the chain;
   // world position = parent.world + parent-rotated local offset.
   // Returns null if the bone doesn't exist.
-  getBoneTransform(name) {
+  getBoneTransform(name: string): BoneTransform | null {
     const bone = this.bones.get(name);
     if (!bone) return null;
     if (!bone.parent) {
       return { x: bone.x, y: bone.y, rotation: bone.rotation };
     }
     const parent = this.getBoneTransform(bone.parent);
+    if (!parent) return null;
     const cos = Math.cos(parent.rotation);
     const sin = Math.sin(parent.rotation);
     return {
@@ -92,8 +137,8 @@ export class Skeleton {
   // World transforms for every bone, returned as a Map<name, {x,y,rotation}>.
   // Cheap enough for ~13-bone rigs without caching parents — reuse the
   // recursive call. If we ever rig a 50-bone monster, memoize per-frame.
-  getAllTransforms() {
-    const result = new Map();
+  getAllTransforms(): Map<string, BoneTransform | null> {
+    const result = new Map<string, BoneTransform | null>();
     for (const name of this.bones.keys()) {
       result.set(name, this.getBoneTransform(name));
     }
@@ -107,7 +152,14 @@ export class Skeleton {
 // reset the skeleton, push the pose. Linear lerp on rotation,
 // x, and y.
 export class Animator {
-  constructor(skeleton, animationLibrary) {
+  skeleton: Skeleton;
+  library: AnimationLibrary;
+  currentName: string | null;
+  currentAnim: Animation | null;
+  loop: boolean;
+  time: number;
+
+  constructor(skeleton: Skeleton, animationLibrary: AnimationLibrary) {
     this.skeleton = skeleton;
     this.library = animationLibrary;
     this.currentName = null;
@@ -119,7 +171,7 @@ export class Animator {
   // Start an animation by name. Resets time to 0. If the name
   // isn't in the library, logs a warning and does nothing so a
   // typo in game code is loud, not silent.
-  play(animName, loop = true) {
+  play(animName: string, loop: boolean = true): void {
     const anim = this.library[animName];
     if (!anim) {
       console.warn(`Animator: unknown animation "${animName}"`);
@@ -133,7 +185,7 @@ export class Animator {
 
   // Advance time by `dt` (seconds), wrap if looping or clamp to
   // the end if not, then push the sampled pose to the skeleton.
-  update(dt) {
+  update(dt: number): void {
     if (!this.currentAnim) return;
     this.time += dt;
     const dur = this.currentAnim.duration;
@@ -146,11 +198,11 @@ export class Animator {
     this.skeleton.applyPose(pose);
   }
 
-  getCurrentAnimation() {
+  getCurrentAnimation(): string | null {
     return this.currentName;
   }
 
-  isPlaying(animName) {
+  isPlaying(animName: string): boolean {
     return this.currentName === animName;
   }
 
@@ -158,9 +210,10 @@ export class Animator {
   // A bone may not appear in every keyframe — we find the nearest
   // surrounding keyframes that DO mention it and lerp between those.
   // Bones never mentioned in any keyframe stay at rest (skeleton.reset).
-  _sampleAt(t) {
-    const result = {};
-    const allBones = new Set();
+  _sampleAt(t: number): Record<string, BonePose> {
+    const result: Record<string, BonePose> = {};
+    if (!this.currentAnim) return result;
+    const allBones = new Set<string>();
     for (const kf of this.currentAnim.keyframes) {
       for (const bone in kf.pose) allBones.add(bone);
     }
@@ -183,12 +236,12 @@ export class Animator {
       if (!prev) prev = next;
       if (!next) next = prev;
 
-      const a = prev.pose[bone];
-      const b = next.pose[bone];
-      const span = next.time - prev.time;
-      const u = span > 0 ? (t - prev.time) / span : 0;
+      const a = prev!.pose[bone];
+      const b = next!.pose[bone];
+      const span = next!.time - prev!.time;
+      const u = span > 0 ? (t - prev!.time) / span : 0;
 
-      const out = {};
+      const out: BonePose = {};
       if ('rotation' in a || 'rotation' in b) {
         out.rotation = lerp(a.rotation ?? 0, b.rotation ?? 0, u);
       }

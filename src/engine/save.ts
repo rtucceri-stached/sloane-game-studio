@@ -12,6 +12,29 @@
  * stay separated so multiplayer can layer on later.
  * ============================================================ */
 
+interface GameData {
+  currentNight: number;
+  tickets: number;
+  clearedStands: string[];
+  discoveredClues: string[];
+  currentZone: string;
+  totalGhostsCaught: number;
+}
+
+interface ProfileMeta {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastPlayed: number;
+}
+
+type Profile = ProfileMeta & GameData;
+
+interface SaveState {
+  active: string | null;
+  profiles: Record<string, Profile>;
+}
+
 const STORAGE_KEY = 'sloane-park-profiles';
 
 // Gameplay defaults. Meta fields (id/name/createdAt/lastPlayed)
@@ -27,7 +50,7 @@ const DEFAULT_GAME_DATA = {
 
 // -- Internal storage helpers --------------------------------
 
-function _read() {
+function _read(): SaveState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { active: null, profiles: {} };
@@ -42,7 +65,7 @@ function _read() {
   }
 }
 
-function _write(state) {
+function _write(state: SaveState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -55,7 +78,7 @@ function _generateId() {
 
 // -- Public API ----------------------------------------------
 
-function getProfiles() {
+function getProfiles(): ProfileMeta[] {
   const { profiles } = _read();
   return Object.values(profiles)
     .map((p) => ({
@@ -67,7 +90,7 @@ function getProfiles() {
     .sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0));
 }
 
-function createProfile(name) {
+function createProfile(name: string): string {
   const state = _read();
   const id = _generateId();
   const now = Date.now();
@@ -82,12 +105,12 @@ function createProfile(name) {
   return id;
 }
 
-function loadProfile(id) {
+function loadProfile(id: string): Profile | null {
   const { profiles } = _read();
   return profiles[id] || null;
 }
 
-function saveProfile(id, data) {
+function saveProfile(id: string, data: Partial<Profile>): void {
   const state = _read();
   const existing = state.profiles[id];
   if (!existing) return;
@@ -100,7 +123,7 @@ function saveProfile(id, data) {
   _write(state);
 }
 
-function deleteProfile(id) {
+function deleteProfile(id: string): void {
   const state = _read();
   delete state.profiles[id];
   if (state.active === id) state.active = null;
@@ -111,13 +134,13 @@ function getActiveProfile() {
   return _read().active;
 }
 
-function setActiveProfile(id) {
+function setActiveProfile(id: string): void {
   const state = _read();
   state.active = id;
   _write(state);
 }
 
-function resetProfile(id) {
+function resetProfile(id: string): void {
   const state = _read();
   const existing = state.profiles[id];
   if (!existing) return;

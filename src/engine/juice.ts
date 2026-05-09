@@ -6,17 +6,28 @@
  *   import { Juice } from './engine/juice.js';
  * ============================================================ */
 
+export interface JuiceParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  size: number;
+}
+
 export const Juice = {
   // -- Easing -------------------------------------------------
   // Smoothly move `a` toward `b`. Use in update loops:
   //   player.x = Juice.lerp(player.x, target.x, 0.2);
-  lerp(a, b, t) {
+  lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t;
   },
 
   // Map a value from one range to another.
   //   const alpha = Juice.map(life, 0, 60, 0, 1);
-  map(v, inMin, inMax, outMin, outMax) {
+  map(v: number, inMin: number, inMax: number, outMin: number, outMax: number): number {
     return outMin + (outMax - outMin) * ((v - inMin) / (inMax - inMin));
   },
 
@@ -25,10 +36,10 @@ export const Juice = {
   //   const s = Juice.shakeOffset();
   //   ctx.translate(s.x, s.y);
   shakeAmount: 0,
-  shake(intensity) {
+  shake(intensity: number): void {
     if (intensity > this.shakeAmount) this.shakeAmount = intensity;
   },
-  shakeOffset() {
+  shakeOffset(): { x: number; y: number } {
     if (this.shakeAmount < 0.1) {
       this.shakeAmount = 0;
       return { x: 0, y: 0 };
@@ -52,7 +63,7 @@ export const Juice = {
   //   ctx.globalAlpha = p.life / p.maxLife;
   //   ctx.fillStyle = p.color;
   //   ctx.fillRect(p.x, p.y, p.size, p.size);
-  burst(x, y, count = 12, color = '#ffcc00') {
+  burst(x: number, y: number, count: number = 12, color: string = '#ffcc00'): JuiceParticle[] {
     const particles = [];
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -78,7 +89,7 @@ export const Juice = {
   //   Juice.tickFreeze();
   // Trigger with: Juice.freeze(6);  // freeze for 6 frames
   _freezeFrames: 0,
-  freeze(frames) {
+  freeze(frames: number): void {
     this._freezeFrames = Math.max(this._freezeFrames, frames);
   },
   isFrozen() {

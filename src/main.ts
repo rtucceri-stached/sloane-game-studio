@@ -18,7 +18,7 @@ import './engine/save.js';
 const CANVAS_W = 960;
 const CANVAS_H = 600;
 
-const canvas = document.getElementById('game');
+const canvas = document.getElementById('game') as HTMLCanvasElement;
 Canvas.fit(canvas, CANVAS_W, CANVAS_H);
 
 const scene = new FoodZone(canvas);
@@ -26,7 +26,7 @@ const scene = new FoodZone(canvas);
 Input.enableTouchControls();
 
 let lastT = performance.now();
-function frame(now) {
+function frame(now: number): void {
   const dt = Math.min(33, now - lastT);
   lastT = now;
   scene.update(dt);

@@ -20,7 +20,7 @@
 export const Input = (function () {
   // -- Action -> key bindings -----------------------------------
   // Add new actions here as games need them.
-  const KEY_BINDINGS = {
+  const KEY_BINDINGS: Record<string, string[]> = {
     left: ['ArrowLeft', 'KeyA'],
     right: ['ArrowRight', 'KeyD'],
     up: ['ArrowUp', 'KeyW'],
@@ -44,7 +44,7 @@ export const Input = (function () {
   // -- Gamepad bindings (XInput layout) ------------------------
   // Standard Gamepad mapping is what `navigator.getGamepads()` returns
   // for any controller it recognizes (Xbox, PS, most BT pads).
-  const GAMEPAD_BUTTONS = {
+  const GAMEPAD_BUTTONS: Record<string, number> = {
     action: 0, // A / Cross
     cancel: 1, // B / Circle
     menu: 9, // Start / Options
@@ -70,7 +70,7 @@ export const Input = (function () {
   });
 
   // -- Public API ----------------------------------------------
-  function isDown(action) {
+  function isDown(action: string): boolean {
     const keys = KEY_BINDINGS[action];
     if (keys && keys.some((k) => keysDown.has(k))) return true;
     if (touchActionsDown.has(action)) return true;
@@ -78,7 +78,7 @@ export const Input = (function () {
     return false;
   }
 
-  function wasPressed(action) {
+  function wasPressed(action: string): boolean {
     const keys = KEY_BINDINGS[action];
     if (keys && keys.some((k) => keysPressedThisFrame.has(k))) return true;
     if (touchActionsPressedThisFrame.has(action)) return true;
@@ -86,7 +86,7 @@ export const Input = (function () {
     return false;
   }
 
-  function wasReleased(action) {
+  function wasReleased(action: string): boolean {
     const keys = KEY_BINDINGS[action];
     if (!keys) return false;
     return keys.some((k) => keysReleasedThisFrame.has(k));
@@ -103,7 +103,7 @@ export const Input = (function () {
     touchActionsPressedThisFrame.clear();
   }
 
-  function bind(action, keys) {
+  function bind(action: string, keys: string | string[]): void {
     KEY_BINDINGS[action] = Array.isArray(keys) ? keys : [keys];
   }
 
@@ -163,7 +163,7 @@ export const Input = (function () {
   // Creates an on-screen D-pad + action button. Only appears on
   // touch devices, so it doesn't get in the way on desktop.
   let _touchEnabled = false;
-  function enableTouchControls(opts = {}) {
+  function enableTouchControls(opts: { dpad?: boolean; actionBtn?: boolean } = {}): void {
     if (_touchEnabled) return;
     if (!('ontouchstart' in window) && !navigator.maxTouchPoints) return;
     _touchEnabled = true;
@@ -192,8 +192,8 @@ export const Input = (function () {
       ];
       layout.forEach((p) => {
         const b = _makeTouchButton(p.action, p.label);
-        b.style.gridColumn = p.col;
-        b.style.gridRow = p.row;
+        b.style.gridColumn = String(p.col);
+        b.style.gridRow = String(p.row);
         pad.appendChild(b);
       });
       root.appendChild(pad);
@@ -212,7 +212,7 @@ export const Input = (function () {
     document.body.appendChild(root);
   }
 
-  function _makeTouchButton(action, label) {
+  function _makeTouchButton(action: string, label: string): HTMLDivElement {
     const btn = document.createElement('div');
     btn.textContent = label;
     btn.style.cssText = `
@@ -225,13 +225,13 @@ export const Input = (function () {
       pointer-events: auto; touch-action: none;
       -webkit-tap-highlight-color: transparent;
     `;
-    const press = (e) => {
+    const press = (e: Event): void => {
       e.preventDefault();
       if (!touchActionsDown.has(action)) touchActionsPressedThisFrame.add(action);
       touchActionsDown.add(action);
       btn.style.background = 'rgba(255,255,255,0.4)';
     };
-    const release = (e) => {
+    const release = (e: Event): void => {
       e.preventDefault();
       touchActionsDown.delete(action);
       btn.style.background = 'rgba(255,255,255,0.18)';

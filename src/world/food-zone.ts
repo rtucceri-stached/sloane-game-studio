@@ -17,6 +17,176 @@ import { Input } from '../engine/input.js';
 import { Juice } from '../engine/juice.js';
 import { Sound } from '../engine/sound.js';
 
+// ---------- Game-object interfaces ----------
+
+interface Camera {
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+}
+
+interface Player {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  facing: number;
+  walkPhase: number;
+  bobPhase: number;
+  speed: number;
+  _stepTimer: number;
+}
+
+interface BobaStand {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  signGlow: number;
+  interiorPhase: number;
+  wrong: number;
+  wrongTimer: number;
+  steamPhase: number;
+}
+
+interface Streetlamp {
+  x: number;
+  y: number;
+  glow: number;
+  handPhase: number;
+  handFade: number;
+}
+
+interface Balloon {
+  x: number;
+  y: number;
+  bobPhase: number;
+  shadowOffsetX: number;
+  shadowOffsetY: number;
+}
+
+type DistantRide =
+  | { type: 'ferris'; x: number; y: number; r: number; tilt: number }
+  | { type: 'coaster'; x: number; y: number; w: number; h: number }
+  | { type: 'tent'; x: number; y: number; w: number; h: number }
+  | { type: 'carousel'; x: number; y: number; r: number };
+
+interface MidSilhouette {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  accent: number;
+}
+
+interface LanternPost {
+  x: number;
+  y: number;
+  h: number;
+  sway: number;
+  hue: number;
+}
+
+interface Bench {
+  x: number;
+  y: number;
+  broken: boolean;
+  rot: number;
+}
+
+interface TrashCan {
+  x: number;
+  y: number;
+  knocked: boolean;
+}
+
+interface Cone {
+  x: number;
+  y: number;
+  lean: number;
+}
+
+interface ConcretePatch {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rot: number;
+  cracks: number;
+}
+
+interface GrassTuft {
+  x: number;
+  y: number;
+  h: number;
+  sway: number;
+  lean: number;
+  dead: boolean;
+}
+
+interface Litter {
+  x: number;
+  y: number;
+  rot: number;
+  size: number;
+  kind: string;
+}
+
+interface FogPuff {
+  x: number;
+  y: number;
+  r: number;
+  vx: number;
+  alpha: number;
+}
+
+interface Firefly {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  phase: number;
+  speed: number;
+}
+
+interface SpiritMote {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  phase: number;
+  speed: number;
+  color: string;
+  size: number;
+}
+
+interface DustMote {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  size: number;
+}
+
+interface BurstParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  size: number;
+}
+
+interface HUD {
+  titleAlpha: number;
+  introHintT: number;
+}
+
 // ---------- Canvas + world dimensions (match artifact) ----------
 const W = 960,
   H = 600;
@@ -89,6 +259,7 @@ const PAL = {
   standInteriorHi: '#5e421e',
   standWrong: '#1a3018',
   standWrongHi: '#2a5028',
+  standWrongGlow: '#6ca85a',
   standNeon: '#ff4dc8',
   standNeonGlow: '#ffaadd',
   standCup: '#e8e0d0',
@@ -187,7 +358,7 @@ const PAL = {
 };
 
 // ---------- Seedable RNG (verbatim from artifact) ----------
-function rng(seed) {
+function rng(seed: number): () => number {
   return function () {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
@@ -197,7 +368,7 @@ function rng(seed) {
   };
 }
 
-function clamp(v, a, b) {
+function clamp(v: number, a: number, b: number): number {
   return v < a ? a : v > b ? b : v;
 }
 
@@ -209,9 +380,37 @@ function clamp(v, a, b) {
 // module-level so they read like the artifact.
 // ============================================================
 export class FoodZone {
-  constructor(canvas) {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  camera: Camera;
+  player: Player;
+  bobaStand: BobaStand;
+  streetlamp: Streetlamp;
+  balloon: Balloon;
+  distantRides: DistantRide[];
+  midSilhouettes: MidSilhouette[];
+  lanternPosts: LanternPost[];
+  stringLightLines: [number, number][];
+  benches: Bench[];
+  trashCans: TrashCan[];
+  cones: Cone[];
+  concretePatches: ConcretePatch[];
+  grassTufts: GrassTuft[];
+  litter: Litter[];
+  bobaHutImage: HTMLCanvasElement | null;
+  bobaHutDrawH: number;
+  fireflies: Firefly[];
+  spiritMotes: SpiritMote[];
+  fogPuffsBack: FogPuff[];
+  fogPuffsFront: FogPuff[];
+  dustMotes: DustMote[];
+  burstParticles: BurstParticle[];
+  hud: HUD;
+  t: number;
+
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d')!;
 
     this.camera = { x: 0, y: 0, tx: 0, ty: 0 };
 
@@ -255,7 +454,7 @@ export class FoodZone {
       const c = document.createElement('canvas');
       c.width = _bobaImg.naturalWidth;
       c.height = _bobaImg.naturalHeight;
-      const cx = c.getContext('2d');
+      const cx = c.getContext('2d')!;
       cx.drawImage(_bobaImg, 0, 0);
       const id = cx.getImageData(0, 0, c.width, c.height);
       const d = id.data;
@@ -482,7 +681,7 @@ export class FoodZone {
   // ============================================================
   // UPDATE
   // ============================================================
-  update(dt) {
+  update(dt: number): void {
     this.t += dt;
     this._updatePlayer(this.t);
     this._updateCamera();
@@ -491,7 +690,7 @@ export class FoodZone {
     Input.endFrame();
   }
 
-  _updatePlayer(t) {
+  _updatePlayer(_t: number): void {
     let dx = 0,
       dy = 0;
     if (Input.isDown('left')) dx -= 1;
@@ -528,14 +727,14 @@ export class FoodZone {
     }
   }
 
-  _updateCamera() {
+  _updateCamera(): void {
     this.camera.tx = clamp(this.player.x - W / 2, 0, WORLD_W - W);
     this.camera.ty = clamp(this.player.y - H / 2, 0, WORLD_H - H);
     this.camera.x = Juice.lerp(this.camera.x, this.camera.tx, 0.12);
     this.camera.y = Juice.lerp(this.camera.y, this.camera.ty, 0.12);
   }
 
-  _updateWorld(t, dt) {
+  _updateWorld(_t: number, _dt: number): void {
     const b = this.bobaStand;
 
     // Sign glow brightens when the player is near
@@ -577,7 +776,7 @@ export class FoodZone {
     if (this.hud.introHintT > 0) this.hud.introHintT--;
   }
 
-  _updateParticles(t) {
+  _updateParticles(t: number): void {
     for (const f of this.fireflies) {
       f.x += f.vx;
       f.y += f.vy;
@@ -673,7 +872,7 @@ export class FoodZone {
   }
 
   // ---------- helpers (verbatim from artifact) ----------
-  _roundRect(x, y, w, h, r) {
+  _roundRect(x: number, y: number, w: number, h: number, r: number): void {
     const ctx = this.ctx;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -688,7 +887,7 @@ export class FoodZone {
   }
 
   /* ---------- 1. SKY GRADIENT (smooth horizon bleed) ---------- */
-  _drawSkyGradient() {
+  _drawSkyGradient(): void {
     const ctx = this.ctx;
     const camY = this.camera.y;
 
@@ -752,7 +951,7 @@ export class FoodZone {
   }
 
   /* ---------- 2. DISTANT RIDES (parallax silhouettes) ---------- */
-  _drawDistantRides(t) {
+  _drawDistantRides(t: number): void {
     for (const ride of this.distantRides) {
       const wx = ride.x - this.camera.x * 0.55;
       const wy = ride.y - this.camera.y * 0.45;
@@ -763,7 +962,7 @@ export class FoodZone {
     }
   }
 
-  _drawFerrisWheel(cx, cy, r, tilt, t) {
+  _drawFerrisWheel(cx: number, cy: number, r: number, tilt: number, t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(cx, cy);
@@ -824,7 +1023,7 @@ export class FoodZone {
     ctx.restore();
   }
 
-  _drawCoaster(cx, cy, w, h, t) {
+  _drawCoaster(cx: number, cy: number, w: number, h: number, _t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(cx, cy);
@@ -882,7 +1081,7 @@ export class FoodZone {
     ctx.restore();
   }
 
-  _drawBigTent(cx, cy, w, h) {
+  _drawBigTent(cx: number, cy: number, w: number, h: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(cx, cy);
@@ -943,7 +1142,7 @@ export class FoodZone {
     ctx.restore();
   }
 
-  _drawCarousel(cx, cy, r, t) {
+  _drawCarousel(cx: number, cy: number, r: number, t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(cx, cy);
@@ -1006,7 +1205,7 @@ export class FoodZone {
   }
 
   /* ---------- 3. FOG (back layer) ---------- */
-  _drawFogBack(t) {
+  _drawFogBack(_t: number): void {
     const ctx = this.ctx;
     ctx.save();
     for (const f of this.fogPuffsBack) {
@@ -1025,7 +1224,7 @@ export class FoodZone {
   }
 
   /* ---------- 4. MID SILHOUETTES ---------- */
-  _drawMidSilhouettes(t) {
+  _drawMidSilhouettes(_t: number): void {
     const ctx = this.ctx;
     for (const s of this.midSilhouettes) {
       const wx = s.x - this.camera.x * 0.85;
@@ -1072,7 +1271,7 @@ export class FoodZone {
   }
 
   /* ---------- 5. CONCRETE PATCHES ---------- */
-  _drawConcretePatches() {
+  _drawConcretePatches(): void {
     const ctx = this.ctx;
     for (const p of this.concretePatches) {
       const wx = p.x - this.camera.x,
@@ -1109,7 +1308,7 @@ export class FoodZone {
   }
 
   /* ---------- 6. GRASS TUFTS ---------- */
-  _drawGrassTufts(t) {
+  _drawGrassTufts(t: number): void {
     const ctx = this.ctx;
     for (const g of this.grassTufts) {
       const wx = g.x - this.camera.x,
@@ -1135,7 +1334,7 @@ export class FoodZone {
   }
 
   /* ---------- 7. LITTER ---------- */
-  _drawLitter(t) {
+  _drawLitter(_t: number): void {
     const ctx = this.ctx;
     for (const l of this.litter) {
       const wx = l.x - this.camera.x,
@@ -1192,7 +1391,7 @@ export class FoodZone {
   }
 
   /* ---------- 8. CONES ---------- */
-  _drawCones() {
+  _drawCones(): void {
     const ctx = this.ctx;
     for (const c of this.cones) {
       const wx = c.x - this.camera.x,
@@ -1223,7 +1422,7 @@ export class FoodZone {
   }
 
   /* ---------- 9. TRASH CANS ---------- */
-  _drawTrashCans(t) {
+  _drawTrashCans(_t: number): void {
     const ctx = this.ctx;
     for (const c of this.trashCans) {
       const wx = c.x - this.camera.x,
@@ -1280,7 +1479,7 @@ export class FoodZone {
   }
 
   /* ---------- 10. BENCHES ---------- */
-  _drawBenches() {
+  _drawBenches(): void {
     const ctx = this.ctx;
     for (const b of this.benches) {
       const wx = b.x - this.camera.x,
@@ -1331,7 +1530,7 @@ export class FoodZone {
   }
 
   /* ---------- 11. LANTERN POSTS + STRING LIGHTS ---------- */
-  _drawLanternPosts(t) {
+  _drawLanternPosts(t: number): void {
     const ctx = this.ctx;
     for (const [i, j] of this.stringLightLines) {
       const a = this.lanternPosts[i],
@@ -1396,7 +1595,7 @@ export class FoodZone {
   }
 
   /* ---------- 12. BOBA STAND ---------- */
-  _drawBobaStand(_t) {
+  _drawBobaStand(_t: number): void {
     if (!this.bobaHutImage) return;
 
     const ctx = this.ctx;
@@ -1420,14 +1619,14 @@ export class FoodZone {
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       ctx.globalAlpha = b.wrong * 0.35;
-      ctx.fillStyle = '#6CA85A';
+      ctx.fillStyle = PAL.standWrongGlow;
       ctx.fillRect(sx, sy, DRAW_W, drawH);
       ctx.restore();
     }
   }
 
   /* ---------- 13. STREETLAMP (procedural verdigris) ---------- */
-  _drawStreetlamp(t) {
+  _drawStreetlamp(_t: number): void {
     const ctx = this.ctx;
     const s = this.streetlamp;
     const wx = s.x - this.camera.x,
@@ -1549,7 +1748,7 @@ export class FoodZone {
   }
 
   /* ---------- 14. BALLOON (wrong-shadow detail) ---------- */
-  _drawBalloon(t) {
+  _drawBalloon(t: number): void {
     const ctx = this.ctx;
     const b = this.balloon;
     const wx = b.x - this.camera.x;
@@ -1588,7 +1787,7 @@ export class FoodZone {
   /* ---------- 15. PLAYER (existing top-down food critic) ---------- */
   // Existing code preserved verbatim from prior phase. The artifact's
   // procedural placeholder is replaced by this draw at the same layer.
-  _drawPlayer(t) {
+  _drawPlayer(_t: number): void {
     const ctx = this.ctx;
     const wx = this.player.x - this.camera.x;
     const wy = this.player.y - this.camera.y;
@@ -1689,7 +1888,7 @@ export class FoodZone {
   }
 
   /* ---------- 16. LIGHT POOLS (additive) ---------- */
-  _drawLightPools(t) {
+  _drawLightPools(t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -1797,7 +1996,7 @@ export class FoodZone {
   }
 
   /* ---------- 17. FIREFLIES ---------- */
-  _drawFireflies(t) {
+  _drawFireflies(t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -1821,7 +2020,7 @@ export class FoodZone {
   }
 
   /* ---------- 18. SPIRIT MOTES ---------- */
-  _drawSpiritMotes(t) {
+  _drawSpiritMotes(t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -1849,7 +2048,7 @@ export class FoodZone {
   }
 
   /* ---------- 19. BURST PARTICLES ---------- */
-  _drawBurstParticles() {
+  _drawBurstParticles(): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
@@ -1866,7 +2065,7 @@ export class FoodZone {
   }
 
   /* ---------- 20. FOG (front layer) ---------- */
-  _drawFogFront(t) {
+  _drawFogFront(_t: number): void {
     const ctx = this.ctx;
     ctx.save();
     for (const f of this.fogPuffsFront) {
@@ -1885,7 +2084,7 @@ export class FoodZone {
   }
 
   /* ---------- 21. DUST MOTES ---------- */
-  _drawDustMotes() {
+  _drawDustMotes(): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.fillStyle = 'rgba(255, 240, 220, 0.45)';
@@ -1899,7 +2098,7 @@ export class FoodZone {
   }
 
   /* ---------- 22. VIGNETTE ---------- */
-  _drawVignette() {
+  _drawVignette(): void {
     const ctx = this.ctx;
     const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.95);
     g.addColorStop(0, 'rgba(0,0,0,0)');
@@ -1911,7 +2110,7 @@ export class FoodZone {
   /* ---------- 23. UI ---------- */
   // Polish fix per spec — moved to bottom-left, italic 22px, so it
   // never overlaps the boba stand at the default camera position.
-  _drawTitle(t) {
+  _drawTitle(_t: number): void {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalAlpha = this.hud.titleAlpha;
@@ -1926,7 +2125,7 @@ export class FoodZone {
     ctx.restore();
   }
 
-  _drawHint(t) {
+  _drawHint(_t: number): void {
     if (this.hud.introHintT <= 0) return;
     const a = clamp(this.hud.introHintT / 200, 0, 1);
     const ctx = this.ctx;

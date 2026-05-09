@@ -303,8 +303,14 @@ abandoned-park/                    ← project root = npm project
 
 Newest at the top.
 
+### 2026-05-08 — Session B: Typing Pass + Code Cleanup
+**Built:** Full TypeScript strict-mode pass — zero `tsc --noEmit` errors across all 10 source files. Interfaces added for every major data shape (Player, Camera, Bone, Animation, SaveState, particles, atmosphere primitives, all food-zone scene objects). Dead discriminated-union `DistantRide` type. Magic number audit — all hex values confirmed in PAL, one missing color (`standWrongGlow`) added. Unused param names prefixed `_` to silence ESLint. `tsc --noEmit` added as first step of the Husky pre-commit hook. `LOCAL_DEV.md` expanded: daily workflow steps, common workflow runbooks, richer error recovery.
+**Sloane Decided:** (No new creative input this session — pure engineering work.)
+**Dad Learned:** TypeScript `strictPropertyInitialization` requires explicit class property declarations; constructor assignments alone don't count. Discriminated unions let TS narrow optional shape fields inside `switch`/`if` branches.
+**Next Up:** Phase 2 — Atmosphere Lock (fog, lighting, sound ambience pass before any gameplay).
+
 ### 2026-05-08 — Session A: Project Pivot + Tooling Setup
 **Built:** Flattened `games/01-abandoned-park/` to project root. TypeScript conversion (basic, Session B does the real pass). ESLint (flat config, ESLint 10) + Prettier. Husky + lint-staged pre-commit hook. Git LFS for `.blend`. Manifest generation script. Blender source folder scaffolded. Rewrote CLAUDE.md, README.md, LOCAL_DEV.md to project framing.
-**Sloane Decided:** Creative Director role. Zone review structure (Food → Games → Rides). Two-character mechanic confirmed.
+**Sloane Decided:** (No new creative input this session — pure tooling work.)
 **Dad Learned:** ESLint 10 uses flat config (not `.eslintrc`); Windows file locks require PowerShell for stubborn deletions.
 **Next Up:** Session B — error overlay, typed engine systems, food zone code cleanup.

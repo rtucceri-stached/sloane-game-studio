@@ -15,11 +15,11 @@
  * ============================================================ */
 
 export const Canvas = (function () {
-  let _canvas = null;
+  let _canvas: HTMLCanvasElement | null = null;
   let _logicalW = 0;
   let _logicalH = 0;
 
-  function fit(canvas, logicalW, logicalH) {
+  function fit(canvas: HTMLCanvasElement, logicalW: number, logicalH: number): void {
     _canvas = canvas;
     _logicalW = logicalW;
     _logicalH = logicalH;

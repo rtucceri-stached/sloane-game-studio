@@ -22,14 +22,30 @@
  * Mute everything: Sound.mute = true;
  * ============================================================ */
 
+interface BeepOpts {
+  freq?: number;
+  freqEnd?: number;
+  duration?: number;
+  type?: OscillatorType;
+  volume?: number;
+}
+
+interface NoiseOpts {
+  duration?: number;
+  volume?: number;
+  lowpass?: number;
+}
+
 export const Sound = (function () {
-  let ctx = null;
+  let ctx: AudioContext | null = null;
 
   // Browsers require a user gesture before playing audio.
   // We lazy-init the AudioContext on first interaction.
   function ensureCtx() {
     if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
+      const AC =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AC) ctx = new AC();
     }
     if (ctx && ctx.state === 'suspended') ctx.resume();
@@ -40,7 +56,13 @@ export const Sound = (function () {
   });
 
   // -- Tone generator ------------------------------------------
-  function beep({ freq = 440, freqEnd, duration = 0.1, type = 'square', volume = 0.2 }) {
+  function beep({
+    freq = 440,
+    freqEnd,
+    duration = 0.1,
+    type = 'square' as OscillatorType,
+    volume = 0.2,
+  }: BeepOpts): void {
     const c = ensureCtx();
     if (!c || api.mute) return;
     const end = freqEnd ?? freq;
@@ -59,7 +81,7 @@ export const Sound = (function () {
   }
 
   // -- Noise burst (for explosions / hits) ---------------------
-  function noise({ duration = 0.2, volume = 0.2, lowpass = 2000 }) {
+  function noise({ duration = 0.2, volume = 0.2, lowpass = 2000 }: NoiseOpts): void {
     const c = ensureCtx();
     if (!c || api.mute) return;
     const bufferSize = Math.floor(c.sampleRate * duration);
@@ -79,7 +101,7 @@ export const Sound = (function () {
   }
 
   // -- Built-in presets ----------------------------------------
-  const PRESETS = {
+  const PRESETS: Record<string, (() => void) | undefined> = {
     jump: () => beep({ freq: 300, freqEnd: 700, duration: 0.12, type: 'square' }),
     hit: () => beep({ freq: 200, freqEnd: 80, duration: 0.1, type: 'square' }),
     coin: () => {
@@ -106,7 +128,7 @@ export const Sound = (function () {
 
   const api = {
     mute: false,
-    play(nameOrConfig) {
+    play(nameOrConfig: string | BeepOpts): void {
       if (typeof nameOrConfig === 'string') {
         const preset = PRESETS[nameOrConfig];
         if (preset) preset();

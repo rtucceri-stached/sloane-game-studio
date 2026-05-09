@@ -16,9 +16,15 @@
  *   const img = Assets.get('streetlamp');
  * ============================================================ */
 
-const _cache = new Map();
+export interface AssetItem {
+  key: string;
+  type: 'image' | 'audio';
+  path: string;
+}
 
-function loadImage(key, path) {
+const _cache = new Map<string, HTMLImageElement | AudioBuffer>();
+
+function loadImage(key: string, path: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -30,7 +36,7 @@ function loadImage(key, path) {
   });
 }
 
-async function loadAudio(key, path, audioCtx) {
+async function loadAudio(key: string, path: string, audioCtx: AudioContext): Promise<AudioBuffer> {
   const res = await fetch(path);
   if (!res.ok) {
     throw new Error(`Failed to fetch audio "${key}" from ${path}: HTTP ${res.status}`);
@@ -41,10 +47,14 @@ async function loadAudio(key, path, audioCtx) {
   return audioBuffer;
 }
 
-function loadAll(manifest, audioCtx, onProgress) {
+function loadAll(
+  manifest: AssetItem[],
+  audioCtx: AudioContext,
+  onProgress?: (n: number, total: number) => void
+): Promise<(HTMLImageElement | AudioBuffer)[]> {
   let loaded = 0;
   const total = manifest.length;
-  const tick = (value) => {
+  const tick = (value: HTMLImageElement | AudioBuffer): HTMLImageElement | AudioBuffer => {
     loaded++;
     if (onProgress) onProgress(loaded, total);
     return value;
@@ -57,15 +67,15 @@ function loadAll(manifest, audioCtx, onProgress) {
   return Promise.all(promises);
 }
 
-function get(key) {
-  return _cache.has(key) ? _cache.get(key) : null;
+function get(key: string): HTMLImageElement | AudioBuffer | null {
+  return _cache.has(key) ? (_cache.get(key) as HTMLImageElement | AudioBuffer) : null;
 }
 
-function isLoaded(key) {
+function isLoaded(key: string): boolean {
   return _cache.has(key);
 }
 
-function clear() {
+function clear(): void {
   _cache.clear();
 }
 
