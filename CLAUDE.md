@@ -13,7 +13,7 @@ A young food critic explores an abandoned amusement park at night. Ghosts run th
 - **Live (paused):** https://sloane-abandoned-park.netlify.app
 - **Design source of truth:** `ABANDONED_PARK_PLAN.md` — lore, mechanics, art direction, audio, tech stack, build roadmap. Read it first when working on game logic or design.
 - **Stack:** Vite + TypeScript + Canvas 2D + Web Audio. ES modules. Project root IS the npm project.
-- **Where Jim went:** he runs the Bobaaaaah stand — the tutorial stand. His earlier "Jim's Boba Shop" concept evolved into this; the boba shop is lore inside the bigger park.
+- **Where Paul shows up:** Paul appears periodically throughout the park, in unexpected places — never as a stand operator. He's a recurring magic-appearance figure (see his entry under Sloane's World below). The earlier "Jim runs the Bobaaaaah stand" framing was character drift; stand operators are ghosts, one per location, each its own per-stand design. The boba shop ghost is a separate future design — TBD who.
 
 ---
 
@@ -43,7 +43,7 @@ Zone reviews generate the next zone's direction. Each zone has a defined scope a
   - *Scary Boba Shop* (game) — a boba shop that gets scarier with each order. The escalation structure.
   - *Fear Street* — the singing demon girl. "She's a creep."
 - **Characters She's Invented:**
-  - **Jim** — a scary demon who wears an old boba tee shirt and jeans. Name's Jim. The mundane name + dad-clothes against the demon part is the whole joke. Looks like he might work there.
+  - **Paul** — looks exactly like a specific doll Sloane grew up with. On a long road trip when Sloane was little, Dad would stage Paul somewhere ahead each morning so she'd "find" him as they explored — she thought he was magic. In the game, Paul shows up periodically throughout the park, in unexpected places, just like he used to in her life. He is NOT a stand operator. He is visually locked: green knit sweater + shorts with blue star patches, plastic doll proportions, painted-on facial features, bare feet. Future Claude: do not "improve" him toward a more conventionally cel-shaded character — the doll quality is the point. The cute-and-a-little-wrong tone of the project lives inside this character.
 - **Creatures She Loves:** Fear Street demons, Ghostface. Stylish horror villains with a specific iconic look — not random monsters.
 - **A Moment That Hit Her Hard:** the jumpscares from *The Conjuring*. Specifically the scare itself — the BAM payoff, not the build-up.
 - **How She Likes to Play (the core verb):** running a place. Store simulators, building, food prep. Cozy busy-hands play — stocking, serving, arranging.
@@ -70,7 +70,7 @@ Zone reviews generate the next zone's direction. Each zone has a defined scope a
 
 5. **Progression you can see.** She wants levels, coins, options, unlocks. Every zone should have a visible economy — earn something, spend it on something, see the result on screen. Numbers going up isn't enough; the *world* should change as she progresses.
 
-6. **Hero characters come from Blender, not emoji.** Jim doesn't get a 👹. Jim gets a rigged Blender model, cel-shaded, rendered at 4 directions. Her characters are the project's flagships — they look like ours. The Blender pipeline spec is in this file.
+6. **Hero characters come from Blender, not emoji.** The food critic doesn't get a placeholder circle. She gets a rigged Blender model, cel-shaded, rendered at 4 directions. Her characters are the project's flagships — they look like ours. The Blender pipeline spec is in this file.
 
 7. **Sound is half the game.** Every zone has two sound layers running together: a **cozy ambient layer** (small constant sounds tied to the core verb — shaking, clinking, footsteps, hums) and an **event layer** (sharp feedback on every meaningful action — coins, completions, arrivals, scares). Music is part of the tone dial: when something's about to shift, the music shifts first. Silence is a tool — when the cozy layer suddenly cuts out, the player knows something's coming. No zone ships without intentional sound design.
 
@@ -163,8 +163,10 @@ Hero characters, ghosts, and hero stands are Blender-rendered sprites. The engin
 | Hero stands | static | — | 1536 × 1536 px |
 | Props | static | — | 384 × 384 px |
 
+**Frame layout:** frames are concatenated into a horizontal sprite strip in a single PNG per direction per animation (left-to-right, frame 0 leftmost). One PNG = one direction × one animation. The engine indexes into the strip at runtime based on animation time. Strip width = frame_count × 512; strip height = 512.
+
 ### Naming and file layout
-- **Kebab-case** everywhere: `critic-1`, `jim-ghost`, `bobaaaaah-stand`
+- **Kebab-case** everywhere: `critic-1`, `paul`, `bobaaaaah-stand`
 - **Source `.blend` files:** `blender/characters/`, `blender/ghosts/`, `blender/stands/`, `blender/props/`
 - **Rendered PNGs:** `public/sprites/characters/`, `public/sprites/ghosts/`, etc. — mirrored folder structure
 - **Sprite anchor:** bottom-center (character's feet = anchor point)
@@ -199,10 +201,16 @@ Regenerate manifest any time sprites change.
 
 Players can switch between two characters; switching is mostly cosmetic but has light mechanical differences:
 
-- **Character 1 — Scout/Stealth:** detects clues at longer range; fits into small hide spots that Character 2 cannot.
-- **Character 2 — Enforcer:** moves faster while wearing the ghost sheet; has longer reach when catching ghosts.
+- **Character 1 — Critic 1 / Scout-Stealth:** the food critic. Detects clues at longer range; fits into small hide spots Erma can't.
+- **Character 2 — Erma / Enforcer:** Sloane's cat. White-and-grey siamese, top hat, monocle — elegant-but-mischievous kawaii-horror energy. Faster while wearing the ghost sheet (a cat in a sheet IS a ghost — shorthand earned), longer reach when catching ghosts. Reference image at `assets/sprites/characters/erma/`. Erma's rig is its own quadruped build, NOT a variant of Critic 1's human rig — different topology, walk cycle, proportions. Plan accordingly when she gets rendered.
 
 Both characters share the same world state, inventory, and stand progression. The switch is a style choice with minor tactical edge, not a hard gate.
+
+---
+
+## Stand Operators
+
+**Stand operators are ghosts.** Every food stand, every game stand, every ride is run by a ghost — one per location, each its own per-stand design. These ghosts are distinct from Paul, who is not a stand operator. The boba shop ghost is the first one we'll need to design, in its own future session.
 
 ---
 
@@ -302,6 +310,12 @@ abandoned-park/                    ← project root = npm project
 ## Progress Log
 
 Newest at the top.
+
+### 2026-05-08 — Session D: Blender Pipeline Setup + Critic 1 Prep
+**Built:** Docs sweep — Jim→Paul rename throughout CLAUDE.md and ABANDONED_PARK_PLAN.md. Paul character locked (the real doll Sloane grew up finding on road trips — NOT a stand operator; recurring magic-appearance figure throughout the park). Erma locked as Character 2 (white-and-grey siamese, top hat, monocle; own quadruped rig, NOT a Critic 1 variant). Stand-operators-are-ghosts rule canonized in both docs — boba shop ghost is a separate future TBD design. Blender install walkthrough added to LOCAL_DEV.md (blender.org LTS, Windows defaults, verify splash screen). `blender-mcp` MCP connector walkthrough added (officially Anthropic-supported; `uv`/`uvx` runner, `addon.py` Blender-side addon, `claude_desktop_config.json` registration, smoke test). Frame layout spec locked in CLAUDE.md Blender Pipeline (horizontal strips, frame 0 leftmost, strip width = count × 512). `scripts/generate-placeholder-sprites.mjs` — zero-dep PNG generator (Node.js built-in zlib + raw PNG encoding, inline 5×7 bitmap font); generates magenta-and-black checker strips for `public/sprites/characters/critic-1/` (idle: 6-frame × 4 directions, walk: 12-frame × 4 directions). `npm run build:manifest` → `src/assets/manifest.ts` regenerated with typed critic-1 entries. Dormant sprite render path added to `src/world/food-zone.ts` (`USE_SPRITE_PLAYER = false`; when flipped, `_drawPlayerSprite()` draws from manifest strips at bottom-center anchor, lazy-loads images, indexes frame by game time).
+**Sloane Decided:** Critic 1 renders first. Character 2 slot is Erma — Sloane's cat (siamese, top hat, monocle); cat means own quadruped rig, not a Critic 1 variant. Paul replaces Jim entirely — he is the specific doll from road trips, locked visual (green knit sweater, blue star shorts, bare feet, painted face, doll proportions). Paul is NOT a stand operator. Stand operators are ghosts, one per location, each its own per-stand design; boba shop ghost is a separate TBD future design.
+**Dad Learned:** `blender-mcp` uses `uvx` as the runner — install `uv` first (PowerShell one-liner), not pip. The Blender addon is a single `addon.py` file installed via Blender's Preferences → Add-ons, not the Extension Store. Sprite strips: all frames in one PNG, engine indexes by `Math.floor((t/60)*fps) % frameCount` — no separate files per frame. `USE_SPRITE_PLAYER = false` pattern keeps dormant code in-tree without any runtime cost — flip to `true` in Session E after real renders land.
+**Next Up:** Dad installs Blender + blender-mcp per LOCAL_DEV.md walkthroughs. Drives Claude Desktop with the Blender MCP to build base human rig, model + animate + render Critic 1 (4-direction idle 6-frame and walk 12-frame sprites) into `public/sprites/characters/critic-1/`. Then Session E (small Claude Code session): replace magenta placeholders with real renders, flip `USE_SPRITE_PLAYER` to `true`, tune anchor + scale, ship Critic 1 in-game.
 
 ### 2026-05-08 — Session C: Runtime Resilience + Atmosphere Refactor + Set-Piece Strip
 **Built:** Error overlay (`src/engine/error-overlay.ts`) — catches `window.onerror` and `unhandledrejection`, draws on canvas, D-key dismiss. Asset loader graceful fallback — failed images return magenta-and-black checker canvas; failed audio returns silent AudioBuffer; both report via ErrorOverlay. Color grading layer (`src/engine/color-grading.ts`) — global tint with eased transitions. FogSystem extended with configurable color + parallax so food-zone can tune without duplicating. Atmosphere refactor — food-zone.ts now uses `FogSystem`, `FireflySystem`, `DustMoteSystem` from engine; zero inline duplication. Spirit motes kept inline (ghost-mechanic-specific, not a general engine concern). Stripped all procedural set pieces: streetlamp, distant rides, mid silhouettes, lantern posts, benches, trash cans, cones, balloon, concrete patches, grass tufts, litter, procedural player draw. Player draw → placeholder circle with facing indicator. PAL reduced from ~100 entries to ~40 (stripped set-piece-only colors, kept design palette). Clean slate ready for Blender.

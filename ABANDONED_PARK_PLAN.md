@@ -30,9 +30,15 @@ The "food critic" framing is the *narrative engine*: it explains why she's at ev
 
 She animates via 2D skeletal animation (described below), so her personality reads through movement, not just art.
 
+**Character 2 — Erma** is Sloane's cat. White-and-grey siamese, top hat, monocle — elegant-but-mischievous kawaii-horror energy. Faster while wearing the ghost sheet; longer reach when catching ghosts. Erma's rig is a quadruped build — NOT a variant of Critic 1's human rig. Different bone topology, different walk cycle, different proportions. Reference image at `assets/sprites/characters/erma/`. Design locked; render is a future session.
+
 ---
 
 ## World Structure
+
+### Stand Operators
+
+**Stand operators are ghosts.** Every food stand, every game stand, every ride is run by a ghost — one per location, each its own per-stand design. These ghosts are distinct from Paul, who is not a stand operator. The boba shop ghost is the first one we'll need to design (tutorial stand, gentlest ghost, most forgiving chase), in its own future session.
 
 **Hub-and-spoke.** The food zone is the central hub. Two paths exit it — one to games, one to rides — but both are blocked until the food zone is fully cleared. The blockers are *visible but inaccessible* (a locked turnstile, a fallen ride banner, ghost-tape across an entrance). The player can *see* what's coming. They just can't reach it yet.
 
@@ -56,15 +62,15 @@ We don't dump this lore on the player. They feel it through the atmosphere.
 
 ---
 
-## Where Jim Fits
+## Where Paul Shows Up
 
-**Jim runs the Bobaaaaah stand.** It is literally his old boba shop, transplanted into the park.
+Paul is NOT a stand operator. He appears periodically throughout the park, in unexpected places — just like he used to on road trips when Sloane was little. Dad would stage Paul somewhere ahead each morning so she'd "find" him as they explored. She thought he was magic.
 
-Lore in one sentence: *"Jim ran the only boba shop in town until the park opened and stole his business. Then the park got abandoned. Now Jim haunts his old stand."*
+In the game, Paul recreates that feeling: he turns up somewhere unexpected each session. Players who recognize him get a small reward (tickets, a clue). Players who don't recognize him yet just feel the cute-and-a-little-wrong atmosphere deepen.
 
-Bobaaaaah is the **tutorial stand** — Jim is the gentlest ghost, his cursed item is the most obvious, his chase is the most forgiving. He's how the player learns the mechanic against a soft opponent.
+**Paul is visually locked:** green knit sweater + shorts with blue star patches, plastic doll proportions, painted-on facial features, bare feet. The doll quality is the point — do not conventionalize him.
 
-Jim's design carries forward from earlier work: tall, thin, scary-looking *man*. Pale skin. Smile too wide. Eyes that don't blink. Wears a Bobaaaaah tee shirt and jeans. Warmth-with-something-off — the calm before every other stand's chaos.
+The Bobaaaaah stand ghost (who DOES run the tutorial stand) is a separate TBD design. He is the gentlest ghost, his cursed item is the most obvious, his chase is the most forgiving. He's how the player learns the mechanic. Stand ghost design: Sloane's call, future session.
 
 ---
 
@@ -75,7 +81,7 @@ Jim's design carries forward from earlier work: tall, thin, scary-looking *man*.
 Eight stand slots arranged around the food zone — four on one side, three on the other, plus one empty slot for a future arrival. The empty slot is *visible and intentional*. Players ask "what's going there?" That's part of the long arc.
 
 The seven starting stands:
-- **Bobaaaaah** (Jim's stand — tutorial)
+- **Bobaaaaah** (tutorial stand — stand ghost TBD)
 - **Whaaaamburger**
 - **Taaaahco**
 - **Ice Scream**
@@ -206,7 +212,7 @@ Cinematic. Every scene gets the vignette overlay. Letterbox bars optional for bi
 - Animation state machine (idle → walk → run → hide → sheet-on → gasp → victory)
 - Per-bone overrides (e.g., head looks at cursor independent of body)
 
-Reusable for every character — player, ghosts, Jim, stand operators.
+Reusable for every character — player, ghosts, stand operators, and Paul.
 
 ### Pipeline (Per Character)
 
@@ -304,7 +310,7 @@ abandoned-park/
 │   ├── characters/
 │   │   ├── player.js
 │   │   ├── ghost.js            ← shared ghost class
-│   │   └── jim.js              ← Jim's specific behavior
+│   │   └── boba-ghost.js       ← Bobaaaaah ghost's specific behavior
 │   └── stands/
 │       ├── boba.js
 │       ├── burger.js
@@ -431,7 +437,7 @@ Force Feedback API for subtle rumble on chase moments. Stretch goal.
 ### Phase 5 — Polish + Share
 - Animation polish (gasp, victory, sheet-on)
 - Audio mix
-- Tutorial pass (Jim's Bobaaaaah stand teaches the mechanic)
+- Tutorial pass (Bobaaaaah stand teaches the mechanic — stand ghost TBD)
 - Sloane shows Mom
 
 ### Phase 6 — Games Zone (eventually)
@@ -457,7 +463,7 @@ Things we still need to decide before we build (or while we build):
 
 1. **Items per stand.** 3? 4? 5? More items = more guesswork. Fewer = puzzle is too quick. Working assumption: 4.
 2. **Specific clue mechanic.** What does a clue look like in-world? Where do clues appear? Are clues stand-specific or zone-wide hints?
-3. **Each ghost's specific design.** Jim is locked. The other 6 ghosts need visual + behavioral concepts. Sloane's call.
+3. **Each stand ghost's specific design.** Seven stand ghosts need visual + behavioral concepts (one per food stand). Paul is a separate character — not a stand operator — and his design is locked. Sloane's call for each ghost.
 4. **Stand operator visibility.** Are ghosts visible inside/behind the stand at all times? Or only revealed on the cursed bite?
 5. **Save profile UX.** How does the profile picker look? How does Sloane create a new profile?
 6. **Sound list per zone.** Curate 10–15 specific sounds we'd license/download.

@@ -3,7 +3,7 @@
  * ------------------------------------------------------------
  * Runtime "loaded at game start" step from ABANDONED_PARK_PLAN.md
  * → ASSET PIPELINE. Loads images and decoded AudioBuffers into a
- * single key→value Map so game code can `Assets.get('jim/head')`
+ * single key→value Map so game code can `Assets.get('critic-1/idle')`
  * without thinking about file types.
  *
  * Failed loads never throw: images fall back to a magenta-and-black
