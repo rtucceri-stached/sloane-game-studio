@@ -75,15 +75,15 @@ git branch -d my-branch    # delete the branch (optional cleanup)
 
 ## Commands
 
-| Command | What it does |
-|---------|--------------|
-| `npm run dev` | Dev server with hot reload |
-| `npm run build` | Build production bundle to `dist/` |
-| `npm run preview` | Serve the production build on `:4173` |
-| `npm run lint` | ESLint — check for errors and warnings |
-| `npm run format` | Prettier — auto-format all `src/` files |
+| Command                  | What it does                                               |
+| ------------------------ | ---------------------------------------------------------- |
+| `npm run dev`            | Dev server with hot reload                                 |
+| `npm run build`          | Build production bundle to `dist/`                         |
+| `npm run preview`        | Serve the production build on `:4173`                      |
+| `npm run lint`           | ESLint — check for errors and warnings                     |
+| `npm run format`         | Prettier — auto-format all `src/` files                    |
 | `npm run build:manifest` | Regenerate `src/assets/manifest.ts` from `public/sprites/` |
-| `npm install` | Install / refresh deps |
+| `npm install`            | Install / refresh deps                                     |
 
 ---
 
@@ -164,9 +164,11 @@ The workflow is: Blender runs on your machine → Claude Desktop talks to it via
 1. Go to **[blender.org/download](https://www.blender.org/download/)**. Download the **Windows Installer** for the current LTS release (4.x as of 2026). The `.msi` or `.exe` file will be around 250–350 MB.
 
 2. Run the installer. Accept all defaults. It will install to:
+
    ```
    C:\Program Files\Blender Foundation\Blender 4.x\
    ```
+
    You don't need to change this.
 
 3. **Verify it installed correctly:** open Blender from the Start menu. A splash screen appears with the version number (e.g., "4.2.0"). Close the splash screen and the default scene appears — a grey cube, a camera, and a light. That's success. Close Blender for now.
@@ -175,12 +177,12 @@ The workflow is: Blender runs on your machine → Claude Desktop talks to it via
 
 **Common Windows install issues:**
 
-| Symptom | Fix |
-|---|---|
-| Installer asks for admin permission | Click Yes — normal for `C:\Program Files` installs |
+| Symptom                                  | Fix                                                                                                    |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Installer asks for admin permission      | Click Yes — normal for `C:\Program Files` installs                                                     |
 | Blender opens but flickers or goes black | Right-click Blender shortcut → Properties → Compatibility → uncheck "Disable fullscreen optimizations" |
-| "This app can't run on your PC" | You downloaded the wrong architecture. Download the x64 build (the default on the main download page) |
-| Blender won't open at all | Make sure your GPU drivers are up to date — Blender requires reasonably modern drivers |
+| "This app can't run on your PC"          | You downloaded the wrong architecture. Download the x64 build (the default on the main download page)  |
+| Blender won't open at all                | Make sure your GPU drivers are up to date — Blender requires reasonably modern drivers                 |
 
 ---
 
@@ -232,14 +234,17 @@ The MCP server that talks between Claude Desktop and Blender runs via `uv`, a fa
 Claude Desktop has a config file that tells it which MCP servers to connect to. You need to add one entry.
 
 1. **Find the config file.** In File Explorer, navigate to:
+
    ```
    %APPDATA%\Claude\
    ```
+
    (Paste that path directly into the address bar — `%APPDATA%` is a shortcut Windows resolves automatically.) The file is called `claude_desktop_config.json`.
 
    > If the file doesn't exist yet: open Notepad, create it yourself at that path. Make sure to save it as `claude_desktop_config.json` with "All files" selected (not `.txt`).
 
 2. **Add the blender-mcp server entry.** Open the file and add (or merge into existing content):
+
    ```json
    {
      "mcpServers": {
@@ -250,6 +255,7 @@ Claude Desktop has a config file that tells it which MCP servers to connect to. 
      }
    }
    ```
+
    If you already have other MCP servers in the file, add `"blender"` as a new key inside the existing `"mcpServers"` block — don't replace what's already there.
 
 3. **Save the file and restart Claude Desktop** (quit completely and reopen).
@@ -269,12 +275,12 @@ That's the full setup verified. From here, Dad drives Claude Desktop with prompt
 
 **Troubleshooting:**
 
-| Symptom | Fix |
-|---|---|
-| Hammer icon missing in Claude Desktop | `uv` may not be on PATH — close and reopen Claude Desktop after installing `uv`. If still missing, restart your machine. |
-| "Connection refused" or "Could not connect to Blender" | Blender's MCP Server isn't running. Open Blender → N panel → Start MCP Server. |
-| `uvx` not found | `uv` didn't install correctly. Re-run the install command, then close/reopen PowerShell. |
-| Claude Desktop shows Blender tool errors | Make sure the `addon.py` version matches the `blender-mcp` package version — re-download `addon.py` from the repo if in doubt. |
+| Symptom                                                | Fix                                                                                                                            |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Hammer icon missing in Claude Desktop                  | `uv` may not be on PATH — close and reopen Claude Desktop after installing `uv`. If still missing, restart your machine.       |
+| "Connection refused" or "Could not connect to Blender" | Blender's MCP Server isn't running. Open Blender → N panel → Start MCP Server.                                                 |
+| `uvx` not found                                        | `uv` didn't install correctly. Re-run the install command, then close/reopen PowerShell.                                       |
+| Claude Desktop shows Blender tool errors               | Make sure the `addon.py` version matches the `blender-mcp` package version — re-download `addon.py` from the repo if in doubt. |
 
 ---
 
@@ -329,6 +335,7 @@ img.src = '/assets/sprites/characters/critic-1.png';
 **Dev (`npm run dev`)** — use 99% of the time. Hot reload, forgiving with paths.
 
 **Preview (`npm run build && npm run preview`)** — serves the actual production bundle on `:4173`. Use when:
+
 - An asset works in dev but you suspect it'll break in prod
 - You want to test exactly what Netlify/Cloudflare will see
 
@@ -368,9 +375,10 @@ Fix: Vite auto-bumps to 5174, 5175, etc. — just use whatever URL the terminal 
 **Commit blocked by Husky**
 The pre-commit hook caught a TypeScript type error, lint error, or formatting issue.
 Fix: read the error output carefully, fix the problem in the file it names, `git add` that file again, then `git commit` again. Common sub-cases:
-- *TS error* — fix the type mismatch the error describes
-- *ESLint error* — fix the rule violation (usually an unused variable or wrong equality operator)
-- *Prettier* — run `npm run format` to auto-fix, then re-stage
+
+- _TS error_ — fix the type mismatch the error describes
+- _ESLint error_ — fix the rule violation (usually an unused variable or wrong equality operator)
+- _Prettier_ — run `npm run format` to auto-fix, then re-stage
 
 **`git lfs` command not found**
 Git LFS isn't installed on this machine.
@@ -381,6 +389,7 @@ Fix: install from [git-lfs.com](https://git-lfs.com), then run `git lfs install`
 ## Working with Claude Code
 
 Two files are most important as context:
+
 - **`CLAUDE.md`** — project brain, design principles, engineering quality bar, Blender pipeline
 - **`ABANDONED_PARK_PLAN.md`** — game design doc
 

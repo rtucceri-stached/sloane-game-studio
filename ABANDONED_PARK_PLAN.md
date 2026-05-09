@@ -14,7 +14,7 @@ You play a young food critic exploring an abandoned amusement park at night. The
 
 ## Studio Pillars (Non-Negotiable)
 
-1. **Atmosphere over assets.** Build the look of the park *first*, before any gameplay. Dark sky, broken neon, fog, lamp glow, silhouettes. Every visual standard from CLAUDE.md applied at the start, not retrofitted at the end.
+1. **Atmosphere over assets.** Build the look of the park _first_, before any gameplay. Dark sky, broken neon, fog, lamp glow, silhouettes. Every visual standard from CLAUDE.md applied at the start, not retrofitted at the end.
 2. **Sloane's drawn art is the game's art.** Important characters and stands come from her hand or curated reference she provides, processed through our PIL pipeline like the streetlamp.
 3. **Tone dial: cute-and-melancholy with horror beats.** Cozy ambient most of the time. Sharp scares earned by careful build-up.
 4. **Never-ending.** No "you win" screen. The park keeps growing, the haunts keep shifting, the long arc is the park slowly coming back to life.
@@ -26,7 +26,7 @@ You play a young food critic exploring an abandoned amusement park at night. The
 
 **The Food Critic.** Long wavy brown hair, brown tee, gray apron, jeans, sneakers. Reference image already in project knowledge. She's serious-faced — not cheerful — because she takes food seriously. She walks with intent.
 
-The "food critic" framing is the *narrative engine*: it explains why she's at every stand trying everything, why she's confident enough to wander into an abandoned park alone, and why every haunted bite has weight. Her job is on the line. Every meal counts.
+The "food critic" framing is the _narrative engine_: it explains why she's at every stand trying everything, why she's confident enough to wander into an abandoned park alone, and why every haunted bite has weight. Her job is on the line. Every meal counts.
 
 She animates via 2D skeletal animation (described below), so her personality reads through movement, not just art.
 
@@ -40,7 +40,7 @@ She animates via 2D skeletal animation (described below), so her personality rea
 
 **Stand operators are ghosts.** Every food stand, every game stand, every ride is run by a ghost — one per location, each its own per-stand design. These ghosts are distinct from Paul, who is not a stand operator. The boba shop ghost is the first one we'll need to design (tutorial stand, gentlest ghost, most forgiving chase), in its own future session.
 
-**Hub-and-spoke.** The food zone is the central hub. Two paths exit it — one to games, one to rides — but both are blocked until the food zone is fully cleared. The blockers are *visible but inaccessible* (a locked turnstile, a fallen ride banner, ghost-tape across an entrance). The player can *see* what's coming. They just can't reach it yet.
+**Hub-and-spoke.** The food zone is the central hub. Two paths exit it — one to games, one to rides — but both are blocked until the food zone is fully cleared. The blockers are _visible but inaccessible_ (a locked turnstile, a fallen ride banner, ghost-tape across an entrance). The player can _see_ what's coming. They just can't reach it yet.
 
 Once the food zone is cleared, both other zones become accessible from the food hub. The player returns to the hub between sessions and zones.
 
@@ -56,7 +56,7 @@ Once the food zone is cleared, both other zones become accessible from the food 
 
 The park's rides broke down years ago. Maintenance stopped. The owners left. But the ghosts — former stand workers, former ride operators — stayed. They're bound to the park they died working at. They still run the stands. They still try to operate the rides. They aren't malicious by default. They're stuck, lonely, snack-hungry. The food critic is the first living person they've seen in a long time. Some are excited. Some are wary.
 
-One specific food item per ghost is *cursed* — something they died near, or something tied to their last bad day. Serving that item to a real human shakes them out of routine and into a chase.
+One specific food item per ghost is _cursed_ — something they died near, or something tied to their last bad day. Serving that item to a real human shakes them out of routine and into a chase.
 
 We don't dump this lore on the player. They feel it through the atmosphere.
 
@@ -78,9 +78,10 @@ The Bobaaaaah stand ghost (who DOES run the tutorial stand) is a separate TBD de
 
 ### Layout
 
-Eight stand slots arranged around the food zone — four on one side, three on the other, plus one empty slot for a future arrival. The empty slot is *visible and intentional*. Players ask "what's going there?" That's part of the long arc.
+Eight stand slots arranged around the food zone — four on one side, three on the other, plus one empty slot for a future arrival. The empty slot is _visible and intentional_. Players ask "what's going there?" That's part of the long arc.
 
 The seven starting stands:
+
 - **Bobaaaaah** (tutorial stand — stand ghost TBD)
 - **Whaaaamburger**
 - **Taaaahco**
@@ -89,13 +90,13 @@ The seven starting stands:
 - **Soooooshi**
 - **Pizza**
 
-The elongated naming is part of the kawaii-horror voice. Every stand sign reads slightly *wrong*.
+The elongated naming is part of the kawaii-horror voice. Every stand sign reads slightly _wrong_.
 
 ### Core Loop (per stand)
 
 1. Player approaches stand. Ghost behind the counter greets them.
 2. Stand has 4 items on its menu. Each costs a few tickets.
-3. **One item is cursed.** Which one is *fixed* (puzzle, not random) — the player figures out which through clues found around the food zone.
+3. **One item is cursed.** Which one is _fixed_ (puzzle, not random) — the player figures out which through clues found around the food zone.
 4. Player buys an item. Eats it.
 5. **If safe:** ghost is friendly, hands them food, gives them a small ticket tip. Player can try again or move on.
 6. **If cursed:** ghost's eyes go black, smile goes wrong, music drops. **Five seconds before the ghost leaves the booth.**
@@ -113,6 +114,7 @@ The elongated naming is part of the kawaii-horror voice. Every stand sign reads 
 ### Clues (Puzzle Layer)
 
 Around the food zone, clues hint at which item is cursed at each stand:
+
 - A ghost's diary entry left on a bench
 - A torn menu nailed to a tree, with one item circled
 - A drawing in chalk on the pavement
@@ -125,13 +127,14 @@ Some clues are obvious. Some require multiple visits. The player can always brut
 
 Two fixed hide spots in the food zone: **trashcan** (one location) and **bush** (one location). Both visually present from the start so the player learns where they are. When a chase starts, the player has 5 seconds to reach one. Hiding lasts as long as the player stays still — the ghost wanders, looks, eventually goes back to its booth.
 
-Hiding is *defensive*. It saves you from the chase. The stand is not cleared. You have to come back and try again — but now the ghost is suspicious and reads slightly differently.
+Hiding is _defensive_. It saves you from the chase. The stand is not cleared. You have to come back and try again — but now the ghost is suspicious and reads slightly differently.
 
 ### Ghost Sheet (The Twist)
 
-Hidden somewhere new each round. After the first chase, the player learns: there's a sheet *somewhere* that lets them turn the tables. Finding it is the actual game.
+Hidden somewhere new each round. After the first chase, the player learns: there's a sheet _somewhere_ that lets them turn the tables. Finding it is the actual game.
 
 Once the sheet is on:
+
 - Player looks like a ghost.
 - Real ghosts mistake them for one of their own.
 - Five seconds to chase down whichever ghost is currently active.
@@ -206,6 +209,7 @@ Cinematic. Every scene gets the vignette overlay. Letterbox bars optional for bi
 ### Engine
 
 `engine/skeleton.js` — about 250 lines. Supports:
+
 - Parent-child bone hierarchy
 - Forward kinematics (bone transforms cascade)
 - Keyframe animation with smooth interpolation (cubic ease)
@@ -337,6 +341,7 @@ abandoned-park/
 Deploy to **Netlify** (or Vercel) connected to the project's git repo. **Auto-deploy on every push** — no manual build, no upload. Sloane gets a stable URL like `sloane-park.netlify.app` that works on any device with a browser. Show Mom on her phone, no install.
 
 Setup is one-time, ~15 minutes:
+
 1. Push project to GitHub
 2. Connect Netlify to the repo
 3. Set build command (`npm run build`) and publish directory (`dist/`)
@@ -355,6 +360,7 @@ When the game's polished, optional **itch.io page** — a real game page with sc
 ### Phase 3 (Future): Multiplayer
 
 Architectural notes for now:
+
 - **Save state should be per-profile from day 1** (we're doing this anyway).
 - **World state and player state stay separated** so two players could share a world later without rewrites.
 - **Network layer added later** via Firebase, Supabase (free tiers), or peer-to-peer WebRTC.
@@ -386,6 +392,7 @@ Built-in browser **Gamepad API** — no external library needed. Works with most
 ### Implementation
 
 Add to `engine/input.js`:
+
 - Poll `navigator.getGamepads()` each frame
 - Read button states + axis values
 - Map XInput layout to game actions:
@@ -408,6 +415,7 @@ Force Feedback API for subtle rumble on chase moments. Stretch goal.
 ## BUILD ORDER / ROADMAP
 
 ### Phase 1 — Foundation
+
 - Multi-file project setup with Vite
 - Input Manager updated with gamepad support
 - Asset loader engine
@@ -416,17 +424,20 @@ Force Feedback API for subtle rumble on chase moments. Stretch goal.
 - Netlify auto-deploy live (Sloane has a URL on Day 1)
 
 ### Phase 2 — Atmosphere Lock
+
 - The dark park scene built and polished — sky, silhouettes, fog, lighting, streetlamps, ambient sound layer, vignette
-- *No mechanics yet* — just the look
+- _No mechanics yet_ — just the look
 - Sloane reacts to the look. We iterate until it feels right. **Then we build on top.**
 
 ### Phase 3 — Player Character
+
 - Sloane's character image cut into parts
 - Skeleton rigged
 - Idle + walk animations
 - She walks around the empty park, exploring it, just to test feel
 
 ### Phase 4 — Food Zone v1
+
 - All 7 stands built (visuals + signs + ghost designs)
 - Ghost roulette mechanic working end-to-end
 - Tickets, hide spots, sheet, chase, catch
@@ -435,21 +446,25 @@ Force Feedback API for subtle rumble on chase moments. Stretch goal.
 - Sloane plays the full loop
 
 ### Phase 5 — Polish + Share
+
 - Animation polish (gasp, victory, sheet-on)
 - Audio mix
 - Tutorial pass (Bobaaaaah stand teaches the mechanic — stand ghost TBD)
 - Sloane shows Mom
 
 ### Phase 6 — Games Zone (eventually)
+
 - 8 mini-games designed with Sloane
 - Each its own small build
 - Same skeletal pipeline for new ghosts
 
 ### Phase 7 — Rides Zone (eventually)
+
 - 8 rides, broken in unique ways
 - Repair/operate mechanics
 
 ### Phase 8 and beyond
+
 - New stands fill the empty 8th slot
 - New nights, new content drops
 - Multiplayer architecture (when we want it)
@@ -472,4 +487,4 @@ Things we still need to decide before we build (or while we build):
 
 ---
 
-*Working draft. Fill in blanks together. Update as decisions get made.*
+_Working draft. Fill in blanks together. Update as decisions get made._

@@ -1,2460 +1,2672 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Bigfoot &amp; Ghost: A Mermaid Mystery — Episode 1</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #050208;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      touch-action: none;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      font-family: 'Cormorant Garamond', serif;
-    }
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    #game {
-      display: block;
-      background: #050208;
-      box-shadow: 0 0 80px rgba(168, 85, 255, 0.25), 0 0 200px rgba(155, 255, 94, 0.08);
-      image-rendering: auto;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Bigfoot &amp; Ghost: A Mermaid Mystery — Episode 1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #050208;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        font-family: 'Cormorant Garamond', serif;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      #game {
+        display: block;
+        background: #050208;
+        box-shadow:
+          0 0 80px rgba(168, 85, 255, 0.25),
+          0 0 200px rgba(155, 255, 94, 0.08);
+        image-rendering: auto;
+      }
 
-    /* ---- Touch controls ---- */
-    #touch-controls {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      display: none;
-      z-index: 10;
-    }
-    #touch-controls.on { display: block; }
-    .pad-base {
-      position: absolute;
-      pointer-events: auto;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    #dpad {
-      left: 18px;
-      bottom: 18px;
-      width: 168px;
-      height: 168px;
-    }
-    .dpad-btn {
-      position: absolute;
-      width: 56px;
-      height: 56px;
-      background: rgba(168, 85, 255, 0.22);
-      border: 2px solid rgba(155, 255, 94, 0.55);
-      border-radius: 14px;
-      color: #f5e8ff;
-      font-family: 'VT323', monospace;
-      font-size: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-    .dpad-btn.active {
-      background: rgba(255, 77, 200, 0.55);
-      border-color: #ff4dc8;
-    }
-    #dpad .up    { left: 56px; top: 0;    }
-    #dpad .down  { left: 56px; top: 112px;}
-    #dpad .left  { left: 0;    top: 56px; }
-    #dpad .right { left: 112px;top: 56px; }
+      /* ---- Touch controls ---- */
+      #touch-controls {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: none;
+        z-index: 10;
+      }
+      #touch-controls.on {
+        display: block;
+      }
+      .pad-base {
+        position: absolute;
+        pointer-events: auto;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #dpad {
+        left: 18px;
+        bottom: 18px;
+        width: 168px;
+        height: 168px;
+      }
+      .dpad-btn {
+        position: absolute;
+        width: 56px;
+        height: 56px;
+        background: rgba(168, 85, 255, 0.22);
+        border: 2px solid rgba(155, 255, 94, 0.55);
+        border-radius: 14px;
+        color: #f5e8ff;
+        font-family: 'VT323', monospace;
+        font-size: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      .dpad-btn.active {
+        background: rgba(255, 77, 200, 0.55);
+        border-color: #ff4dc8;
+      }
+      #dpad .up {
+        left: 56px;
+        top: 0;
+      }
+      #dpad .down {
+        left: 56px;
+        top: 112px;
+      }
+      #dpad .left {
+        left: 0;
+        top: 56px;
+      }
+      #dpad .right {
+        left: 112px;
+        top: 56px;
+      }
 
-    #action-btn {
-      right: 28px;
-      bottom: 50px;
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 77, 200, 0.85), rgba(168, 85, 255, 0.55));
-      border: 3px solid #9bff5e;
-      color: #0f0820;
-      font-family: 'VT323', monospace;
-      font-size: 22px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 24px rgba(155, 255, 94, 0.45);
-    }
-    #action-btn.active { transform: scale(0.93); }
-  </style>
-</head>
-<body>
-  <canvas id="game"></canvas>
-  <div id="touch-controls">
-    <div id="dpad" class="pad-base">
-      <div class="dpad-btn up"    data-key="up">▲</div>
-      <div class="dpad-btn down"  data-key="down">▼</div>
-      <div class="dpad-btn left"  data-key="left">◀</div>
-      <div class="dpad-btn right" data-key="right">▶</div>
+      #action-btn {
+        right: 28px;
+        bottom: 50px;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 30% 30%,
+          rgba(255, 77, 200, 0.85),
+          rgba(168, 85, 255, 0.55)
+        );
+        border: 3px solid #9bff5e;
+        color: #0f0820;
+        font-family: 'VT323', monospace;
+        font-size: 22px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 24px rgba(155, 255, 94, 0.45);
+      }
+      #action-btn.active {
+        transform: scale(0.93);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="touch-controls">
+      <div id="dpad" class="pad-base">
+        <div class="dpad-btn up" data-key="up">▲</div>
+        <div class="dpad-btn down" data-key="down">▼</div>
+        <div class="dpad-btn left" data-key="left">◀</div>
+        <div class="dpad-btn right" data-key="right">▶</div>
+      </div>
+      <div id="action-btn" class="pad-base" data-key="action">Swap</div>
     </div>
-    <div id="action-btn" class="pad-base" data-key="action">Swap</div>
-  </div>
 
-<script>
-/* ============================================================
+    <script>
+      /* ============================================================
    SHARED LIBRARIES (inlined — Dad swaps these for <script src>
    tags pointing at shared/ when saving into the project)
    ============================================================ */
 
-/* ---------- Input Manager: keyboard + touch -------------- */
-const Input = (function () {
-  const keys = {};
-  const justPressed = {};
-  const map = {
-    'arrowleft': 'left', 'a': 'left',
-    'arrowright': 'right', 'd': 'right',
-    'arrowup': 'up', 'w': 'up',
-    'arrowdown': 'down', 's': 'down',
-    ' ': 'action', 'enter': 'action', 'e': 'action', 'shift': 'action'
-  };
+      /* ---------- Input Manager: keyboard + touch -------------- */
+      const Input = (function () {
+        const keys = {};
+        const justPressed = {};
+        const map = {
+          arrowleft: 'left',
+          a: 'left',
+          arrowright: 'right',
+          d: 'right',
+          arrowup: 'up',
+          w: 'up',
+          arrowdown: 'down',
+          s: 'down',
+          ' ': 'action',
+          enter: 'action',
+          e: 'action',
+          shift: 'action',
+        };
 
-  window.addEventListener('keydown', (e) => {
-    const k = e.key.toLowerCase();
-    const action = map[k];
-    if (action) {
-      if (!keys[action]) justPressed[action] = true;
-      keys[action] = true;
-      e.preventDefault();
-    }
-  });
-  window.addEventListener('keyup', (e) => {
-    const k = e.key.toLowerCase();
-    const action = map[k];
-    if (action) keys[action] = false;
-  });
-
-  function setupTouchButton(el, name) {
-    const press = (ev) => {
-      ev.preventDefault();
-      if (!keys[name]) justPressed[name] = true;
-      keys[name] = true;
-      el.classList.add('active');
-    };
-    const release = (ev) => {
-      ev.preventDefault();
-      keys[name] = false;
-      el.classList.remove('active');
-    };
-    el.addEventListener('touchstart', press, { passive: false });
-    el.addEventListener('touchend', release, { passive: false });
-    el.addEventListener('touchcancel', release, { passive: false });
-    el.addEventListener('mousedown', press);
-    el.addEventListener('mouseup', release);
-    el.addEventListener('mouseleave', release);
-  }
-
-  let touchEnabled = false;
-  function enableTouchControls() {
-    if (touchEnabled) return;
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (!isTouch) return;
-    touchEnabled = true;
-    const tc = document.getElementById('touch-controls');
-    if (!tc) return;
-    tc.classList.add('on');
-    tc.querySelectorAll('[data-key]').forEach((el) => {
-      setupTouchButton(el, el.dataset.key);
-    });
-  }
-
-  return {
-    isDown(name) { return !!keys[name]; },
-    wasPressed(name) { return !!justPressed[name]; },
-    enableTouchControls,
-    endFrame() { for (const k in justPressed) justPressed[k] = false; }
-  };
-})();
-
-/* ---------- Juice: easing, particles, shake, freeze -------- */
-const Juice = (function () {
-  let shakeAmount = 0;
-  let freezeFrames = 0;
-
-  return {
-    lerp(a, b, t) { return a + (b - a) * t; },
-    burst(x, y, count, color) {
-      const out = [];
-      for (let i = 0; i < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = 1 + Math.random() * 4;
-        out.push({
-          x, y,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s,
-          life: 30 + Math.random() * 25,
-          maxLife: 55,
-          color,
-          size: 2 + Math.random() * 3
+        window.addEventListener('keydown', (e) => {
+          const k = e.key.toLowerCase();
+          const action = map[k];
+          if (action) {
+            if (!keys[action]) justPressed[action] = true;
+            keys[action] = true;
+            e.preventDefault();
+          }
         });
-      }
-      return out;
-    },
-    sparkle(x, y, count, color) {
-      const out = [];
-      for (let i = 0; i < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = 0.5 + Math.random() * 1.5;
-        out.push({
-          x: x + (Math.random() - 0.5) * 10,
-          y: y + (Math.random() - 0.5) * 10,
-          vx: Math.cos(a) * s,
-          vy: Math.sin(a) * s - 0.4,
-          life: 40 + Math.random() * 30,
-          maxLife: 70,
-          color,
-          size: 1 + Math.random() * 2,
-          twinkle: true
+        window.addEventListener('keyup', (e) => {
+          const k = e.key.toLowerCase();
+          const action = map[k];
+          if (action) keys[action] = false;
         });
-      }
-      return out;
-    },
-    shake(amount) { shakeAmount = Math.max(shakeAmount, amount); },
-    getShakeOffset() {
-      const s = shakeAmount;
-      shakeAmount *= 0.85;
-      if (shakeAmount < 0.1) shakeAmount = 0;
-      return {
-        x: (Math.random() - 0.5) * s,
-        y: (Math.random() - 0.5) * s
-      };
-    },
-    freeze(frames) { freezeFrames = Math.max(freezeFrames, frames); },
-    isFrozen() {
-      if (freezeFrames > 0) { freezeFrames--; return true; }
-      return false;
-    }
-  };
-})();
 
-/* ---------- Sound: procedural Web Audio beeps -------------- */
-const Sound = (function () {
-  let ac = null;
-  let muted = false;
-
-  function ensure() {
-    if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-    if (ac.state === 'suspended') ac.resume();
-    return ac;
-  }
-
-  function tone({ freq, dur = 0.15, type = 'square', volume = 0.1, slideTo = null, attack = 0.005 }) {
-    if (muted) return;
-    const a = ensure();
-    const t = a.currentTime;
-    const osc = a.createOscillator();
-    const gain = a.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, t);
-    if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(volume, t + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(gain).connect(a.destination);
-    osc.start(t);
-    osc.stop(t + dur + 0.02);
-  }
-
-  function noiseBurst({ dur = 0.2, volume = 0.08, filter = 800 }) {
-    if (muted) return;
-    const a = ensure();
-    const t = a.currentTime;
-    const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-    const src = a.createBufferSource();
-    src.buffer = buf;
-    const f = a.createBiquadFilter();
-    f.type = 'lowpass';
-    f.frequency.value = filter;
-    const gain = a.createGain();
-    gain.gain.setValueAtTime(volume, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(f).connect(gain).connect(a.destination);
-    src.start(t);
-    src.stop(t + dur);
-  }
-
-  const sounds = {
-    step: () => noiseBurst({ dur: 0.04, volume: 0.025, filter: 380 }),
-    swap: () => {
-      tone({ freq: 600, dur: 0.06, type: 'triangle', volume: 0.08 });
-      setTimeout(() => tone({ freq: 900, dur: 0.08, type: 'triangle', volume: 0.08 }), 50);
-    },
-    sparkle: () => {
-      tone({ freq: 1500, dur: 0.05, type: 'triangle', volume: 0.07 });
-      setTimeout(() => tone({ freq: 1900, dur: 0.06, type: 'triangle', volume: 0.06 }), 40);
-      setTimeout(() => tone({ freq: 2400, dur: 0.07, type: 'triangle', volume: 0.05 }), 80);
-    },
-    coin: () => {
-      tone({ freq: 880, dur: 0.07, type: 'square', volume: 0.09 });
-      setTimeout(() => tone({ freq: 1320, dur: 0.12, type: 'square', volume: 0.09 }), 60);
-    },
-    clue: () => {
-      tone({ freq: 660, dur: 0.08, type: 'triangle', volume: 0.1 });
-      setTimeout(() => tone({ freq: 990, dur: 0.1, type: 'triangle', volume: 0.1 }), 60);
-      setTimeout(() => tone({ freq: 1320, dur: 0.18, type: 'triangle', volume: 0.1 }), 130);
-    },
-    mystery: () => tone({ freq: 220, dur: 0.4, type: 'sine', volume: 0.06, slideTo: 165 }),
-    pondReveal: () => {
-      tone({ freq: 330, dur: 0.6, type: 'sine', volume: 0.1, slideTo: 660, attack: 0.05 });
-      setTimeout(() => tone({ freq: 440, dur: 0.5, type: 'triangle', volume: 0.08, slideTo: 880 }), 250);
-    },
-    win: () => {
-      const notes = [523, 659, 784, 1047, 784, 1047, 1319];
-      notes.forEach((f, i) => setTimeout(() => tone({ freq: f, dur: 0.18, type: 'square', volume: 0.1 }), i * 150));
-    },
-    click: () => tone({ freq: 500, dur: 0.04, type: 'square', volume: 0.07 }),
-    dialogBlip: () => tone({ freq: 380 + Math.random() * 80, dur: 0.025, type: 'square', volume: 0.04 })
-  };
-
-  return {
-    play(name) { if (sounds[name]) sounds[name](); },
-    set mute(v) { muted = !!v; },
-    get mute() { return muted; }
-  };
-})();
-
-/* ---------- Canvas: responsive sizing ---------------------- */
-const Canvas = (function () {
-  return {
-    fit(canvas, W, H) {
-      function resize() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const ratio = W / H;
-        const winRatio = window.innerWidth / window.innerHeight;
-        let cssW, cssH;
-        if (winRatio > ratio) {
-          cssH = window.innerHeight;
-          cssW = cssH * ratio;
-        } else {
-          cssW = window.innerWidth;
-          cssH = cssW / ratio;
+        function setupTouchButton(el, name) {
+          const press = (ev) => {
+            ev.preventDefault();
+            if (!keys[name]) justPressed[name] = true;
+            keys[name] = true;
+            el.classList.add('active');
+          };
+          const release = (ev) => {
+            ev.preventDefault();
+            keys[name] = false;
+            el.classList.remove('active');
+          };
+          el.addEventListener('touchstart', press, { passive: false });
+          el.addEventListener('touchend', release, { passive: false });
+          el.addEventListener('touchcancel', release, { passive: false });
+          el.addEventListener('mousedown', press);
+          el.addEventListener('mouseup', release);
+          el.addEventListener('mouseleave', release);
         }
-        canvas.style.width = cssW + 'px';
-        canvas.style.height = cssH + 'px';
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        const ctx = canvas.getContext('2d');
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.imageSmoothingEnabled = true;
-      }
-      resize();
-      window.addEventListener('resize', resize);
-    }
-  };
-})();
 
+        let touchEnabled = false;
+        function enableTouchControls() {
+          if (touchEnabled) return;
+          const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+          if (!isTouch) return;
+          touchEnabled = true;
+          const tc = document.getElementById('touch-controls');
+          if (!tc) return;
+          tc.classList.add('on');
+          tc.querySelectorAll('[data-key]').forEach((el) => {
+            setupTouchButton(el, el.dataset.key);
+          });
+        }
 
-/* ============================================================
+        return {
+          isDown(name) {
+            return !!keys[name];
+          },
+          wasPressed(name) {
+            return !!justPressed[name];
+          },
+          enableTouchControls,
+          endFrame() {
+            for (const k in justPressed) justPressed[k] = false;
+          },
+        };
+      })();
+
+      /* ---------- Juice: easing, particles, shake, freeze -------- */
+      const Juice = (function () {
+        let shakeAmount = 0;
+        let freezeFrames = 0;
+
+        return {
+          lerp(a, b, t) {
+            return a + (b - a) * t;
+          },
+          burst(x, y, count, color) {
+            const out = [];
+            for (let i = 0; i < count; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const s = 1 + Math.random() * 4;
+              out.push({
+                x,
+                y,
+                vx: Math.cos(a) * s,
+                vy: Math.sin(a) * s,
+                life: 30 + Math.random() * 25,
+                maxLife: 55,
+                color,
+                size: 2 + Math.random() * 3,
+              });
+            }
+            return out;
+          },
+          sparkle(x, y, count, color) {
+            const out = [];
+            for (let i = 0; i < count; i++) {
+              const a = Math.random() * Math.PI * 2;
+              const s = 0.5 + Math.random() * 1.5;
+              out.push({
+                x: x + (Math.random() - 0.5) * 10,
+                y: y + (Math.random() - 0.5) * 10,
+                vx: Math.cos(a) * s,
+                vy: Math.sin(a) * s - 0.4,
+                life: 40 + Math.random() * 30,
+                maxLife: 70,
+                color,
+                size: 1 + Math.random() * 2,
+                twinkle: true,
+              });
+            }
+            return out;
+          },
+          shake(amount) {
+            shakeAmount = Math.max(shakeAmount, amount);
+          },
+          getShakeOffset() {
+            const s = shakeAmount;
+            shakeAmount *= 0.85;
+            if (shakeAmount < 0.1) shakeAmount = 0;
+            return {
+              x: (Math.random() - 0.5) * s,
+              y: (Math.random() - 0.5) * s,
+            };
+          },
+          freeze(frames) {
+            freezeFrames = Math.max(freezeFrames, frames);
+          },
+          isFrozen() {
+            if (freezeFrames > 0) {
+              freezeFrames--;
+              return true;
+            }
+            return false;
+          },
+        };
+      })();
+
+      /* ---------- Sound: procedural Web Audio beeps -------------- */
+      const Sound = (function () {
+        let ac = null;
+        let muted = false;
+
+        function ensure() {
+          if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+          if (ac.state === 'suspended') ac.resume();
+          return ac;
+        }
+
+        function tone({
+          freq,
+          dur = 0.15,
+          type = 'square',
+          volume = 0.1,
+          slideTo = null,
+          attack = 0.005,
+        }) {
+          if (muted) return;
+          const a = ensure();
+          const t = a.currentTime;
+          const osc = a.createOscillator();
+          const gain = a.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, t);
+          if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(volume, t + attack);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          osc.connect(gain).connect(a.destination);
+          osc.start(t);
+          osc.stop(t + dur + 0.02);
+        }
+
+        function noiseBurst({ dur = 0.2, volume = 0.08, filter = 800 }) {
+          if (muted) return;
+          const a = ensure();
+          const t = a.currentTime;
+          const buf = a.createBuffer(1, a.sampleRate * dur, a.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+          const src = a.createBufferSource();
+          src.buffer = buf;
+          const f = a.createBiquadFilter();
+          f.type = 'lowpass';
+          f.frequency.value = filter;
+          const gain = a.createGain();
+          gain.gain.setValueAtTime(volume, t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          src.connect(f).connect(gain).connect(a.destination);
+          src.start(t);
+          src.stop(t + dur);
+        }
+
+        const sounds = {
+          step: () => noiseBurst({ dur: 0.04, volume: 0.025, filter: 380 }),
+          swap: () => {
+            tone({ freq: 600, dur: 0.06, type: 'triangle', volume: 0.08 });
+            setTimeout(() => tone({ freq: 900, dur: 0.08, type: 'triangle', volume: 0.08 }), 50);
+          },
+          sparkle: () => {
+            tone({ freq: 1500, dur: 0.05, type: 'triangle', volume: 0.07 });
+            setTimeout(() => tone({ freq: 1900, dur: 0.06, type: 'triangle', volume: 0.06 }), 40);
+            setTimeout(() => tone({ freq: 2400, dur: 0.07, type: 'triangle', volume: 0.05 }), 80);
+          },
+          coin: () => {
+            tone({ freq: 880, dur: 0.07, type: 'square', volume: 0.09 });
+            setTimeout(() => tone({ freq: 1320, dur: 0.12, type: 'square', volume: 0.09 }), 60);
+          },
+          clue: () => {
+            tone({ freq: 660, dur: 0.08, type: 'triangle', volume: 0.1 });
+            setTimeout(() => tone({ freq: 990, dur: 0.1, type: 'triangle', volume: 0.1 }), 60);
+            setTimeout(() => tone({ freq: 1320, dur: 0.18, type: 'triangle', volume: 0.1 }), 130);
+          },
+          mystery: () => tone({ freq: 220, dur: 0.4, type: 'sine', volume: 0.06, slideTo: 165 }),
+          pondReveal: () => {
+            tone({ freq: 330, dur: 0.6, type: 'sine', volume: 0.1, slideTo: 660, attack: 0.05 });
+            setTimeout(
+              () => tone({ freq: 440, dur: 0.5, type: 'triangle', volume: 0.08, slideTo: 880 }),
+              250
+            );
+          },
+          win: () => {
+            const notes = [523, 659, 784, 1047, 784, 1047, 1319];
+            notes.forEach((f, i) =>
+              setTimeout(() => tone({ freq: f, dur: 0.18, type: 'square', volume: 0.1 }), i * 150)
+            );
+          },
+          click: () => tone({ freq: 500, dur: 0.04, type: 'square', volume: 0.07 }),
+          dialogBlip: () =>
+            tone({ freq: 380 + Math.random() * 80, dur: 0.025, type: 'square', volume: 0.04 }),
+        };
+
+        return {
+          play(name) {
+            if (sounds[name]) sounds[name]();
+          },
+          set mute(v) {
+            muted = !!v;
+          },
+          get mute() {
+            return muted;
+          },
+        };
+      })();
+
+      /* ---------- Canvas: responsive sizing ---------------------- */
+      const Canvas = (function () {
+        return {
+          fit(canvas, W, H) {
+            function resize() {
+              const dpr = Math.min(window.devicePixelRatio || 1, 2);
+              const ratio = W / H;
+              const winRatio = window.innerWidth / window.innerHeight;
+              let cssW, cssH;
+              if (winRatio > ratio) {
+                cssH = window.innerHeight;
+                cssW = cssH * ratio;
+              } else {
+                cssW = window.innerWidth;
+                cssH = cssW / ratio;
+              }
+              canvas.style.width = cssW + 'px';
+              canvas.style.height = cssH + 'px';
+              canvas.width = W * dpr;
+              canvas.height = H * dpr;
+              const ctx = canvas.getContext('2d');
+              ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              ctx.imageSmoothingEnabled = true;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+          },
+        };
+      })();
+
+      /* ============================================================
    GAME: Bigfoot & Ghost — Episode 1: The Dark Forest
    ============================================================ */
 
-/* ---------- Palette (Sloane's three colors are the anchor) -- */
-const PAL = {
-  // Backgrounds (deep purple night)
-  skyTop:    '#0a0518',
-  skyMid:    '#160a2e',
-  skyBottom: '#291647',
-  groundTop: '#1a0e2e',
-  groundMid: '#150a24',
-  groundBot: '#080414',
+      /* ---------- Palette (Sloane's three colors are the anchor) -- */
+      const PAL = {
+        // Backgrounds (deep purple night)
+        skyTop: '#0a0518',
+        skyMid: '#160a2e',
+        skyBottom: '#291647',
+        groundTop: '#1a0e2e',
+        groundMid: '#150a24',
+        groundBot: '#080414',
 
-  // Sloane's three loud colors
-  pinkGlit:    '#ff4dc8',  // glittery — Bigfoot's bow, sparkles, hearts
-  purpleSplat: '#a855ff',  // splatter-paint — ghost glow, UI accents
-  limeGlow:    '#9bff5e',  // glow-in-the-dark — mushrooms, magic light
+        // Sloane's three loud colors
+        pinkGlit: '#ff4dc8', // glittery — Bigfoot's bow, sparkles, hearts
+        purpleSplat: '#a855ff', // splatter-paint — ghost glow, UI accents
+        limeGlow: '#9bff5e', // glow-in-the-dark — mushrooms, magic light
 
-  // Forest layers (parallax depth via value, not just color)
-  treeBack:    '#120822',
-  treeMid:     '#1c0e30',
-  treeFront:   '#27143e',
-  leavesBack:  '#0e1f18',
-  leavesMid:   '#16302a',
-  leavesFront: '#1f3f38',
+        // Forest layers (parallax depth via value, not just color)
+        treeBack: '#120822',
+        treeMid: '#1c0e30',
+        treeFront: '#27143e',
+        leavesBack: '#0e1f18',
+        leavesMid: '#16302a',
+        leavesFront: '#1f3f38',
 
-  // Ambient lighting
-  fireflyGlow: '#ffd76b',
-  ghostGlow:   '#c9a8ff',
-  pondGlow:    '#5ee8ff',
-  pondShimmer: '#a8f0ff',
+        // Ambient lighting
+        fireflyGlow: '#ffd76b',
+        ghostGlow: '#c9a8ff',
+        pondGlow: '#5ee8ff',
+        pondShimmer: '#a8f0ff',
 
-  // Bigfoot
-  bigfootFur:  '#3a2a1f',
-  bigfootDark: '#221610',
-  bigfootHigh: '#544037',
-  bigfootEye:  '#ffffff',
-  bigfootPup:  '#0a0a0a',
-  bigfootBow:  '#ff4dc8',
-  bigfootBowD: '#c2369a',
+        // Bigfoot
+        bigfootFur: '#3a2a1f',
+        bigfootDark: '#221610',
+        bigfootHigh: '#544037',
+        bigfootEye: '#ffffff',
+        bigfootPup: '#0a0a0a',
+        bigfootBow: '#ff4dc8',
+        bigfootBowD: '#c2369a',
 
-  // Ghost
-  ghostBody:   '#ece0ff',
-  ghostBodyD:  '#b8a8d8',
-  ghostEye:    '#1a0a2e',
+        // Ghost
+        ghostBody: '#ece0ff',
+        ghostBodyD: '#b8a8d8',
+        ghostEye: '#1a0a2e',
 
-  // Bushes (witchy, faintly glowing)
-  bushFront:   '#1f3f38',
-  bushBack:    '#152d28',
-  bushTip:     '#9bff5e',
-  bushBerry:   '#ff4dc8',
+        // Bushes (witchy, faintly glowing)
+        bushFront: '#1f3f38',
+        bushBack: '#152d28',
+        bushTip: '#9bff5e',
+        bushBerry: '#ff4dc8',
 
-  // Logs
-  logBody:     '#3a2820',
-  logRing:     '#5a3e30',
-  logShade:    '#1a0e08',
-  logMoss:     '#3a5840',
+        // Logs
+        logBody: '#3a2820',
+        logRing: '#5a3e30',
+        logShade: '#1a0e08',
+        logMoss: '#3a5840',
 
-  // Atmosphere
-  fogColor:    'rgba(180, 160, 220, 0.10)',
-  vignette:    'rgba(0, 0, 0, 0.78)',
+        // Atmosphere
+        fogColor: 'rgba(180, 160, 220, 0.10)',
+        vignette: 'rgba(0, 0, 0, 0.78)',
 
-  // UI
-  uiBg:        'rgba(15, 8, 28, 0.92)',
-  uiBgSolid:   '#0f081c',
-  uiBorder:    '#a855ff',
-  uiBorderHi:  '#ff4dc8',
-  uiText:      '#f5e8ff',
-  uiAccent:    '#9bff5e',
-  uiPink:      '#ff4dc8',
-  uiDim:       '#7a6a8a'
-};
+        // UI
+        uiBg: 'rgba(15, 8, 28, 0.92)',
+        uiBgSolid: '#0f081c',
+        uiBorder: '#a855ff',
+        uiBorderHi: '#ff4dc8',
+        uiText: '#f5e8ff',
+        uiAccent: '#9bff5e',
+        uiPink: '#ff4dc8',
+        uiDim: '#7a6a8a',
+      };
 
-/* ---------- Canvas setup --------------------------------- */
-const W = 960, H = 600;
-const canvas = document.getElementById('game');
-Canvas.fit(canvas, W, H);
-const ctx = canvas.getContext('2d');
+      /* ---------- Canvas setup --------------------------------- */
+      const W = 960,
+        H = 600;
+      const canvas = document.getElementById('game');
+      Canvas.fit(canvas, W, H);
+      const ctx = canvas.getContext('2d');
 
-/* ---------- World dimensions (camera scrolls inside) ----- */
-const WORLD_W = 2400;
-const WORLD_H = 1700;
+      /* ---------- World dimensions (camera scrolls inside) ----- */
+      const WORLD_W = 2400;
+      const WORLD_H = 1700;
 
-const camera = { x: 0, y: 0, tx: 0, ty: 0 };
+      const camera = { x: 0, y: 0, tx: 0, ty: 0 };
 
-/* ---------- Characters ----------------------------------- */
-const bigfoot = {
-  x: 1200, y: 1100, vx: 0, vy: 0,
-  r: 22,                         // collision radius
-  facing: 1,                     // 1 right, -1 left
-  walkPhase: 0,                  // for legs
-  bobPhase: 0,                   // tiny idle bob
-  type: 'bigfoot',
-  speed: 2.6
-};
+      /* ---------- Characters ----------------------------------- */
+      const bigfoot = {
+        x: 1200,
+        y: 1100,
+        vx: 0,
+        vy: 0,
+        r: 22, // collision radius
+        facing: 1, // 1 right, -1 left
+        walkPhase: 0, // for legs
+        bobPhase: 0, // tiny idle bob
+        type: 'bigfoot',
+        speed: 2.6,
+      };
 
-const ghost = {
-  x: 1230, y: 1095, vx: 0, vy: 0,
-  r: 18,
-  facing: 1,
-  bobPhase: Math.random() * Math.PI * 2,
-  drift: 0,
-  type: 'ghost',
-  speed: 2.7
-};
+      const ghost = {
+        x: 1230,
+        y: 1095,
+        vx: 0,
+        vy: 0,
+        r: 18,
+        facing: 1,
+        bobPhase: Math.random() * Math.PI * 2,
+        drift: 0,
+        type: 'ghost',
+        speed: 2.7,
+      };
 
-let leader = bigfoot;
-let follower = ghost;
+      let leader = bigfoot;
+      let follower = ghost;
 
-/* ---------- Static world layout -------------------------- */
-// We place trees, bushes, logs, mushrooms, rocks, clues with
-// careful coordinates. Scattering procedurally would feel random;
-// hand-placing with intent makes a real PLACE.
+      /* ---------- Static world layout -------------------------- */
+      // We place trees, bushes, logs, mushrooms, rocks, clues with
+      // careful coordinates. Scattering procedurally would feel random;
+      // hand-placing with intent makes a real PLACE.
 
-const trees = [];  // background silhouettes (decorative + parallax)
-const treesFront = []; // foreground trees (block player visually but not movement — they're just atmosphere unless we want collision)
-const bushes = [];     // BLOCK GHOST. Bigfoot pushes through.
-const logs = [];       // BLOCK BIGFOOT. Ghost phases through.
-const mushrooms = [];  // light sources
-const rocks = [];      // pure decoration
-const grassTufts = []; // pure decoration
+      const trees = []; // background silhouettes (decorative + parallax)
+      const treesFront = []; // foreground trees (block player visually but not movement — they're just atmosphere unless we want collision)
+      const bushes = []; // BLOCK GHOST. Bigfoot pushes through.
+      const logs = []; // BLOCK BIGFOOT. Ghost phases through.
+      const mushrooms = []; // light sources
+      const rocks = []; // pure decoration
+      const grassTufts = []; // pure decoration
 
-(function buildWorld() {
-  // ---- Trees (background, far) ----
-  const rngTree = mulberry32(11);
-  for (let i = 0; i < 90; i++) {
-    trees.push({
-      x: rngTree() * WORLD_W,
-      y: 80 + rngTree() * (WORLD_H - 160),
-      h: 90 + rngTree() * 130,
-      w: 28 + rngTree() * 38,
-      depth: 0.5 + rngTree() * 0.5,    // parallax / shading
-      sway: rngTree() * Math.PI * 2
-    });
-  }
-  for (let i = 0; i < 50; i++) {
-    treesFront.push({
-      x: rngTree() * WORLD_W,
-      y: 80 + rngTree() * (WORLD_H - 160),
-      h: 130 + rngTree() * 160,
-      w: 36 + rngTree() * 44,
-      sway: rngTree() * Math.PI * 2
-    });
-  }
+      (function buildWorld() {
+        // ---- Trees (background, far) ----
+        const rngTree = mulberry32(11);
+        for (let i = 0; i < 90; i++) {
+          trees.push({
+            x: rngTree() * WORLD_W,
+            y: 80 + rngTree() * (WORLD_H - 160),
+            h: 90 + rngTree() * 130,
+            w: 28 + rngTree() * 38,
+            depth: 0.5 + rngTree() * 0.5, // parallax / shading
+            sway: rngTree() * Math.PI * 2,
+          });
+        }
+        for (let i = 0; i < 50; i++) {
+          treesFront.push({
+            x: rngTree() * WORLD_W,
+            y: 80 + rngTree() * (WORLD_H - 160),
+            h: 130 + rngTree() * 160,
+            w: 36 + rngTree() * 44,
+            sway: rngTree() * Math.PI * 2,
+          });
+        }
 
-  // ---- Mushrooms scattered, with extra clusters at clue spots
-  function placeMushroomCluster(cx, cy, n, spread) {
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const d = Math.random() * spread;
-      mushrooms.push({
-        x: cx + Math.cos(a) * d,
-        y: cy + Math.sin(a) * d,
-        h: 18 + Math.random() * 22,
-        cap: 14 + Math.random() * 10,
-        glow: 60 + Math.random() * 40,
-        pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: 0.025 + Math.random() * 0.015
-      });
-    }
-  }
+        // ---- Mushrooms scattered, with extra clusters at clue spots
+        function placeMushroomCluster(cx, cy, n, spread) {
+          for (let i = 0; i < n; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const d = Math.random() * spread;
+            mushrooms.push({
+              x: cx + Math.cos(a) * d,
+              y: cy + Math.sin(a) * d,
+              h: 18 + Math.random() * 22,
+              cap: 14 + Math.random() * 10,
+              glow: 60 + Math.random() * 40,
+              pulse: Math.random() * Math.PI * 2,
+              pulseSpeed: 0.025 + Math.random() * 0.015,
+            });
+          }
+        }
 
-  // Light the path north and along main routes
-  for (let i = 0; i < 24; i++) {
-    placeMushroomCluster(
-      300 + Math.random() * (WORLD_W - 600),
-      200 + Math.random() * (WORLD_H - 400),
-      1 + Math.floor(Math.random() * 3),
-      40
-    );
-  }
+        // Light the path north and along main routes
+        for (let i = 0; i < 24; i++) {
+          placeMushroomCluster(
+            300 + Math.random() * (WORLD_W - 600),
+            200 + Math.random() * (WORLD_H - 400),
+            1 + Math.floor(Math.random() * 3),
+            40
+          );
+        }
 
-  // ---- Rocks ----
-  for (let i = 0; i < 30; i++) {
-    rocks.push({
-      x: Math.random() * WORLD_W,
-      y: 200 + Math.random() * (WORLD_H - 400),
-      w: 30 + Math.random() * 50,
-      h: 18 + Math.random() * 26
-    });
-  }
+        // ---- Rocks ----
+        for (let i = 0; i < 30; i++) {
+          rocks.push({
+            x: Math.random() * WORLD_W,
+            y: 200 + Math.random() * (WORLD_H - 400),
+            w: 30 + Math.random() * 50,
+            h: 18 + Math.random() * 26,
+          });
+        }
 
-  // ---- Grass tufts ----
-  for (let i = 0; i < 200; i++) {
-    grassTufts.push({
-      x: Math.random() * WORLD_W,
-      y: 140 + Math.random() * (WORLD_H - 200),
-      h: 6 + Math.random() * 10,
-      sway: Math.random() * Math.PI * 2
-    });
-  }
+        // ---- Grass tufts ----
+        for (let i = 0; i < 200; i++) {
+          grassTufts.push({
+            x: Math.random() * WORLD_W,
+            y: 140 + Math.random() * (WORLD_H - 200),
+            h: 6 + Math.random() * 10,
+            sway: Math.random() * Math.PI * 2,
+          });
+        }
 
-  // ---- Bushes (Ghost-blocking) — south & east areas ----
-  // Cluster of bushes guarding the SHELL clue (south)
-  pushBushRow(1500, 1380, 6, 70, 0);
-  pushBushRow(1500, 1440, 6, 70, 25);
-  // Bushes guarding the FLANNEL clue (south-west)
-  pushBushRow(550, 1320, 5, 70, 0);
-  pushBushRow(580, 1380, 4, 70, 30);
-  // Some scattered atmospheric bushes
-  for (let i = 0; i < 14; i++) {
-    bushes.push(makeBush(
-      Math.random() * WORLD_W,
-      200 + Math.random() * (WORLD_H - 400)
-    ));
-  }
+        // ---- Bushes (Ghost-blocking) — south & east areas ----
+        // Cluster of bushes guarding the SHELL clue (south)
+        pushBushRow(1500, 1380, 6, 70, 0);
+        pushBushRow(1500, 1440, 6, 70, 25);
+        // Bushes guarding the FLANNEL clue (south-west)
+        pushBushRow(550, 1320, 5, 70, 0);
+        pushBushRow(580, 1380, 4, 70, 30);
+        // Some scattered atmospheric bushes
+        for (let i = 0; i < 14; i++) {
+          bushes.push(makeBush(Math.random() * WORLD_W, 200 + Math.random() * (WORLD_H - 400)));
+        }
 
-  function pushBushRow(x, y, n, gap, jitter) {
-    for (let i = 0; i < n; i++) {
-      bushes.push(makeBush(x + i * gap + (Math.random() - 0.5) * jitter, y + (Math.random() - 0.5) * jitter));
-    }
-  }
-  function makeBush(x, y) {
-    return {
-      x, y,
-      r: 30 + Math.random() * 14,
-      sway: Math.random() * Math.PI * 2,
-      berries: Math.random() < 0.5
-    };
-  }
+        function pushBushRow(x, y, n, gap, jitter) {
+          for (let i = 0; i < n; i++) {
+            bushes.push(
+              makeBush(
+                x + i * gap + (Math.random() - 0.5) * jitter,
+                y + (Math.random() - 0.5) * jitter
+              )
+            );
+          }
+        }
+        function makeBush(x, y) {
+          return {
+            x,
+            y,
+            r: 30 + Math.random() * 14,
+            sway: Math.random() * Math.PI * 2,
+            berries: Math.random() < 0.5,
+          };
+        }
 
-  // ---- Logs (Bigfoot-blocking) — north area ----
-  // Wall of logs guarding the SCRUNCHIE clue
-  logs.push({ x: 700, y: 540, w: 280, h: 38, rot: 0.05 });
-  logs.push({ x: 1000, y: 580, w: 220, h: 38, rot: -0.04 });
-  // Wall of logs guarding the POLAROID clue
-  logs.push({ x: 1500, y: 520, w: 260, h: 38, rot: -0.02 });
-  logs.push({ x: 1780, y: 560, w: 200, h: 38, rot: 0.03 });
-  // A few atmospheric logs scattered
-  logs.push({ x: 380, y: 880, w: 180, h: 32, rot: 0.1 });
-  logs.push({ x: 2050, y: 940, w: 170, h: 32, rot: -0.08 });
-})();
+        // ---- Logs (Bigfoot-blocking) — north area ----
+        // Wall of logs guarding the SCRUNCHIE clue
+        logs.push({ x: 700, y: 540, w: 280, h: 38, rot: 0.05 });
+        logs.push({ x: 1000, y: 580, w: 220, h: 38, rot: -0.04 });
+        // Wall of logs guarding the POLAROID clue
+        logs.push({ x: 1500, y: 520, w: 260, h: 38, rot: -0.02 });
+        logs.push({ x: 1780, y: 560, w: 200, h: 38, rot: 0.03 });
+        // A few atmospheric logs scattered
+        logs.push({ x: 380, y: 880, w: 180, h: 32, rot: 0.1 });
+        logs.push({ x: 2050, y: 940, w: 170, h: 32, rot: -0.08 });
+      })();
 
-/* Tiny seedable RNG */
-function mulberry32(seed) {
-  return function () {
-    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+      /* Tiny seedable RNG */
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0;
+          seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
 
-/* ---------- Clues -----------------------------------------
+      /* ---------- Clues -----------------------------------------
    Each clue knows where it lives and what it says.
    A clue can require Bigfoot, Ghost, or either to reach (just by
    physical access — no explicit lock; bushes/logs do that work).
 */
-const clues = [
-  {
-    id: 'note',
-    x: 1280, y: 920,
-    title: 'A Glowing Note',
-    icon: 'note',
-    flavor: '"Saw something with fins last Tuesday. Or maybe just a wet raccoon. ANYWAY." — anonymous forest gossip',
-    ghostQuip: 'Useful. Truly. We can definitely close the case now.',
-    collected: false
-  },
-  {
-    id: 'sign',
-    x: 950, y: 1180,
-    title: 'A Wooden Sign',
-    icon: 'sign',
-    flavor: 'It reads: "NO MERMAIDS THIS WAY ↗" (The arrow points northeast.)',
-    ghostQuip: 'Oh wow. So obvious. We are absolutely going that way.',
-    collected: false
-  },
-  {
-    id: 'flannel',
-    x: 700, y: 1420,   // behind south-west bushes — needs Bigfoot
-    title: 'A Wet Flannel Shirt',
-    icon: 'flannel',
-    flavor: 'It is SOAKED. The hem of it is shaped like... a tail? A FIN? Who is doing laundry in the forest.',
-    ghostQuip: 'I refuse to believe a mermaid is also a flannel girl. And yet.',
-    collected: false
-  },
-  {
-    id: 'shell',
-    x: 1740, y: 1430,  // behind south-east bushes — needs Bigfoot
-    title: 'A Suspicious Seashell',
-    icon: 'shell',
-    flavor: 'We are two hundred miles from any ocean. Explain yourself, shell.',
-    ghostQuip: 'The shell is not explaining itself. That tracks.',
-    collected: false
-  },
-  {
-    id: 'scrunchie',
-    x: 850, y: 460,    // behind north-west logs — needs Ghost
-    title: 'A Pink Scrunchie',
-    icon: 'scrunchie',
-    flavor: 'Glittery. Wet. Smells faintly of pond. Whoever lost this had GREAT hair.',
-    ghostQuip: 'We are getting somewhere. Or losing our minds. Hard to tell.',
-    collected: false
-  },
-  {
-    id: 'polaroid',
-    x: 1700, y: 420,   // behind north-east logs — needs Ghost
-    title: 'A Half-Buried Polaroid',
-    icon: 'polaroid',
-    flavor: 'The photo is too blurry to make out. But there is DEFINITELY something in the water. With eyes.',
-    ghostQuip: 'Okay. Okay. Bigfoot. We need to talk about how we feel right now.',
-    collected: false
-  }
-];
+      const clues = [
+        {
+          id: 'note',
+          x: 1280,
+          y: 920,
+          title: 'A Glowing Note',
+          icon: 'note',
+          flavor:
+            '"Saw something with fins last Tuesday. Or maybe just a wet raccoon. ANYWAY." — anonymous forest gossip',
+          ghostQuip: 'Useful. Truly. We can definitely close the case now.',
+          collected: false,
+        },
+        {
+          id: 'sign',
+          x: 950,
+          y: 1180,
+          title: 'A Wooden Sign',
+          icon: 'sign',
+          flavor: 'It reads: "NO MERMAIDS THIS WAY ↗" (The arrow points northeast.)',
+          ghostQuip: 'Oh wow. So obvious. We are absolutely going that way.',
+          collected: false,
+        },
+        {
+          id: 'flannel',
+          x: 700,
+          y: 1420, // behind south-west bushes — needs Bigfoot
+          title: 'A Wet Flannel Shirt',
+          icon: 'flannel',
+          flavor:
+            'It is SOAKED. The hem of it is shaped like... a tail? A FIN? Who is doing laundry in the forest.',
+          ghostQuip: 'I refuse to believe a mermaid is also a flannel girl. And yet.',
+          collected: false,
+        },
+        {
+          id: 'shell',
+          x: 1740,
+          y: 1430, // behind south-east bushes — needs Bigfoot
+          title: 'A Suspicious Seashell',
+          icon: 'shell',
+          flavor: 'We are two hundred miles from any ocean. Explain yourself, shell.',
+          ghostQuip: 'The shell is not explaining itself. That tracks.',
+          collected: false,
+        },
+        {
+          id: 'scrunchie',
+          x: 850,
+          y: 460, // behind north-west logs — needs Ghost
+          title: 'A Pink Scrunchie',
+          icon: 'scrunchie',
+          flavor: 'Glittery. Wet. Smells faintly of pond. Whoever lost this had GREAT hair.',
+          ghostQuip: 'We are getting somewhere. Or losing our minds. Hard to tell.',
+          collected: false,
+        },
+        {
+          id: 'polaroid',
+          x: 1700,
+          y: 420, // behind north-east logs — needs Ghost
+          title: 'A Half-Buried Polaroid',
+          icon: 'polaroid',
+          flavor:
+            'The photo is too blurry to make out. But there is DEFINITELY something in the water. With eyes.',
+          ghostQuip: 'Okay. Okay. Bigfoot. We need to talk about how we feel right now.',
+          collected: false,
+        },
+      ];
 
-const TOTAL_CLUES = clues.length;
+      const TOTAL_CLUES = clues.length;
 
-/* ---------- Pond (the goal) ------------------------------- */
-const pond = {
-  x: 1200, y: 240,
-  rx: 200, ry: 90,
-  revealed: false,
-  revealT: 0,
-  shimmerPhase: 0
-};
+      /* ---------- Pond (the goal) ------------------------------- */
+      const pond = {
+        x: 1200,
+        y: 240,
+        rx: 200,
+        ry: 90,
+        revealed: false,
+        revealT: 0,
+        shimmerPhase: 0,
+      };
 
-/* ---------- Magic cameo (Easter egg) ---------------------- */
-// A tiny pizza with Magic the cat sitting on it. Off the beaten path.
-const magicSpot = { x: 2200, y: 1300, mmmmTimer: 0, mmmmShown: false };
+      /* ---------- Magic cameo (Easter egg) ---------------------- */
+      // A tiny pizza with Magic the cat sitting on it. Off the beaten path.
+      const magicSpot = { x: 2200, y: 1300, mmmmTimer: 0, mmmmShown: false };
 
-/* ---------- Particle / FX systems ------------------------- */
-const fireflies = [];
-for (let i = 0; i < 60; i++) {
-  fireflies.push({
-    x: Math.random() * WORLD_W,
-    y: 200 + Math.random() * (WORLD_H - 400),
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.04 + Math.random() * 0.04
-  });
-}
+      /* ---------- Particle / FX systems ------------------------- */
+      const fireflies = [];
+      for (let i = 0; i < 60; i++) {
+        fireflies.push({
+          x: Math.random() * WORLD_W,
+          y: 200 + Math.random() * (WORLD_H - 400),
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.04 + Math.random() * 0.04,
+        });
+      }
 
-const fogPuffs = [];
-for (let i = 0; i < 16; i++) {
-  fogPuffs.push({
-    x: Math.random() * WORLD_W,
-    y: Math.random() * WORLD_H,
-    r: 140 + Math.random() * 220,
-    vx: -0.15 - Math.random() * 0.15,
-    alpha: 0.04 + Math.random() * 0.05
-  });
-}
+      const fogPuffs = [];
+      for (let i = 0; i < 16; i++) {
+        fogPuffs.push({
+          x: Math.random() * WORLD_W,
+          y: Math.random() * WORLD_H,
+          r: 140 + Math.random() * 220,
+          vx: -0.15 - Math.random() * 0.15,
+          alpha: 0.04 + Math.random() * 0.05,
+        });
+      }
 
-const dustMotes = [];
-for (let i = 0; i < 80; i++) {
-  dustMotes.push({
-    x: Math.random() * WORLD_W,
-    y: Math.random() * WORLD_H,
-    vx: (Math.random() - 0.5) * 0.2,
-    vy: -0.05 - Math.random() * 0.15,
-    life: Math.random() * 200,
-    size: 0.5 + Math.random() * 1
-  });
-}
+      const dustMotes = [];
+      for (let i = 0; i < 80; i++) {
+        dustMotes.push({
+          x: Math.random() * WORLD_W,
+          y: Math.random() * WORLD_H,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: -0.05 - Math.random() * 0.15,
+          life: Math.random() * 200,
+          size: 0.5 + Math.random() * 1,
+        });
+      }
 
-let burstParticles = [];
-let sparkleParticles = [];
+      let burstParticles = [];
+      let sparkleParticles = [];
 
-/* ---------- UI / dialog state ---------------------------- */
-const game = {
-  mode: 'title',   // 'title' | 'playing' | 'dialog' | 'pondReveal' | 'ending'
-  modeT: 0,
-  dialog: null,    // { speaker, text, charsShown, doneTyping, autoCloseAt }
-  dialogQueue: [],
-  collectedCount: 0,
-  pondRevealT: 0,
-  endingT: 0,
-  ghostQuipTimer: 240, // periodic snark
-  titleStartHover: false,
-  showHint: 0,
-  introShown: false
-};
+      /* ---------- UI / dialog state ---------------------------- */
+      const game = {
+        mode: 'title', // 'title' | 'playing' | 'dialog' | 'pondReveal' | 'ending'
+        modeT: 0,
+        dialog: null, // { speaker, text, charsShown, doneTyping, autoCloseAt }
+        dialogQueue: [],
+        collectedCount: 0,
+        pondRevealT: 0,
+        endingT: 0,
+        ghostQuipTimer: 240, // periodic snark
+        titleStartHover: false,
+        showHint: 0,
+        introShown: false,
+      };
 
-/* ---------- Ambient ghost lines (random / context) ------- */
-const idleGhostLines = [
-  'Oh great. Another tree. Love that for us.',
-  'Statistically the mermaid is fictional. Just so we are aligned.',
-  'Bigfoot. You smell like a wet carpet. Stop looking at me.',
-  'I have been dead for sixty years and THIS is my Tuesday.',
-  'If we find her, I am taking the credit. Just so we are clear.',
-  'A bush moved. Riveting. Five stars.',
-];
+      /* ---------- Ambient ghost lines (random / context) ------- */
+      const idleGhostLines = [
+        'Oh great. Another tree. Love that for us.',
+        'Statistically the mermaid is fictional. Just so we are aligned.',
+        'Bigfoot. You smell like a wet carpet. Stop looking at me.',
+        'I have been dead for sixty years and THIS is my Tuesday.',
+        'If we find her, I am taking the credit. Just so we are clear.',
+        'A bush moved. Riveting. Five stars.',
+      ];
 
-const idleBigfootLines = [
-  '...',
-  '*sniffs around*',
-  '*chews a leaf, immediately spits it out*',
-  '*adjusts pink bow*'
-];
+      const idleBigfootLines = [
+        '...',
+        '*sniffs around*',
+        '*chews a leaf, immediately spits it out*',
+        '*adjusts pink bow*',
+      ];
 
-const magicLines = [
-  'mmmmmmmm.',
-  'mmmmmmmm. (he definitely loves this pizza, but pretends not to)',
-  'mmmmmmmm. (do not make eye contact with him)',
-  'mmmmmmmm. (he is judging your forest exploration skills)'
-];
+      const magicLines = [
+        'mmmmmmmm.',
+        'mmmmmmmm. (he definitely loves this pizza, but pretends not to)',
+        'mmmmmmmm. (do not make eye contact with him)',
+        'mmmmmmmm. (he is judging your forest exploration skills)',
+      ];
 
-/* ============================================================
+      /* ============================================================
    DRAWING HELPERS
    ============================================================ */
 
-function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-
-function drawGradientBackground() {
-  // Sky gradient
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, PAL.skyTop);
-  g.addColorStop(0.55, PAL.skyMid);
-  g.addColorStop(1, PAL.skyBottom);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-
-  // Ground gradient bleed (subtle)
-  const gg = ctx.createLinearGradient(0, H * 0.55, 0, H);
-  gg.addColorStop(0, 'rgba(26,14,46,0)');
-  gg.addColorStop(1, PAL.groundBot);
-  ctx.fillStyle = gg;
-  ctx.fillRect(0, H * 0.55, W, H * 0.45);
-}
-
-function drawDistantTrees(t) {
-  // Very far silhouette band, minimal parallax
-  for (const tree of trees) {
-    const wx = tree.x - camera.x * tree.depth * 0.7;
-    const wy = tree.y - camera.y * tree.depth * 0.7;
-    if (wx < -80 || wx > W + 80) continue;
-    if (wy < -80 || wy > H + 80) continue;
-    const sway = Math.sin(t * 0.0006 + tree.sway) * 1.2;
-    drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeBack, tree.depth);
-  }
-}
-
-function drawTreeSilhouette(x, y, w, h, color, depth) {
-  // Trunk
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(x - w * 0.12, y);
-  ctx.quadraticCurveTo(x, y - h * 0.6, x - w * 0.06, y - h);
-  ctx.quadraticCurveTo(x, y - h * 0.7, x + w * 0.12, y);
-  ctx.closePath();
-  ctx.fill();
-
-  // Foliage clusters (3 puffs)
-  ctx.beginPath();
-  ctx.arc(x, y - h, w * 0.55, 0, Math.PI * 2);
-  ctx.arc(x - w * 0.35, y - h * 0.85, w * 0.45, 0, Math.PI * 2);
-  ctx.arc(x + w * 0.35, y - h * 0.85, w * 0.45, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawForegroundTrees(t) {
-  // Foreground trees, drawn AFTER characters for depth (those go in late layer)
-  // For now we render front trees at world Y for proper sorting
-  for (const tree of treesFront) {
-    const wx = tree.x - camera.x;
-    const wy = tree.y - camera.y;
-    if (wx < -120 || wx > W + 120) continue;
-    if (wy < -200 || wy > H + 60) continue;
-    const sway = Math.sin(t * 0.0008 + tree.sway) * 2;
-    drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeMid, 1);
-  }
-}
-
-function drawTreesAroundPlayer(t, py) {
-  // Closest trees (drawn after characters if they're below the player)
-  for (const tree of treesFront) {
-    if (tree.y < py) continue;
-    const wx = tree.x - camera.x;
-    const wy = tree.y - camera.y;
-    if (wx < -120 || wx > W + 120) continue;
-    if (wy < -200 || wy > H + 60) continue;
-    const sway = Math.sin(t * 0.0008 + tree.sway) * 2;
-    drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeFront, 1);
-  }
-}
-
-function drawGround() {
-  // Soft "ground" texture: faint horizontal blob pattern
-  ctx.save();
-  ctx.globalAlpha = 0.4;
-  const g = ctx.createRadialGradient(W * 0.5, H * 0.7, 0, W * 0.5, H * 0.7, H * 0.9);
-  g.addColorStop(0, 'rgba(60, 40, 90, 0.25)');
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-  ctx.restore();
-}
-
-function drawGrassTufts(t) {
-  ctx.save();
-  for (const g of grassTufts) {
-    const wx = g.x - camera.x, wy = g.y - camera.y;
-    if (wx < -10 || wx > W + 10 || wy < -10 || wy > H + 10) continue;
-    const sway = Math.sin(t * 0.001 + g.sway) * 1.5;
-    ctx.strokeStyle = PAL.leavesFront;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(wx, wy);
-    ctx.quadraticCurveTo(wx + sway, wy - g.h * 0.6, wx + sway * 1.6, wy - g.h);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function drawRocks() {
-  for (const r of rocks) {
-    const wx = r.x - camera.x, wy = r.y - camera.y;
-    if (wx < -100 || wx > W + 100 || wy < -100 || wy > H + 100) continue;
-    ctx.fillStyle = PAL.treeBack;
-    ctx.beginPath();
-    ctx.ellipse(wx, wy, r.w, r.h, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-    ctx.beginPath();
-    ctx.ellipse(wx - r.w * 0.2, wy - r.h * 0.3, r.w * 0.6, r.h * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function drawBushes(t) {
-  for (const b of bushes) {
-    const wx = b.x - camera.x, wy = b.y - camera.y;
-    if (wx < -80 || wx > W + 80 || wy < -80 || wy > H + 80) continue;
-    const sway = Math.sin(t * 0.0015 + b.sway) * 1.5;
-    // back layer
-    ctx.fillStyle = PAL.bushBack;
-    ctx.beginPath();
-    ctx.arc(wx + sway * 0.5, wy - 4, b.r, 0, Math.PI * 2);
-    ctx.arc(wx - b.r * 0.6 + sway, wy - 2, b.r * 0.7, 0, Math.PI * 2);
-    ctx.arc(wx + b.r * 0.6 + sway, wy - 2, b.r * 0.7, 0, Math.PI * 2);
-    ctx.fill();
-    // front layer
-    ctx.fillStyle = PAL.bushFront;
-    ctx.beginPath();
-    ctx.arc(wx + sway, wy, b.r * 0.85, 0, Math.PI * 2);
-    ctx.arc(wx - b.r * 0.5 + sway * 0.6, wy, b.r * 0.55, 0, Math.PI * 2);
-    ctx.arc(wx + b.r * 0.5 + sway * 0.6, wy, b.r * 0.55, 0, Math.PI * 2);
-    ctx.fill();
-    // tip highlights — tiny lime sparks
-    ctx.fillStyle = PAL.bushTip;
-    ctx.globalAlpha = 0.55;
-    for (let i = 0; i < 5; i++) {
-      const a = i * (Math.PI * 2 / 5) + b.sway;
-      const px = wx + Math.cos(a) * b.r * 0.7 + sway;
-      const py = wy + Math.sin(a) * b.r * 0.5;
-      ctx.fillRect(px - 1, py - 1, 2, 2);
-    }
-    ctx.globalAlpha = 1;
-    // berries
-    if (b.berries) {
-      ctx.fillStyle = PAL.bushBerry;
-      const a = t * 0.001 + b.sway;
-      ctx.beginPath();
-      ctx.arc(wx + Math.cos(a) * b.r * 0.5 + sway, wy - 4 + Math.sin(a) * 3, 3, 0, Math.PI * 2);
-      ctx.arc(wx + Math.cos(a + 2) * b.r * 0.4 + sway, wy + 2 + Math.sin(a + 2) * 3, 2.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-}
-
-function drawLogs() {
-  for (const l of logs) {
-    const wx = l.x - camera.x, wy = l.y - camera.y;
-    if (wx + l.w < 0 || wx > W || wy < -60 || wy > H + 40) continue;
-    ctx.save();
-    ctx.translate(wx + l.w / 2, wy);
-    ctx.rotate(l.rot);
-    // log body
-    ctx.fillStyle = PAL.logBody;
-    roundRect(-l.w / 2, -l.h / 2, l.w, l.h, l.h * 0.5);
-    ctx.fill();
-    // shading underneath
-    ctx.fillStyle = PAL.logShade;
-    roundRect(-l.w / 2 + 4, -l.h / 2 + l.h * 0.55, l.w - 8, l.h * 0.45, l.h * 0.3);
-    ctx.fill();
-    // ring on the left (cross-section)
-    ctx.fillStyle = PAL.logRing;
-    ctx.beginPath();
-    ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.42, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = PAL.logShade;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.28, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.16, 0, Math.PI * 2);
-    ctx.stroke();
-    // moss tufts
-    ctx.fillStyle = PAL.logMoss;
-    for (let i = 0; i < 5; i++) {
-      const px = -l.w / 2 + 20 + i * (l.w - 40) / 5 + Math.sin(i) * 6;
-      ctx.beginPath();
-      ctx.arc(px, -l.h / 2 + 2, 4 + Math.sin(i * 1.7) * 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-}
-
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-}
-
-function drawMushrooms(t) {
-  for (const m of mushrooms) {
-    const wx = m.x - camera.x, wy = m.y - camera.y;
-    if (wx < -60 || wx > W + 60 || wy < -60 || wy > H + 60) continue;
-    // stem
-    ctx.fillStyle = '#e8e0d4';
-    ctx.beginPath();
-    ctx.moveTo(wx - 3, wy);
-    ctx.lineTo(wx - 4, wy - m.h);
-    ctx.lineTo(wx + 4, wy - m.h);
-    ctx.lineTo(wx + 3, wy);
-    ctx.closePath();
-    ctx.fill();
-    // cap
-    const pulse = 0.85 + 0.15 * Math.sin(t * m.pulseSpeed + m.pulse);
-    ctx.fillStyle = PAL.limeGlow;
-    ctx.beginPath();
-    ctx.ellipse(wx, wy - m.h, m.cap, m.cap * 0.7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // cap dark base
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath();
-    ctx.ellipse(wx, wy - m.h + m.cap * 0.45, m.cap * 0.95, m.cap * 0.25, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // dots on cap
-    ctx.fillStyle = '#e8ffe0';
-    for (let i = 0; i < 3; i++) {
-      const a = i * 2.0 + m.pulse;
-      ctx.beginPath();
-      ctx.arc(wx + Math.cos(a) * m.cap * 0.5, wy - m.h + Math.sin(a) * m.cap * 0.25, 1.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // stash pulse for the lighting pass
-    m._pulse = pulse;
-  }
-}
-
-function drawMushroomLightOverlay(t) {
-  // Additive light pools — call AFTER everything else for that warm glow
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  for (const m of mushrooms) {
-    const wx = m.x - camera.x, wy = m.y - camera.y - m.h;
-    if (wx < -200 || wx > W + 200 || wy < -200 || wy > H + 200) continue;
-    const r = m.glow * (m._pulse || 1);
-    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
-    g.addColorStop(0, 'rgba(155, 255, 94, 0.55)');
-    g.addColorStop(0.4, 'rgba(155, 255, 94, 0.18)');
-    g.addColorStop(1, 'rgba(155, 255, 94, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(wx, wy, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawClues(t) {
-  for (const c of clues) {
-    if (c.collected) continue;
-    const wx = c.x - camera.x, wy = c.y - camera.y;
-    if (wx < -80 || wx > W + 80 || wy < -80 || wy > H + 80) continue;
-
-    // floating bob
-    const bob = Math.sin(t * 0.003 + c.x * 0.01) * 4;
-
-    // glow under
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    const g = ctx.createRadialGradient(wx, wy + bob, 0, wx, wy + bob, 50);
-    g.addColorStop(0, 'rgba(255, 77, 200, 0.45)');
-    g.addColorStop(1, 'rgba(255, 77, 200, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(wx, wy + bob, 50, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    drawClueIcon(wx, wy + bob, c.icon, t);
-
-    // sparkle ring
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < 3; i++) {
-      const a = t * 0.003 + i * (Math.PI * 2 / 3);
-      const sx = wx + Math.cos(a) * 22;
-      const sy = wy + bob + Math.sin(a) * 22;
-      ctx.fillStyle = 'rgba(255, 220, 255, 0.9)';
-      ctx.fillRect(sx - 1, sy - 1, 2, 2);
-    }
-    ctx.restore();
-  }
-}
-
-function drawClueIcon(x, y, kind, t) {
-  ctx.save();
-  ctx.translate(x, y);
-
-  const wob = Math.sin(t * 0.004) * 0.05;
-  ctx.rotate(wob);
-
-  if (kind === 'note') {
-    // glowing parchment note
-    ctx.fillStyle = '#fff6d0';
-    roundRect(-12, -16, 24, 28, 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let i = 0; i < 4; i++) {
-      ctx.moveTo(-8, -10 + i * 6);
-      ctx.lineTo(8, -10 + i * 6);
-    }
-    ctx.stroke();
-    // corner fold
-    ctx.fillStyle = '#e8d7a8';
-    ctx.beginPath();
-    ctx.moveTo(8, -16); ctx.lineTo(12, -12); ctx.lineTo(8, -12);
-    ctx.closePath();
-    ctx.fill();
-
-  } else if (kind === 'sign') {
-    // wooden post with sign
-    ctx.fillStyle = PAL.logBody;
-    ctx.fillRect(-2, -6, 4, 22);
-    ctx.fillStyle = '#8a6c4f';
-    roundRect(-18, -22, 36, 16, 2);
-    ctx.fill();
-    ctx.fillStyle = '#3a2810';
-    ctx.font = 'bold 8px VT323, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('NO MERMAIDS ↗', 0, -11);
-
-  } else if (kind === 'flannel') {
-    // folded flannel — red checks
-    ctx.fillStyle = '#7a1e1e';
-    roundRect(-14, -10, 28, 20, 2);
-    ctx.fill();
-    ctx.strokeStyle = '#c44a4a';
-    ctx.lineWidth = 1;
-    for (let i = -12; i <= 12; i += 4) {
-      ctx.beginPath(); ctx.moveTo(i, -10); ctx.lineTo(i, 10); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(-14, i * 0.7); ctx.lineTo(14, i * 0.7); ctx.stroke();
-    }
-    // wet drip
-    ctx.fillStyle = 'rgba(110, 200, 240, 0.6)';
-    ctx.beginPath(); ctx.arc(0, 12, 3, 0, Math.PI * 2); ctx.fill();
-
-  } else if (kind === 'shell') {
-    // pink/purple seashell
-    ctx.fillStyle = PAL.pinkGlit;
-    ctx.beginPath();
-    ctx.moveTo(0, 12);
-    ctx.quadraticCurveTo(-16, 6, -14, -8);
-    ctx.quadraticCurveTo(0, -16, 14, -8);
-    ctx.quadraticCurveTo(16, 6, 0, 12);
-    ctx.fill();
-    ctx.strokeStyle = PAL.purpleSplat;
-    ctx.lineWidth = 1.4;
-    for (let i = -3; i <= 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(0, 12);
-      ctx.quadraticCurveTo(i * 3, 0, i * 4, -10);
-      ctx.stroke();
-    }
-
-  } else if (kind === 'scrunchie') {
-    // donut-shaped pink scrunchie
-    ctx.strokeStyle = PAL.pinkGlit;
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.arc(0, 0, 11, 0, Math.PI * 2);
-    ctx.stroke();
-    // glitter highlights
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 6; i++) {
-      const a = i * (Math.PI * 2 / 6) + t * 0.003;
-      ctx.fillRect(Math.cos(a) * 11 - 0.5, Math.sin(a) * 11 - 0.5, 1, 1);
-    }
-
-  } else if (kind === 'polaroid') {
-    // polaroid frame
-    ctx.fillStyle = '#f0ebe0';
-    ctx.fillRect(-13, -16, 26, 30);
-    // photo area (dark, blurry, with one mysterious glow)
-    ctx.fillStyle = '#0a1422';
-    ctx.fillRect(-11, -14, 22, 20);
-    ctx.fillStyle = 'rgba(94, 232, 255, 0.5)';
-    ctx.beginPath();
-    ctx.arc(0, -4, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(94, 232, 255, 0.2)';
-    ctx.beginPath();
-    ctx.arc(0, -4, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.fillRect(-2, -5, 1, 1);
-    ctx.fillRect(1, -5, 1, 1);
-    // caption
-    ctx.fillStyle = '#3a2a44';
-    ctx.font = '6px VT323, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('???', 0, 12);
-  }
-
-  ctx.restore();
-}
-
-/* ---------- Bigfoot drawing ---------------------------- */
-function drawBigfoot(b, t) {
-  const wx = b.x - camera.x;
-  const wy = b.y - camera.y;
-  const isMoving = Math.abs(b.vx) + Math.abs(b.vy) > 0.5;
-  const phase = b.walkPhase;
-  const bob = isMoving ? Math.abs(Math.sin(phase * 2)) * 2 : Math.sin(t * 0.003) * 1;
-  const stretch = isMoving ? 1 + Math.sin(phase * 2) * 0.04 : 1;
-  const isLeader = leader === b;
-
-  ctx.save();
-  ctx.translate(wx, wy - bob);
-
-  // soft drop shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.beginPath();
-  ctx.ellipse(0, 22, 22, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // legs
-  const legSwing = isMoving ? Math.sin(phase) * 5 : 0;
-  ctx.fillStyle = PAL.bigfootDark;
-  ctx.fillRect(-10, 8, 8, 14 + legSwing);
-  ctx.fillRect(2, 8, 8, 14 - legSwing);
-
-  // body (chunky pear)
-  ctx.scale(b.facing, 1);
-  ctx.scale(1, stretch);
-  ctx.fillStyle = PAL.bigfootFur;
-  ctx.beginPath();
-  ctx.moveTo(-18, 12);
-  ctx.bezierCurveTo(-22, -12, -16, -22, 0, -22);
-  ctx.bezierCurveTo(16, -22, 22, -12, 18, 12);
-  ctx.bezierCurveTo(14, 18, -14, 18, -18, 12);
-  ctx.fill();
-
-  // belly
-  ctx.fillStyle = PAL.bigfootDark;
-  ctx.beginPath();
-  ctx.ellipse(0, 4, 10, 12, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // arms
-  const armSwing = isMoving ? Math.sin(phase) * 3 : 0;
-  ctx.fillStyle = PAL.bigfootFur;
-  ctx.beginPath();
-  ctx.ellipse(-18, -2 + armSwing, 6, 14, 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(18, -2 - armSwing, 6, 14, -0.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // head
-  ctx.fillStyle = PAL.bigfootFur;
-  ctx.beginPath();
-  ctx.arc(0, -22, 14, 0, Math.PI * 2);
-  ctx.fill();
-
-  // fur tufts on top
-  ctx.fillStyle = PAL.bigfootHigh;
-  for (let i = 0; i < 5; i++) {
-    const a = -Math.PI / 2 + (i - 2) * 0.4;
-    const sx = Math.cos(a) * 14;
-    const sy = -22 + Math.sin(a) * 14;
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(sx + Math.cos(a) * 4, sy + Math.sin(a) * 4 - 2);
-    ctx.lineTo(sx + Math.cos(a) * 2, sy + Math.sin(a) * 2);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // pink BOW (girl Bigfoot signature)
-  ctx.save();
-  ctx.translate(-3, -32);
-  ctx.fillStyle = PAL.bigfootBow;
-  // bow loops
-  ctx.beginPath();
-  ctx.ellipse(-5, 0, 5, 4, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(5, 0, 5, 4, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  // knot
-  ctx.fillStyle = PAL.bigfootBowD;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 2.4, 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // glitter sparks
-  ctx.fillStyle = '#ffffff';
-  for (let i = 0; i < 3; i++) {
-    const px = -7 + Math.sin(t * 0.005 + i) * 8;
-    const py = -2 + Math.cos(t * 0.005 + i) * 3;
-    ctx.fillRect(px, py, 1, 1);
-  }
-  ctx.restore();
-
-  // eyes
-  ctx.fillStyle = PAL.bigfootEye;
-  ctx.beginPath();
-  ctx.arc(-5, -22, 3.4, 0, Math.PI * 2);
-  ctx.arc(5, -22, 3.4, 0, Math.PI * 2);
-  ctx.fill();
-  // pupils — gently track movement
-  const px = clamp(b.vx * 0.8, -1.2, 1.2);
-  const py = clamp(b.vy * 0.8, -1.2, 1.2);
-  ctx.fillStyle = PAL.bigfootPup;
-  ctx.beginPath();
-  ctx.arc(-5 + px, -22 + py, 1.6, 0, Math.PI * 2);
-  ctx.arc(5 + px, -22 + py, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-  // tiny mouth
-  ctx.strokeStyle = PAL.bigfootDark;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.arc(0, -16, 2, 0.2, Math.PI - 0.2);
-  ctx.stroke();
-
-  ctx.restore();
-
-  // leader indicator (small caret above)
-  if (isLeader && game.mode === 'playing') {
-    ctx.save();
-    ctx.fillStyle = PAL.uiAccent;
-    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 0.008);
-    ctx.beginPath();
-    ctx.moveTo(wx, wy - 56 - bob);
-    ctx.lineTo(wx - 6, wy - 50 - bob);
-    ctx.lineTo(wx + 6, wy - 50 - bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-/* ---------- Ghost drawing ------------------------------- */
-function drawGhost(g, t) {
-  const wx = g.x - camera.x;
-  const wy = g.y - camera.y;
-  const bob = Math.sin(t * 0.003 + g.bobPhase) * 4 - 2;
-  const drift = Math.sin(t * 0.0015 + g.bobPhase) * 2;
-  const isLeader = leader === g;
-
-  ctx.save();
-  ctx.translate(wx + drift, wy + bob);
-  ctx.scale(g.facing, 1);
-
-  // outer glow (additive)
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  const grad = ctx.createRadialGradient(0, -4, 0, 0, -4, 40);
-  grad.addColorStop(0, 'rgba(201, 168, 255, 0.65)');
-  grad.addColorStop(0.5, 'rgba(168, 85, 255, 0.2)');
-  grad.addColorStop(1, 'rgba(168, 85, 255, 0)');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(0, -4, 40, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // body (wavy bottom)
-  ctx.fillStyle = PAL.ghostBody;
-  ctx.beginPath();
-  ctx.arc(0, -8, 16, Math.PI, 0);
-  // wavy bottom edge
-  const segs = 5;
-  for (let i = 0; i <= segs; i++) {
-    const lerp = i / segs;
-    const xx = 16 - lerp * 32;
-    const yy = 8 + Math.sin(t * 0.006 + i + g.bobPhase) * 3;
-    ctx.lineTo(xx, yy);
-  }
-  ctx.closePath();
-  ctx.fill();
-
-  // shading on right edge
-  ctx.fillStyle = PAL.ghostBodyD;
-  ctx.globalAlpha = 0.35;
-  ctx.beginPath();
-  ctx.arc(8, -6, 10, Math.PI * 1.4, Math.PI * 2.2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-
-  // eyes (sarcastic, half-lidded)
-  ctx.fillStyle = PAL.ghostEye;
-  ctx.beginPath();
-  ctx.ellipse(-6, -10, 2.2, 1.6, 0, 0, Math.PI * 2);
-  ctx.ellipse(6, -10, 2.2, 1.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // half-lid line above eyes for permanent eye-roll
-  ctx.strokeStyle = PAL.ghostEye;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(-9, -12); ctx.lineTo(-3, -12);
-  ctx.moveTo(3, -12);  ctx.lineTo(9, -12);
-  ctx.stroke();
-
-  // mouth — small flat unimpressed line
-  ctx.beginPath();
-  ctx.moveTo(-3, -3); ctx.lineTo(3, -3);
-  ctx.stroke();
-
-  ctx.restore();
-
-  // leader caret
-  if (isLeader && game.mode === 'playing') {
-    ctx.save();
-    ctx.fillStyle = PAL.uiAccent;
-    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 0.008);
-    ctx.beginPath();
-    ctx.moveTo(wx + drift, wy - 36 + bob);
-    ctx.lineTo(wx - 6 + drift, wy - 30 + bob);
-    ctx.lineTo(wx + 6 + drift, wy - 30 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-/* ---------- Magic the wizard cat (Easter egg) -------------- */
-function drawMagic(t) {
-  const wx = magicSpot.x - camera.x;
-  const wy = magicSpot.y - camera.y;
-  if (wx < -100 || wx > W + 100 || wy < -100 || wy > H + 100) return;
-
-  // pizza
-  ctx.save();
-  ctx.translate(wx, wy);
-  // crust
-  ctx.fillStyle = '#c98e4a';
-  ctx.beginPath();
-  ctx.ellipse(0, 6, 30, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // cheese
-  ctx.fillStyle = '#f0c060';
-  ctx.beginPath();
-  ctx.ellipse(0, 4, 26, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // pepperoni
-  ctx.fillStyle = '#b03030';
-  for (let i = 0; i < 5; i++) {
-    const px = -16 + i * 8;
-    const py = 4 + Math.sin(i) * 2;
-    ctx.beginPath();
-    ctx.ellipse(px, py, 3, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // steam wisps (magic IS sitting on a freshly cooked pizza)
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 1.5;
-  for (let i = 0; i < 3; i++) {
-    const off = Math.sin(t * 0.003 + i) * 3;
-    ctx.beginPath();
-    ctx.moveTo(-12 + i * 12 + off, -2);
-    ctx.quadraticCurveTo(-10 + i * 12, -10, -14 + i * 12 + off, -18);
-    ctx.stroke();
-  }
-
-  // Magic the cat — sitting smugly
-  // body
-  ctx.fillStyle = '#7a7484';
-  ctx.beginPath();
-  ctx.ellipse(0, -5, 14, 12, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // chest highlight
-  ctx.fillStyle = '#9a94a4';
-  ctx.beginPath();
-  ctx.ellipse(0, -2, 6, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // head
-  ctx.fillStyle = '#7a7484';
-  ctx.beginPath();
-  ctx.arc(0, -16, 9, 0, Math.PI * 2);
-  ctx.fill();
-  // ears
-  ctx.beginPath();
-  ctx.moveTo(-7, -22); ctx.lineTo(-9, -28); ctx.lineTo(-3, -22);
-  ctx.moveTo(7, -22);  ctx.lineTo(9, -28);  ctx.lineTo(3, -22);
-  ctx.closePath();
-  ctx.fill();
-  // wizard hat (purple, comically large)
-  ctx.fillStyle = PAL.purpleSplat;
-  ctx.beginPath();
-  ctx.moveTo(-10, -26);
-  ctx.lineTo(0, -42);
-  ctx.lineTo(10, -26);
-  ctx.closePath();
-  ctx.fill();
-  // hat brim
-  ctx.fillStyle = '#7c3fc2';
-  ctx.beginPath();
-  ctx.ellipse(0, -25, 12, 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // hat star
-  ctx.fillStyle = PAL.limeGlow;
-  ctx.beginPath();
-  ctx.arc(0, -34, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-  // half-lidded smug eyes
-  ctx.fillStyle = '#1a0a14';
-  ctx.fillRect(-5, -16, 3, 1);
-  ctx.fillRect(2, -16, 3, 1);
-  // tiny smile (he is pretending he doesn't love this)
-  ctx.strokeStyle = '#1a0a14';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(0, -13, 1.5, 0.2, Math.PI - 0.2);
-  ctx.stroke();
-  // tail curled around
-  ctx.strokeStyle = '#7a7484';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(12, -2);
-  ctx.quadraticCurveTo(20, 0, 18, 8);
-  ctx.stroke();
-
-  // "mmmmmmmm." occasionally
-  if (magicSpot.mmmmTimer > 0) {
-    ctx.fillStyle = PAL.uiText;
-    ctx.font = '14px Cormorant Garamond, serif';
-    ctx.textAlign = 'center';
-    ctx.globalAlpha = Math.min(1, magicSpot.mmmmTimer / 30);
-    ctx.fillText('mmmmmmmm.', 0, -52);
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-}
-
-/* ---------- Particle drawing --------------------------- */
-function drawFireflies(t) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  for (const f of fireflies) {
-    const wx = f.x - camera.x, wy = f.y - camera.y;
-    if (wx < -40 || wx > W + 40 || wy < -40 || wy > H + 40) continue;
-    const blink = 0.4 + 0.6 * Math.abs(Math.sin(t * f.speed + f.phase));
-    const r = 6 + blink * 6;
-    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
-    g.addColorStop(0, `rgba(255, 215, 107, ${0.9 * blink})`);
-    g.addColorStop(1, 'rgba(255, 215, 107, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(wx, wy, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = `rgba(255, 240, 180, ${blink})`;
-    ctx.fillRect(wx - 0.5, wy - 0.5, 1, 1);
-  }
-  ctx.restore();
-}
-
-function drawFog(t) {
-  ctx.save();
-  for (const f of fogPuffs) {
-    const wx = f.x - camera.x * 0.85;
-    const wy = f.y - camera.y * 0.85;
-    if (wx < -300 || wx > W + 300 || wy < -300 || wy > H + 300) continue;
-    const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, f.r);
-    g.addColorStop(0, `rgba(180, 160, 220, ${f.alpha})`);
-    g.addColorStop(1, 'rgba(180, 160, 220, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(wx, wy, f.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawDustMotes() {
-  ctx.save();
-  ctx.fillStyle = 'rgba(255, 240, 220, 0.45)';
-  for (const d of dustMotes) {
-    const wx = d.x - camera.x, wy = d.y - camera.y;
-    if (wx < 0 || wx > W || wy < 0 || wy > H) continue;
-    ctx.fillRect(wx, wy, d.size, d.size);
-  }
-  ctx.restore();
-}
-
-function drawBurstParticles() {
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  for (const p of burstParticles) {
-    const wx = p.x - camera.x, wy = p.y - camera.y;
-    const a = p.life / p.maxLife;
-    ctx.globalAlpha = a;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(wx - p.size / 2, wy - p.size / 2, p.size, p.size);
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-function drawSparkles(t) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  for (const p of sparkleParticles) {
-    const wx = p.x - camera.x, wy = p.y - camera.y;
-    const a = p.life / p.maxLife;
-    const tw = 0.5 + 0.5 * Math.sin(t * 0.02 + p.x);
-    ctx.globalAlpha = a * tw;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(wx - p.size / 2, wy - p.size / 2, p.size, p.size);
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-/* ---------- Pond drawing ---------------------------- */
-function drawPond(t) {
-  if (!pond.revealed && pond.revealT <= 0) return;
-
-  const wx = pond.x - camera.x;
-  const wy = pond.y - camera.y;
-  const reveal = clamp(pond.revealT, 0, 1);
-
-  // big glow
-  ctx.save();
-  ctx.globalCompositeOperation = 'screen';
-  const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, 280);
-  g.addColorStop(0, `rgba(94, 232, 255, ${0.6 * reveal})`);
-  g.addColorStop(0.5, `rgba(94, 232, 255, ${0.2 * reveal})`);
-  g.addColorStop(1, 'rgba(94, 232, 255, 0)');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(wx, wy, 280, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // pond body
-  ctx.save();
-  ctx.fillStyle = '#0a2440';
-  ctx.beginPath();
-  ctx.ellipse(wx, wy, pond.rx * reveal, pond.ry * reveal, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // shimmer arcs
-  ctx.globalCompositeOperation = 'screen';
-  for (let i = 0; i < 5; i++) {
-    const phase = t * 0.001 + i * 0.7 + pond.shimmerPhase;
-    const ry = pond.ry * (0.3 + i * 0.18);
-    ctx.strokeStyle = `rgba(168, 240, 255, ${(0.3 - i * 0.05) * reveal})`;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.ellipse(wx + Math.sin(phase) * 8, wy + Math.cos(phase) * 4, pond.rx * 0.85, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // fish-tail flicker — a hint that something is in there
-  if (reveal > 0.7) {
-    const tt = (Math.sin(t * 0.001) + 1) * 0.5;
-    if (tt < 0.08) {
-      ctx.fillStyle = 'rgba(94, 232, 255, 0.8)';
-      ctx.beginPath();
-      ctx.moveTo(wx + 30, wy - 12);
-      ctx.lineTo(wx + 60, wy - 24);
-      ctx.lineTo(wx + 50, wy - 6);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-}
-
-/* ---------- Vignette ----------------------------------- */
-function drawVignette() {
-  ctx.save();
-  const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.85);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, PAL.vignette);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-  ctx.restore();
-}
-
-/* ============================================================
+      function clamp(v, a, b) {
+        return v < a ? a : v > b ? b : v;
+      }
+
+      function drawGradientBackground() {
+        // Sky gradient
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, PAL.skyTop);
+        g.addColorStop(0.55, PAL.skyMid);
+        g.addColorStop(1, PAL.skyBottom);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+
+        // Ground gradient bleed (subtle)
+        const gg = ctx.createLinearGradient(0, H * 0.55, 0, H);
+        gg.addColorStop(0, 'rgba(26,14,46,0)');
+        gg.addColorStop(1, PAL.groundBot);
+        ctx.fillStyle = gg;
+        ctx.fillRect(0, H * 0.55, W, H * 0.45);
+      }
+
+      function drawDistantTrees(t) {
+        // Very far silhouette band, minimal parallax
+        for (const tree of trees) {
+          const wx = tree.x - camera.x * tree.depth * 0.7;
+          const wy = tree.y - camera.y * tree.depth * 0.7;
+          if (wx < -80 || wx > W + 80) continue;
+          if (wy < -80 || wy > H + 80) continue;
+          const sway = Math.sin(t * 0.0006 + tree.sway) * 1.2;
+          drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeBack, tree.depth);
+        }
+      }
+
+      function drawTreeSilhouette(x, y, w, h, color, depth) {
+        // Trunk
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x - w * 0.12, y);
+        ctx.quadraticCurveTo(x, y - h * 0.6, x - w * 0.06, y - h);
+        ctx.quadraticCurveTo(x, y - h * 0.7, x + w * 0.12, y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Foliage clusters (3 puffs)
+        ctx.beginPath();
+        ctx.arc(x, y - h, w * 0.55, 0, Math.PI * 2);
+        ctx.arc(x - w * 0.35, y - h * 0.85, w * 0.45, 0, Math.PI * 2);
+        ctx.arc(x + w * 0.35, y - h * 0.85, w * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawForegroundTrees(t) {
+        // Foreground trees, drawn AFTER characters for depth (those go in late layer)
+        // For now we render front trees at world Y for proper sorting
+        for (const tree of treesFront) {
+          const wx = tree.x - camera.x;
+          const wy = tree.y - camera.y;
+          if (wx < -120 || wx > W + 120) continue;
+          if (wy < -200 || wy > H + 60) continue;
+          const sway = Math.sin(t * 0.0008 + tree.sway) * 2;
+          drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeMid, 1);
+        }
+      }
+
+      function drawTreesAroundPlayer(t, py) {
+        // Closest trees (drawn after characters if they're below the player)
+        for (const tree of treesFront) {
+          if (tree.y < py) continue;
+          const wx = tree.x - camera.x;
+          const wy = tree.y - camera.y;
+          if (wx < -120 || wx > W + 120) continue;
+          if (wy < -200 || wy > H + 60) continue;
+          const sway = Math.sin(t * 0.0008 + tree.sway) * 2;
+          drawTreeSilhouette(wx + sway, wy, tree.w, tree.h, PAL.treeFront, 1);
+        }
+      }
+
+      function drawGround() {
+        // Soft "ground" texture: faint horizontal blob pattern
+        ctx.save();
+        ctx.globalAlpha = 0.4;
+        const g = ctx.createRadialGradient(W * 0.5, H * 0.7, 0, W * 0.5, H * 0.7, H * 0.9);
+        g.addColorStop(0, 'rgba(60, 40, 90, 0.25)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+
+      function drawGrassTufts(t) {
+        ctx.save();
+        for (const g of grassTufts) {
+          const wx = g.x - camera.x,
+            wy = g.y - camera.y;
+          if (wx < -10 || wx > W + 10 || wy < -10 || wy > H + 10) continue;
+          const sway = Math.sin(t * 0.001 + g.sway) * 1.5;
+          ctx.strokeStyle = PAL.leavesFront;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(wx, wy);
+          ctx.quadraticCurveTo(wx + sway, wy - g.h * 0.6, wx + sway * 1.6, wy - g.h);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function drawRocks() {
+        for (const r of rocks) {
+          const wx = r.x - camera.x,
+            wy = r.y - camera.y;
+          if (wx < -100 || wx > W + 100 || wy < -100 || wy > H + 100) continue;
+          ctx.fillStyle = PAL.treeBack;
+          ctx.beginPath();
+          ctx.ellipse(wx, wy, r.w, r.h, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.04)';
+          ctx.beginPath();
+          ctx.ellipse(wx - r.w * 0.2, wy - r.h * 0.3, r.w * 0.6, r.h * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawBushes(t) {
+        for (const b of bushes) {
+          const wx = b.x - camera.x,
+            wy = b.y - camera.y;
+          if (wx < -80 || wx > W + 80 || wy < -80 || wy > H + 80) continue;
+          const sway = Math.sin(t * 0.0015 + b.sway) * 1.5;
+          // back layer
+          ctx.fillStyle = PAL.bushBack;
+          ctx.beginPath();
+          ctx.arc(wx + sway * 0.5, wy - 4, b.r, 0, Math.PI * 2);
+          ctx.arc(wx - b.r * 0.6 + sway, wy - 2, b.r * 0.7, 0, Math.PI * 2);
+          ctx.arc(wx + b.r * 0.6 + sway, wy - 2, b.r * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+          // front layer
+          ctx.fillStyle = PAL.bushFront;
+          ctx.beginPath();
+          ctx.arc(wx + sway, wy, b.r * 0.85, 0, Math.PI * 2);
+          ctx.arc(wx - b.r * 0.5 + sway * 0.6, wy, b.r * 0.55, 0, Math.PI * 2);
+          ctx.arc(wx + b.r * 0.5 + sway * 0.6, wy, b.r * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+          // tip highlights — tiny lime sparks
+          ctx.fillStyle = PAL.bushTip;
+          ctx.globalAlpha = 0.55;
+          for (let i = 0; i < 5; i++) {
+            const a = i * ((Math.PI * 2) / 5) + b.sway;
+            const px = wx + Math.cos(a) * b.r * 0.7 + sway;
+            const py = wy + Math.sin(a) * b.r * 0.5;
+            ctx.fillRect(px - 1, py - 1, 2, 2);
+          }
+          ctx.globalAlpha = 1;
+          // berries
+          if (b.berries) {
+            ctx.fillStyle = PAL.bushBerry;
+            const a = t * 0.001 + b.sway;
+            ctx.beginPath();
+            ctx.arc(
+              wx + Math.cos(a) * b.r * 0.5 + sway,
+              wy - 4 + Math.sin(a) * 3,
+              3,
+              0,
+              Math.PI * 2
+            );
+            ctx.arc(
+              wx + Math.cos(a + 2) * b.r * 0.4 + sway,
+              wy + 2 + Math.sin(a + 2) * 3,
+              2.6,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawLogs() {
+        for (const l of logs) {
+          const wx = l.x - camera.x,
+            wy = l.y - camera.y;
+          if (wx + l.w < 0 || wx > W || wy < -60 || wy > H + 40) continue;
+          ctx.save();
+          ctx.translate(wx + l.w / 2, wy);
+          ctx.rotate(l.rot);
+          // log body
+          ctx.fillStyle = PAL.logBody;
+          roundRect(-l.w / 2, -l.h / 2, l.w, l.h, l.h * 0.5);
+          ctx.fill();
+          // shading underneath
+          ctx.fillStyle = PAL.logShade;
+          roundRect(-l.w / 2 + 4, -l.h / 2 + l.h * 0.55, l.w - 8, l.h * 0.45, l.h * 0.3);
+          ctx.fill();
+          // ring on the left (cross-section)
+          ctx.fillStyle = PAL.logRing;
+          ctx.beginPath();
+          ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.42, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = PAL.logShade;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.28, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(-l.w / 2 + l.h * 0.5, 0, l.h * 0.16, 0, Math.PI * 2);
+          ctx.stroke();
+          // moss tufts
+          ctx.fillStyle = PAL.logMoss;
+          for (let i = 0; i < 5; i++) {
+            const px = -l.w / 2 + 20 + (i * (l.w - 40)) / 5 + Math.sin(i) * 6;
+            ctx.beginPath();
+            ctx.arc(px, -l.h / 2 + 2, 4 + Math.sin(i * 1.7) * 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+      }
+
+      function drawMushrooms(t) {
+        for (const m of mushrooms) {
+          const wx = m.x - camera.x,
+            wy = m.y - camera.y;
+          if (wx < -60 || wx > W + 60 || wy < -60 || wy > H + 60) continue;
+          // stem
+          ctx.fillStyle = '#e8e0d4';
+          ctx.beginPath();
+          ctx.moveTo(wx - 3, wy);
+          ctx.lineTo(wx - 4, wy - m.h);
+          ctx.lineTo(wx + 4, wy - m.h);
+          ctx.lineTo(wx + 3, wy);
+          ctx.closePath();
+          ctx.fill();
+          // cap
+          const pulse = 0.85 + 0.15 * Math.sin(t * m.pulseSpeed + m.pulse);
+          ctx.fillStyle = PAL.limeGlow;
+          ctx.beginPath();
+          ctx.ellipse(wx, wy - m.h, m.cap, m.cap * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // cap dark base
+          ctx.fillStyle = 'rgba(0,0,0,0.25)';
+          ctx.beginPath();
+          ctx.ellipse(wx, wy - m.h + m.cap * 0.45, m.cap * 0.95, m.cap * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // dots on cap
+          ctx.fillStyle = '#e8ffe0';
+          for (let i = 0; i < 3; i++) {
+            const a = i * 2.0 + m.pulse;
+            ctx.beginPath();
+            ctx.arc(
+              wx + Math.cos(a) * m.cap * 0.5,
+              wy - m.h + Math.sin(a) * m.cap * 0.25,
+              1.6,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+          // stash pulse for the lighting pass
+          m._pulse = pulse;
+        }
+      }
+
+      function drawMushroomLightOverlay(t) {
+        // Additive light pools — call AFTER everything else for that warm glow
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const m of mushrooms) {
+          const wx = m.x - camera.x,
+            wy = m.y - camera.y - m.h;
+          if (wx < -200 || wx > W + 200 || wy < -200 || wy > H + 200) continue;
+          const r = m.glow * (m._pulse || 1);
+          const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+          g.addColorStop(0, 'rgba(155, 255, 94, 0.55)');
+          g.addColorStop(0.4, 'rgba(155, 255, 94, 0.18)');
+          g.addColorStop(1, 'rgba(155, 255, 94, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(wx, wy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawClues(t) {
+        for (const c of clues) {
+          if (c.collected) continue;
+          const wx = c.x - camera.x,
+            wy = c.y - camera.y;
+          if (wx < -80 || wx > W + 80 || wy < -80 || wy > H + 80) continue;
+
+          // floating bob
+          const bob = Math.sin(t * 0.003 + c.x * 0.01) * 4;
+
+          // glow under
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          const g = ctx.createRadialGradient(wx, wy + bob, 0, wx, wy + bob, 50);
+          g.addColorStop(0, 'rgba(255, 77, 200, 0.45)');
+          g.addColorStop(1, 'rgba(255, 77, 200, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(wx, wy + bob, 50, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          drawClueIcon(wx, wy + bob, c.icon, t);
+
+          // sparkle ring
+          ctx.save();
+          ctx.globalCompositeOperation = 'screen';
+          for (let i = 0; i < 3; i++) {
+            const a = t * 0.003 + i * ((Math.PI * 2) / 3);
+            const sx = wx + Math.cos(a) * 22;
+            const sy = wy + bob + Math.sin(a) * 22;
+            ctx.fillStyle = 'rgba(255, 220, 255, 0.9)';
+            ctx.fillRect(sx - 1, sy - 1, 2, 2);
+          }
+          ctx.restore();
+        }
+      }
+
+      function drawClueIcon(x, y, kind, t) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const wob = Math.sin(t * 0.004) * 0.05;
+        ctx.rotate(wob);
+
+        if (kind === 'note') {
+          // glowing parchment note
+          ctx.fillStyle = '#fff6d0';
+          roundRect(-12, -16, 24, 28, 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            ctx.moveTo(-8, -10 + i * 6);
+            ctx.lineTo(8, -10 + i * 6);
+          }
+          ctx.stroke();
+          // corner fold
+          ctx.fillStyle = '#e8d7a8';
+          ctx.beginPath();
+          ctx.moveTo(8, -16);
+          ctx.lineTo(12, -12);
+          ctx.lineTo(8, -12);
+          ctx.closePath();
+          ctx.fill();
+        } else if (kind === 'sign') {
+          // wooden post with sign
+          ctx.fillStyle = PAL.logBody;
+          ctx.fillRect(-2, -6, 4, 22);
+          ctx.fillStyle = '#8a6c4f';
+          roundRect(-18, -22, 36, 16, 2);
+          ctx.fill();
+          ctx.fillStyle = '#3a2810';
+          ctx.font = 'bold 8px VT323, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('NO MERMAIDS ↗', 0, -11);
+        } else if (kind === 'flannel') {
+          // folded flannel — red checks
+          ctx.fillStyle = '#7a1e1e';
+          roundRect(-14, -10, 28, 20, 2);
+          ctx.fill();
+          ctx.strokeStyle = '#c44a4a';
+          ctx.lineWidth = 1;
+          for (let i = -12; i <= 12; i += 4) {
+            ctx.beginPath();
+            ctx.moveTo(i, -10);
+            ctx.lineTo(i, 10);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(-14, i * 0.7);
+            ctx.lineTo(14, i * 0.7);
+            ctx.stroke();
+          }
+          // wet drip
+          ctx.fillStyle = 'rgba(110, 200, 240, 0.6)';
+          ctx.beginPath();
+          ctx.arc(0, 12, 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (kind === 'shell') {
+          // pink/purple seashell
+          ctx.fillStyle = PAL.pinkGlit;
+          ctx.beginPath();
+          ctx.moveTo(0, 12);
+          ctx.quadraticCurveTo(-16, 6, -14, -8);
+          ctx.quadraticCurveTo(0, -16, 14, -8);
+          ctx.quadraticCurveTo(16, 6, 0, 12);
+          ctx.fill();
+          ctx.strokeStyle = PAL.purpleSplat;
+          ctx.lineWidth = 1.4;
+          for (let i = -3; i <= 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 12);
+            ctx.quadraticCurveTo(i * 3, 0, i * 4, -10);
+            ctx.stroke();
+          }
+        } else if (kind === 'scrunchie') {
+          // donut-shaped pink scrunchie
+          ctx.strokeStyle = PAL.pinkGlit;
+          ctx.lineWidth = 7;
+          ctx.beginPath();
+          ctx.arc(0, 0, 11, 0, Math.PI * 2);
+          ctx.stroke();
+          // glitter highlights
+          ctx.fillStyle = '#ffffff';
+          for (let i = 0; i < 6; i++) {
+            const a = i * ((Math.PI * 2) / 6) + t * 0.003;
+            ctx.fillRect(Math.cos(a) * 11 - 0.5, Math.sin(a) * 11 - 0.5, 1, 1);
+          }
+        } else if (kind === 'polaroid') {
+          // polaroid frame
+          ctx.fillStyle = '#f0ebe0';
+          ctx.fillRect(-13, -16, 26, 30);
+          // photo area (dark, blurry, with one mysterious glow)
+          ctx.fillStyle = '#0a1422';
+          ctx.fillRect(-11, -14, 22, 20);
+          ctx.fillStyle = 'rgba(94, 232, 255, 0.5)';
+          ctx.beginPath();
+          ctx.arc(0, -4, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(94, 232, 255, 0.2)';
+          ctx.beginPath();
+          ctx.arc(0, -4, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#000';
+          ctx.fillRect(-2, -5, 1, 1);
+          ctx.fillRect(1, -5, 1, 1);
+          // caption
+          ctx.fillStyle = '#3a2a44';
+          ctx.font = '6px VT323, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('???', 0, 12);
+        }
+
+        ctx.restore();
+      }
+
+      /* ---------- Bigfoot drawing ---------------------------- */
+      function drawBigfoot(b, t) {
+        const wx = b.x - camera.x;
+        const wy = b.y - camera.y;
+        const isMoving = Math.abs(b.vx) + Math.abs(b.vy) > 0.5;
+        const phase = b.walkPhase;
+        const bob = isMoving ? Math.abs(Math.sin(phase * 2)) * 2 : Math.sin(t * 0.003) * 1;
+        const stretch = isMoving ? 1 + Math.sin(phase * 2) * 0.04 : 1;
+        const isLeader = leader === b;
+
+        ctx.save();
+        ctx.translate(wx, wy - bob);
+
+        // soft drop shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, 22, 22, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // legs
+        const legSwing = isMoving ? Math.sin(phase) * 5 : 0;
+        ctx.fillStyle = PAL.bigfootDark;
+        ctx.fillRect(-10, 8, 8, 14 + legSwing);
+        ctx.fillRect(2, 8, 8, 14 - legSwing);
+
+        // body (chunky pear)
+        ctx.scale(b.facing, 1);
+        ctx.scale(1, stretch);
+        ctx.fillStyle = PAL.bigfootFur;
+        ctx.beginPath();
+        ctx.moveTo(-18, 12);
+        ctx.bezierCurveTo(-22, -12, -16, -22, 0, -22);
+        ctx.bezierCurveTo(16, -22, 22, -12, 18, 12);
+        ctx.bezierCurveTo(14, 18, -14, 18, -18, 12);
+        ctx.fill();
+
+        // belly
+        ctx.fillStyle = PAL.bigfootDark;
+        ctx.beginPath();
+        ctx.ellipse(0, 4, 10, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // arms
+        const armSwing = isMoving ? Math.sin(phase) * 3 : 0;
+        ctx.fillStyle = PAL.bigfootFur;
+        ctx.beginPath();
+        ctx.ellipse(-18, -2 + armSwing, 6, 14, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(18, -2 - armSwing, 6, 14, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // head
+        ctx.fillStyle = PAL.bigfootFur;
+        ctx.beginPath();
+        ctx.arc(0, -22, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        // fur tufts on top
+        ctx.fillStyle = PAL.bigfootHigh;
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + (i - 2) * 0.4;
+          const sx = Math.cos(a) * 14;
+          const sy = -22 + Math.sin(a) * 14;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + Math.cos(a) * 4, sy + Math.sin(a) * 4 - 2);
+          ctx.lineTo(sx + Math.cos(a) * 2, sy + Math.sin(a) * 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // pink BOW (girl Bigfoot signature)
+        ctx.save();
+        ctx.translate(-3, -32);
+        ctx.fillStyle = PAL.bigfootBow;
+        // bow loops
+        ctx.beginPath();
+        ctx.ellipse(-5, 0, 5, 4, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(5, 0, 5, 4, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        // knot
+        ctx.fillStyle = PAL.bigfootBowD;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 2.4, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // glitter sparks
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 3; i++) {
+          const px = -7 + Math.sin(t * 0.005 + i) * 8;
+          const py = -2 + Math.cos(t * 0.005 + i) * 3;
+          ctx.fillRect(px, py, 1, 1);
+        }
+        ctx.restore();
+
+        // eyes
+        ctx.fillStyle = PAL.bigfootEye;
+        ctx.beginPath();
+        ctx.arc(-5, -22, 3.4, 0, Math.PI * 2);
+        ctx.arc(5, -22, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+        // pupils — gently track movement
+        const px = clamp(b.vx * 0.8, -1.2, 1.2);
+        const py = clamp(b.vy * 0.8, -1.2, 1.2);
+        ctx.fillStyle = PAL.bigfootPup;
+        ctx.beginPath();
+        ctx.arc(-5 + px, -22 + py, 1.6, 0, Math.PI * 2);
+        ctx.arc(5 + px, -22 + py, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        // tiny mouth
+        ctx.strokeStyle = PAL.bigfootDark;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, -16, 2, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // leader indicator (small caret above)
+        if (isLeader && game.mode === 'playing') {
+          ctx.save();
+          ctx.fillStyle = PAL.uiAccent;
+          ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 0.008);
+          ctx.beginPath();
+          ctx.moveTo(wx, wy - 56 - bob);
+          ctx.lineTo(wx - 6, wy - 50 - bob);
+          ctx.lineTo(wx + 6, wy - 50 - bob);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      /* ---------- Ghost drawing ------------------------------- */
+      function drawGhost(g, t) {
+        const wx = g.x - camera.x;
+        const wy = g.y - camera.y;
+        const bob = Math.sin(t * 0.003 + g.bobPhase) * 4 - 2;
+        const drift = Math.sin(t * 0.0015 + g.bobPhase) * 2;
+        const isLeader = leader === g;
+
+        ctx.save();
+        ctx.translate(wx + drift, wy + bob);
+        ctx.scale(g.facing, 1);
+
+        // outer glow (additive)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const grad = ctx.createRadialGradient(0, -4, 0, 0, -4, 40);
+        grad.addColorStop(0, 'rgba(201, 168, 255, 0.65)');
+        grad.addColorStop(0.5, 'rgba(168, 85, 255, 0.2)');
+        grad.addColorStop(1, 'rgba(168, 85, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, -4, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // body (wavy bottom)
+        ctx.fillStyle = PAL.ghostBody;
+        ctx.beginPath();
+        ctx.arc(0, -8, 16, Math.PI, 0);
+        // wavy bottom edge
+        const segs = 5;
+        for (let i = 0; i <= segs; i++) {
+          const lerp = i / segs;
+          const xx = 16 - lerp * 32;
+          const yy = 8 + Math.sin(t * 0.006 + i + g.bobPhase) * 3;
+          ctx.lineTo(xx, yy);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // shading on right edge
+        ctx.fillStyle = PAL.ghostBodyD;
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        ctx.arc(8, -6, 10, Math.PI * 1.4, Math.PI * 2.2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // eyes (sarcastic, half-lidded)
+        ctx.fillStyle = PAL.ghostEye;
+        ctx.beginPath();
+        ctx.ellipse(-6, -10, 2.2, 1.6, 0, 0, Math.PI * 2);
+        ctx.ellipse(6, -10, 2.2, 1.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // half-lid line above eyes for permanent eye-roll
+        ctx.strokeStyle = PAL.ghostEye;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-9, -12);
+        ctx.lineTo(-3, -12);
+        ctx.moveTo(3, -12);
+        ctx.lineTo(9, -12);
+        ctx.stroke();
+
+        // mouth — small flat unimpressed line
+        ctx.beginPath();
+        ctx.moveTo(-3, -3);
+        ctx.lineTo(3, -3);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // leader caret
+        if (isLeader && game.mode === 'playing') {
+          ctx.save();
+          ctx.fillStyle = PAL.uiAccent;
+          ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 0.008);
+          ctx.beginPath();
+          ctx.moveTo(wx + drift, wy - 36 + bob);
+          ctx.lineTo(wx - 6 + drift, wy - 30 + bob);
+          ctx.lineTo(wx + 6 + drift, wy - 30 + bob);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      /* ---------- Magic the wizard cat (Easter egg) -------------- */
+      function drawMagic(t) {
+        const wx = magicSpot.x - camera.x;
+        const wy = magicSpot.y - camera.y;
+        if (wx < -100 || wx > W + 100 || wy < -100 || wy > H + 100) return;
+
+        // pizza
+        ctx.save();
+        ctx.translate(wx, wy);
+        // crust
+        ctx.fillStyle = '#c98e4a';
+        ctx.beginPath();
+        ctx.ellipse(0, 6, 30, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // cheese
+        ctx.fillStyle = '#f0c060';
+        ctx.beginPath();
+        ctx.ellipse(0, 4, 26, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // pepperoni
+        ctx.fillStyle = '#b03030';
+        for (let i = 0; i < 5; i++) {
+          const px = -16 + i * 8;
+          const py = 4 + Math.sin(i) * 2;
+          ctx.beginPath();
+          ctx.ellipse(px, py, 3, 1.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // steam wisps (magic IS sitting on a freshly cooked pizza)
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 3; i++) {
+          const off = Math.sin(t * 0.003 + i) * 3;
+          ctx.beginPath();
+          ctx.moveTo(-12 + i * 12 + off, -2);
+          ctx.quadraticCurveTo(-10 + i * 12, -10, -14 + i * 12 + off, -18);
+          ctx.stroke();
+        }
+
+        // Magic the cat — sitting smugly
+        // body
+        ctx.fillStyle = '#7a7484';
+        ctx.beginPath();
+        ctx.ellipse(0, -5, 14, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // chest highlight
+        ctx.fillStyle = '#9a94a4';
+        ctx.beginPath();
+        ctx.ellipse(0, -2, 6, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // head
+        ctx.fillStyle = '#7a7484';
+        ctx.beginPath();
+        ctx.arc(0, -16, 9, 0, Math.PI * 2);
+        ctx.fill();
+        // ears
+        ctx.beginPath();
+        ctx.moveTo(-7, -22);
+        ctx.lineTo(-9, -28);
+        ctx.lineTo(-3, -22);
+        ctx.moveTo(7, -22);
+        ctx.lineTo(9, -28);
+        ctx.lineTo(3, -22);
+        ctx.closePath();
+        ctx.fill();
+        // wizard hat (purple, comically large)
+        ctx.fillStyle = PAL.purpleSplat;
+        ctx.beginPath();
+        ctx.moveTo(-10, -26);
+        ctx.lineTo(0, -42);
+        ctx.lineTo(10, -26);
+        ctx.closePath();
+        ctx.fill();
+        // hat brim
+        ctx.fillStyle = '#7c3fc2';
+        ctx.beginPath();
+        ctx.ellipse(0, -25, 12, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // hat star
+        ctx.fillStyle = PAL.limeGlow;
+        ctx.beginPath();
+        ctx.arc(0, -34, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        // half-lidded smug eyes
+        ctx.fillStyle = '#1a0a14';
+        ctx.fillRect(-5, -16, 3, 1);
+        ctx.fillRect(2, -16, 3, 1);
+        // tiny smile (he is pretending he doesn't love this)
+        ctx.strokeStyle = '#1a0a14';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, -13, 1.5, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        // tail curled around
+        ctx.strokeStyle = '#7a7484';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(12, -2);
+        ctx.quadraticCurveTo(20, 0, 18, 8);
+        ctx.stroke();
+
+        // "mmmmmmmm." occasionally
+        if (magicSpot.mmmmTimer > 0) {
+          ctx.fillStyle = PAL.uiText;
+          ctx.font = '14px Cormorant Garamond, serif';
+          ctx.textAlign = 'center';
+          ctx.globalAlpha = Math.min(1, magicSpot.mmmmTimer / 30);
+          ctx.fillText('mmmmmmmm.', 0, -52);
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+      }
+
+      /* ---------- Particle drawing --------------------------- */
+      function drawFireflies(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const f of fireflies) {
+          const wx = f.x - camera.x,
+            wy = f.y - camera.y;
+          if (wx < -40 || wx > W + 40 || wy < -40 || wy > H + 40) continue;
+          const blink = 0.4 + 0.6 * Math.abs(Math.sin(t * f.speed + f.phase));
+          const r = 6 + blink * 6;
+          const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, r);
+          g.addColorStop(0, `rgba(255, 215, 107, ${0.9 * blink})`);
+          g.addColorStop(1, 'rgba(255, 215, 107, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(wx, wy, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255, 240, 180, ${blink})`;
+          ctx.fillRect(wx - 0.5, wy - 0.5, 1, 1);
+        }
+        ctx.restore();
+      }
+
+      function drawFog(t) {
+        ctx.save();
+        for (const f of fogPuffs) {
+          const wx = f.x - camera.x * 0.85;
+          const wy = f.y - camera.y * 0.85;
+          if (wx < -300 || wx > W + 300 || wy < -300 || wy > H + 300) continue;
+          const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, f.r);
+          g.addColorStop(0, `rgba(180, 160, 220, ${f.alpha})`);
+          g.addColorStop(1, 'rgba(180, 160, 220, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(wx, wy, f.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function drawDustMotes() {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 240, 220, 0.45)';
+        for (const d of dustMotes) {
+          const wx = d.x - camera.x,
+            wy = d.y - camera.y;
+          if (wx < 0 || wx > W || wy < 0 || wy > H) continue;
+          ctx.fillRect(wx, wy, d.size, d.size);
+        }
+        ctx.restore();
+      }
+
+      function drawBurstParticles() {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const p of burstParticles) {
+          const wx = p.x - camera.x,
+            wy = p.y - camera.y;
+          const a = p.life / p.maxLife;
+          ctx.globalAlpha = a;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(wx - p.size / 2, wy - p.size / 2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      function drawSparkles(t) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const p of sparkleParticles) {
+          const wx = p.x - camera.x,
+            wy = p.y - camera.y;
+          const a = p.life / p.maxLife;
+          const tw = 0.5 + 0.5 * Math.sin(t * 0.02 + p.x);
+          ctx.globalAlpha = a * tw;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(wx - p.size / 2, wy - p.size / 2, p.size, p.size);
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      /* ---------- Pond drawing ---------------------------- */
+      function drawPond(t) {
+        if (!pond.revealed && pond.revealT <= 0) return;
+
+        const wx = pond.x - camera.x;
+        const wy = pond.y - camera.y;
+        const reveal = clamp(pond.revealT, 0, 1);
+
+        // big glow
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        const g = ctx.createRadialGradient(wx, wy, 0, wx, wy, 280);
+        g.addColorStop(0, `rgba(94, 232, 255, ${0.6 * reveal})`);
+        g.addColorStop(0.5, `rgba(94, 232, 255, ${0.2 * reveal})`);
+        g.addColorStop(1, 'rgba(94, 232, 255, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(wx, wy, 280, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // pond body
+        ctx.save();
+        ctx.fillStyle = '#0a2440';
+        ctx.beginPath();
+        ctx.ellipse(wx, wy, pond.rx * reveal, pond.ry * reveal, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // shimmer arcs
+        ctx.globalCompositeOperation = 'screen';
+        for (let i = 0; i < 5; i++) {
+          const phase = t * 0.001 + i * 0.7 + pond.shimmerPhase;
+          const ry = pond.ry * (0.3 + i * 0.18);
+          ctx.strokeStyle = `rgba(168, 240, 255, ${(0.3 - i * 0.05) * reveal})`;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.ellipse(
+            wx + Math.sin(phase) * 8,
+            wy + Math.cos(phase) * 4,
+            pond.rx * 0.85,
+            ry,
+            0,
+            0,
+            Math.PI * 2
+          );
+          ctx.stroke();
+        }
+
+        // fish-tail flicker — a hint that something is in there
+        if (reveal > 0.7) {
+          const tt = (Math.sin(t * 0.001) + 1) * 0.5;
+          if (tt < 0.08) {
+            ctx.fillStyle = 'rgba(94, 232, 255, 0.8)';
+            ctx.beginPath();
+            ctx.moveTo(wx + 30, wy - 12);
+            ctx.lineTo(wx + 60, wy - 24);
+            ctx.lineTo(wx + 50, wy - 6);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+
+      /* ---------- Vignette ----------------------------------- */
+      function drawVignette() {
+        ctx.save();
+        const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.85);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, PAL.vignette);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+
+      /* ============================================================
    UI: Mystery Journal + Dialog Box + Title + Ending
    ============================================================ */
 
-function drawMysteryJournal() {
-  if (game.mode === 'title' || game.mode === 'ending') return;
-  const x = W - 232;
-  const y = 16;
-  const w = 216;
-  const padding = 12;
-  const rowH = 22;
-  const headerH = 36;
-  const h = headerH + clues.length * rowH + padding;
+      function drawMysteryJournal() {
+        if (game.mode === 'title' || game.mode === 'ending') return;
+        const x = W - 232;
+        const y = 16;
+        const w = 216;
+        const padding = 12;
+        const rowH = 22;
+        const headerH = 36;
+        const h = headerH + clues.length * rowH + padding;
 
-  // panel
-  ctx.save();
-  ctx.fillStyle = PAL.uiBg;
-  roundRect(x, y, w, h, 8);
-  ctx.fill();
-  ctx.strokeStyle = PAL.uiBorder;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+        // panel
+        ctx.save();
+        ctx.fillStyle = PAL.uiBg;
+        roundRect(x, y, w, h, 8);
+        ctx.fill();
+        ctx.strokeStyle = PAL.uiBorder;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-  // header
-  ctx.fillStyle = PAL.uiAccent;
-  ctx.font = '20px VT323, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('MYSTERY JOURNAL', x + padding, y + 24);
+        // header
+        ctx.fillStyle = PAL.uiAccent;
+        ctx.font = '20px VT323, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('MYSTERY JOURNAL', x + padding, y + 24);
 
-  // counter on right
-  ctx.textAlign = 'right';
-  ctx.fillStyle = PAL.uiPink;
-  ctx.fillText(`${game.collectedCount}/${TOTAL_CLUES}`, x + w - padding, y + 24);
+        // counter on right
+        ctx.textAlign = 'right';
+        ctx.fillStyle = PAL.uiPink;
+        ctx.fillText(`${game.collectedCount}/${TOTAL_CLUES}`, x + w - padding, y + 24);
 
-  // line under header
-  ctx.strokeStyle = PAL.uiBorder;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x + padding, y + headerH);
-  ctx.lineTo(x + w - padding, y + headerH);
-  ctx.stroke();
+        // line under header
+        ctx.strokeStyle = PAL.uiBorder;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + padding, y + headerH);
+        ctx.lineTo(x + w - padding, y + headerH);
+        ctx.stroke();
 
-  // clues
-  ctx.font = '15px VT323, monospace';
-  ctx.textAlign = 'left';
-  for (let i = 0; i < clues.length; i++) {
-    const c = clues[i];
-    const ry = y + headerH + 4 + i * rowH + 14;
-    ctx.fillStyle = c.collected ? PAL.uiText : PAL.uiDim;
-    if (c.collected) {
-      ctx.fillStyle = PAL.uiAccent;
-      ctx.fillText('✓', x + padding, ry);
-    } else {
-      ctx.fillStyle = PAL.uiDim;
-      ctx.fillText('?', x + padding, ry);
-    }
-    ctx.fillStyle = c.collected ? PAL.uiText : PAL.uiDim;
-    ctx.fillText(c.collected ? c.title : '???', x + padding + 18, ry);
-  }
-  ctx.restore();
-}
+        // clues
+        ctx.font = '15px VT323, monospace';
+        ctx.textAlign = 'left';
+        for (let i = 0; i < clues.length; i++) {
+          const c = clues[i];
+          const ry = y + headerH + 4 + i * rowH + 14;
+          ctx.fillStyle = c.collected ? PAL.uiText : PAL.uiDim;
+          if (c.collected) {
+            ctx.fillStyle = PAL.uiAccent;
+            ctx.fillText('✓', x + padding, ry);
+          } else {
+            ctx.fillStyle = PAL.uiDim;
+            ctx.fillText('?', x + padding, ry);
+          }
+          ctx.fillStyle = c.collected ? PAL.uiText : PAL.uiDim;
+          ctx.fillText(c.collected ? c.title : '???', x + padding + 18, ry);
+        }
+        ctx.restore();
+      }
 
-function drawCharacterIndicator() {
-  if (game.mode !== 'playing' && game.mode !== 'dialog') return;
-  const x = 16, y = 16, w = 200, h = 60;
-  ctx.save();
-  ctx.fillStyle = PAL.uiBg;
-  roundRect(x, y, w, h, 8);
-  ctx.fill();
-  ctx.strokeStyle = PAL.uiBorder;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+      function drawCharacterIndicator() {
+        if (game.mode !== 'playing' && game.mode !== 'dialog') return;
+        const x = 16,
+          y = 16,
+          w = 200,
+          h = 60;
+        ctx.save();
+        ctx.fillStyle = PAL.uiBg;
+        roundRect(x, y, w, h, 8);
+        ctx.fill();
+        ctx.strokeStyle = PAL.uiBorder;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
-  // mini bigfoot avatar
-  ctx.save();
-  ctx.translate(x + 30, y + 32);
-  if (leader === bigfoot) ctx.scale(1.2, 1.2);
-  else ctx.globalAlpha = 0.4;
-  // head only
-  ctx.fillStyle = PAL.bigfootFur;
-  ctx.beginPath();
-  ctx.arc(0, 0, 14, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = PAL.bigfootBow;
-  ctx.beginPath();
-  ctx.ellipse(-3, -14, 4, 3, -0.3, 0, Math.PI * 2);
-  ctx.ellipse(3, -14, 4, 3, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(-4, -2, 3, 0, Math.PI * 2); ctx.arc(4, -2, 3, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#000';
-  ctx.beginPath(); ctx.arc(-4, -2, 1.4, 0, Math.PI * 2); ctx.arc(4, -2, 1.4, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
+        // mini bigfoot avatar
+        ctx.save();
+        ctx.translate(x + 30, y + 32);
+        if (leader === bigfoot) ctx.scale(1.2, 1.2);
+        else ctx.globalAlpha = 0.4;
+        // head only
+        ctx.fillStyle = PAL.bigfootFur;
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = PAL.bigfootBow;
+        ctx.beginPath();
+        ctx.ellipse(-3, -14, 4, 3, -0.3, 0, Math.PI * 2);
+        ctx.ellipse(3, -14, 4, 3, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(-4, -2, 3, 0, Math.PI * 2);
+        ctx.arc(4, -2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-4, -2, 1.4, 0, Math.PI * 2);
+        ctx.arc(4, -2, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-  // mini ghost avatar
-  ctx.save();
-  ctx.translate(x + 80, y + 32);
-  if (leader === ghost) ctx.scale(1.2, 1.2);
-  else ctx.globalAlpha = 0.4;
-  ctx.fillStyle = PAL.ghostBody;
-  ctx.beginPath();
-  ctx.arc(0, -2, 12, Math.PI, 0);
-  for (let i = 0; i <= 4; i++) {
-    ctx.lineTo(12 - (i / 4) * 24, 8 + Math.sin(i) * 2);
-  }
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = PAL.ghostEye;
-  ctx.beginPath(); ctx.arc(-4, -3, 1.6, 0, Math.PI * 2); ctx.arc(4, -3, 1.6, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
+        // mini ghost avatar
+        ctx.save();
+        ctx.translate(x + 80, y + 32);
+        if (leader === ghost) ctx.scale(1.2, 1.2);
+        else ctx.globalAlpha = 0.4;
+        ctx.fillStyle = PAL.ghostBody;
+        ctx.beginPath();
+        ctx.arc(0, -2, 12, Math.PI, 0);
+        for (let i = 0; i <= 4; i++) {
+          ctx.lineTo(12 - (i / 4) * 24, 8 + Math.sin(i) * 2);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = PAL.ghostEye;
+        ctx.beginPath();
+        ctx.arc(-4, -3, 1.6, 0, Math.PI * 2);
+        ctx.arc(4, -3, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-  // labels
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = '14px VT323, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText(leader === bigfoot ? 'BIGFOOT' : 'GHOST', x + 110, y + 26);
-  ctx.fillStyle = PAL.uiAccent;
-  ctx.font = '12px VT323, monospace';
-  ctx.fillText('SPACE = SWAP', x + 110, y + 46);
+        // labels
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = '14px VT323, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(leader === bigfoot ? 'BIGFOOT' : 'GHOST', x + 110, y + 26);
+        ctx.fillStyle = PAL.uiAccent;
+        ctx.font = '12px VT323, monospace';
+        ctx.fillText('SPACE = SWAP', x + 110, y + 46);
 
-  ctx.restore();
-}
+        ctx.restore();
+      }
 
-function drawDialog(t) {
-  if (!game.dialog) return;
-  const d = game.dialog;
-  const margin = 28;
-  const h = 130;
-  const y = H - h - margin;
-  const x = margin;
-  const w = W - margin * 2 - 232 - 12;  // leave room for journal
+      function drawDialog(t) {
+        if (!game.dialog) return;
+        const d = game.dialog;
+        const margin = 28;
+        const h = 130;
+        const y = H - h - margin;
+        const x = margin;
+        const w = W - margin * 2 - 232 - 12; // leave room for journal
 
-  // panel
-  ctx.save();
-  ctx.fillStyle = PAL.uiBg;
-  roundRect(x, y, w, h, 10);
-  ctx.fill();
-  ctx.strokeStyle = d.speaker === 'GHOST' ? PAL.purpleSplat : (d.speaker === 'MAGIC' ? PAL.limeGlow : PAL.pinkGlit);
-  ctx.lineWidth = 2;
-  ctx.stroke();
+        // panel
+        ctx.save();
+        ctx.fillStyle = PAL.uiBg;
+        roundRect(x, y, w, h, 10);
+        ctx.fill();
+        ctx.strokeStyle =
+          d.speaker === 'GHOST'
+            ? PAL.purpleSplat
+            : d.speaker === 'MAGIC'
+              ? PAL.limeGlow
+              : PAL.pinkGlit;
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-  // speaker tag (top-left, overlaps border)
-  const tagW = ctx.measureText(d.speaker).width + 28;
-  ctx.fillStyle = d.speaker === 'GHOST' ? PAL.purpleSplat : (d.speaker === 'MAGIC' ? PAL.limeGlow : PAL.pinkGlit);
-  roundRect(x + 14, y - 10, tagW, 24, 6);
-  ctx.fill();
-  ctx.fillStyle = '#0a0518';
-  ctx.font = 'bold 16px VT323, monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText(d.speaker, x + 28, y + 7);
+        // speaker tag (top-left, overlaps border)
+        const tagW = ctx.measureText(d.speaker).width + 28;
+        ctx.fillStyle =
+          d.speaker === 'GHOST'
+            ? PAL.purpleSplat
+            : d.speaker === 'MAGIC'
+              ? PAL.limeGlow
+              : PAL.pinkGlit;
+        roundRect(x + 14, y - 10, tagW, 24, 6);
+        ctx.fill();
+        ctx.fillStyle = '#0a0518';
+        ctx.font = 'bold 16px VT323, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(d.speaker, x + 28, y + 7);
 
-  // text — wrap & type out
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = '20px Cormorant Garamond, serif';
-  const visible = d.text.slice(0, Math.floor(d.charsShown));
-  wrapText(visible, x + 22, y + 38, w - 44, 24);
+        // text — wrap & type out
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = '20px Cormorant Garamond, serif';
+        const visible = d.text.slice(0, Math.floor(d.charsShown));
+        wrapText(visible, x + 22, y + 38, w - 44, 24);
 
-  // continue prompt
-  if (d.doneTyping) {
-    ctx.fillStyle = PAL.uiAccent;
-    ctx.font = '14px VT323, monospace';
-    ctx.textAlign = 'right';
-    const blink = Math.floor(t / 400) % 2 === 0 ? 1 : 0.4;
-    ctx.globalAlpha = blink;
-    ctx.fillText('▼ press SPACE', x + w - 14, y + h - 12);
-    ctx.globalAlpha = 1;
-  }
+        // continue prompt
+        if (d.doneTyping) {
+          ctx.fillStyle = PAL.uiAccent;
+          ctx.font = '14px VT323, monospace';
+          ctx.textAlign = 'right';
+          const blink = Math.floor(t / 400) % 2 === 0 ? 1 : 0.4;
+          ctx.globalAlpha = blink;
+          ctx.fillText('▼ press SPACE', x + w - 14, y + h - 12);
+          ctx.globalAlpha = 1;
+        }
 
-  ctx.restore();
-}
+        ctx.restore();
+      }
 
-function wrapText(text, x, y, maxW, lineH) {
-  const words = text.split(' ');
-  let line = '';
-  let yy = y;
-  for (const word of words) {
-    const test = line ? line + ' ' + word : word;
-    if (ctx.measureText(test).width > maxW && line) {
-      ctx.fillText(line, x, yy);
-      line = word;
-      yy += lineH;
-    } else {
-      line = test;
-    }
-  }
-  ctx.fillText(line, x, yy);
-}
+      function wrapText(text, x, y, maxW, lineH) {
+        const words = text.split(' ');
+        let line = '';
+        let yy = y;
+        for (const word of words) {
+          const test = line ? line + ' ' + word : word;
+          if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line, x, yy);
+            line = word;
+            yy += lineH;
+          } else {
+            line = test;
+          }
+        }
+        ctx.fillText(line, x, yy);
+      }
 
-/* ---------- Title screen ---------------------------- */
-function drawTitle(t) {
-  // dim everything else with a wash
-  ctx.fillStyle = 'rgba(8, 4, 16, 0.62)';
-  ctx.fillRect(0, 0, W, H);
+      /* ---------- Title screen ---------------------------- */
+      function drawTitle(t) {
+        // dim everything else with a wash
+        ctx.fillStyle = 'rgba(8, 4, 16, 0.62)';
+        ctx.fillRect(0, 0, W, H);
 
-  // big title
-  const titleY = H * 0.4;
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+        // big title
+        const titleY = H * 0.4;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
 
-  // glow shadow
-  ctx.shadowColor = PAL.purpleSplat;
-  ctx.shadowBlur = 30;
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = 'bold 64px Cormorant Garamond, serif';
-  ctx.fillText('Bigfoot & Ghost', W / 2, titleY - 50);
+        // glow shadow
+        ctx.shadowColor = PAL.purpleSplat;
+        ctx.shadowBlur = 30;
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = 'bold 64px Cormorant Garamond, serif';
+        ctx.fillText('Bigfoot & Ghost', W / 2, titleY - 50);
 
-  ctx.shadowColor = PAL.pinkGlit;
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = PAL.pinkGlit;
-  ctx.font = 'italic 30px Cormorant Garamond, serif';
-  ctx.fillText('A Mermaid Mystery', W / 2, titleY + 4);
+        ctx.shadowColor = PAL.pinkGlit;
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = PAL.pinkGlit;
+        ctx.font = 'italic 30px Cormorant Garamond, serif';
+        ctx.fillText('A Mermaid Mystery', W / 2, titleY + 4);
 
-  ctx.shadowColor = PAL.limeGlow;
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = PAL.limeGlow;
-  ctx.font = '22px VT323, monospace';
-  ctx.fillText('— EPISODE 1: THE DARK FOREST —', W / 2, titleY + 44);
+        ctx.shadowColor = PAL.limeGlow;
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = PAL.limeGlow;
+        ctx.font = '22px VT323, monospace';
+        ctx.fillText('— EPISODE 1: THE DARK FOREST —', W / 2, titleY + 44);
 
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = '18px Cormorant Garamond, serif';
-  ctx.globalAlpha = 0.85;
-  ctx.fillText('Two best friends. One missing mermaid. One sarcastic ghost.', W / 2, titleY + 84);
-  ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = '18px Cormorant Garamond, serif';
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(
+          'Two best friends. One missing mermaid. One sarcastic ghost.',
+          W / 2,
+          titleY + 84
+        );
+        ctx.globalAlpha = 1;
 
-  // start prompt (pulsing)
-  const pulse = 0.7 + 0.3 * Math.sin(t * 0.005);
-  ctx.fillStyle = PAL.uiAccent;
-  ctx.globalAlpha = pulse;
-  ctx.font = '24px VT323, monospace';
-  ctx.fillText('▸ PRESS SPACE / TAP TO BEGIN ◂', W / 2, H - 90);
-  ctx.globalAlpha = 1;
+        // start prompt (pulsing)
+        const pulse = 0.7 + 0.3 * Math.sin(t * 0.005);
+        ctx.fillStyle = PAL.uiAccent;
+        ctx.globalAlpha = pulse;
+        ctx.font = '24px VT323, monospace';
+        ctx.fillText('▸ PRESS SPACE / TAP TO BEGIN ◂', W / 2, H - 90);
+        ctx.globalAlpha = 1;
 
-  // controls hint
-  ctx.fillStyle = PAL.uiDim;
-  ctx.font = '14px VT323, monospace';
-  ctx.fillText('ARROWS / WASD to move • SPACE to swap characters', W / 2, H - 50);
+        // controls hint
+        ctx.fillStyle = PAL.uiDim;
+        ctx.font = '14px VT323, monospace';
+        ctx.fillText('ARROWS / WASD to move • SPACE to swap characters', W / 2, H - 50);
 
-  ctx.restore();
-}
+        ctx.restore();
+      }
 
-/* ---------- Ending screen ---------------------------- */
-function drawEnding(t) {
-  const a = clamp(game.endingT / 90, 0, 1);
-  ctx.fillStyle = `rgba(8, 4, 16, ${0.85 * a})`;
-  ctx.fillRect(0, 0, W, H);
+      /* ---------- Ending screen ---------------------------- */
+      function drawEnding(t) {
+        const a = clamp(game.endingT / 90, 0, 1);
+        ctx.fillStyle = `rgba(8, 4, 16, ${0.85 * a})`;
+        ctx.fillRect(0, 0, W, H);
 
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.globalAlpha = a;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = a;
 
-  ctx.shadowColor = PAL.pondGlow;
-  ctx.shadowBlur = 30;
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = 'bold 56px Cormorant Garamond, serif';
-  ctx.fillText('THE POND.', W / 2, H * 0.36);
+        ctx.shadowColor = PAL.pondGlow;
+        ctx.shadowBlur = 30;
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = 'bold 56px Cormorant Garamond, serif';
+        ctx.fillText('THE POND.', W / 2, H * 0.36);
 
-  ctx.shadowColor = PAL.pinkGlit;
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = PAL.pinkGlit;
-  ctx.font = 'italic 28px Cormorant Garamond, serif';
-  ctx.fillText('Something is in there.', W / 2, H * 0.46);
+        ctx.shadowColor = PAL.pinkGlit;
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = PAL.pinkGlit;
+        ctx.font = 'italic 28px Cormorant Garamond, serif';
+        ctx.fillText('Something is in there.', W / 2, H * 0.46);
 
-  ctx.shadowColor = PAL.purpleSplat;
-  ctx.shadowBlur = 14;
-  ctx.fillStyle = PAL.uiText;
-  ctx.font = '20px Cormorant Garamond, serif';
-  ctx.fillText('Bigfoot stares. Ghost rolls her eyes.', W / 2, H * 0.55);
-  ctx.fillText('"...okay yeah," says Ghost. "Maybe she\u2019s real."', W / 2, H * 0.6);
+        ctx.shadowColor = PAL.purpleSplat;
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = PAL.uiText;
+        ctx.font = '20px Cormorant Garamond, serif';
+        ctx.fillText('Bigfoot stares. Ghost rolls her eyes.', W / 2, H * 0.55);
+        ctx.fillText('"...okay yeah," says Ghost. "Maybe she\u2019s real."', W / 2, H * 0.6);
 
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = PAL.limeGlow;
-  ctx.font = '26px VT323, monospace';
-  ctx.fillText('TO BE CONTINUED IN EPISODE 2', W / 2, H * 0.74);
-  ctx.fillStyle = PAL.uiDim;
-  ctx.font = '16px VT323, monospace';
-  ctx.fillText('(in the haunted 80s mall, probably)', W / 2, H * 0.79);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = PAL.limeGlow;
+        ctx.font = '26px VT323, monospace';
+        ctx.fillText('TO BE CONTINUED IN EPISODE 2', W / 2, H * 0.74);
+        ctx.fillStyle = PAL.uiDim;
+        ctx.font = '16px VT323, monospace';
+        ctx.fillText('(in the haunted 80s mall, probably)', W / 2, H * 0.79);
 
-  // refresh hint
-  if (game.endingT > 180) {
-    const pulse = 0.5 + 0.5 * Math.sin(t * 0.005);
-    ctx.globalAlpha = a * pulse;
-    ctx.fillStyle = PAL.pinkGlit;
-    ctx.font = '18px VT323, monospace';
-    ctx.fillText('press SPACE to play again', W / 2, H - 50);
-  }
+        // refresh hint
+        if (game.endingT > 180) {
+          const pulse = 0.5 + 0.5 * Math.sin(t * 0.005);
+          ctx.globalAlpha = a * pulse;
+          ctx.fillStyle = PAL.pinkGlit;
+          ctx.font = '18px VT323, monospace';
+          ctx.fillText('press SPACE to play again', W / 2, H - 50);
+        }
 
-  ctx.restore();
-}
+        ctx.restore();
+      }
 
-
-/* ============================================================
+      /* ============================================================
    GAME LOGIC: update functions
    ============================================================ */
 
-function startDialog(speaker, text, onClose) {
-  game.dialog = {
-    speaker, text,
-    charsShown: 0,
-    doneTyping: false,
-    onClose: onClose || null,
-    blipTimer: 0
-  };
-  game.mode = 'dialog';
-}
+      function startDialog(speaker, text, onClose) {
+        game.dialog = {
+          speaker,
+          text,
+          charsShown: 0,
+          doneTyping: false,
+          onClose: onClose || null,
+          blipTimer: 0,
+        };
+        game.mode = 'dialog';
+      }
 
-function closeDialog() {
-  if (game.dialog && game.dialog.onClose) game.dialog.onClose();
-  game.dialog = null;
-  if (game.mode === 'dialog') game.mode = 'playing';
-}
+      function closeDialog() {
+        if (game.dialog && game.dialog.onClose) game.dialog.onClose();
+        game.dialog = null;
+        if (game.mode === 'dialog') game.mode = 'playing';
+      }
 
-function queueDialog(speaker, text, after) {
-  game.dialogQueue.push({ speaker, text, after });
-}
+      function queueDialog(speaker, text, after) {
+        game.dialogQueue.push({ speaker, text, after });
+      }
 
-function flushDialogQueue() {
-  if (game.dialogQueue.length === 0) return;
-  const next = game.dialogQueue.shift();
-  startDialog(next.speaker, next.text, () => {
-    if (next.after) next.after();
-    if (game.dialogQueue.length > 0) flushDialogQueue();
-  });
-}
+      function flushDialogQueue() {
+        if (game.dialogQueue.length === 0) return;
+        const next = game.dialogQueue.shift();
+        startDialog(next.speaker, next.text, () => {
+          if (next.after) next.after();
+          if (game.dialogQueue.length > 0) flushDialogQueue();
+        });
+      }
 
-function updateDialog() {
-  if (!game.dialog) return;
-  const d = game.dialog;
-  if (!d.doneTyping) {
-    d.charsShown += 1.4;
-    d.blipTimer++;
-    if (d.blipTimer >= 3) {
-      d.blipTimer = 0;
-      Sound.play('dialogBlip');
-    }
-    if (d.charsShown >= d.text.length) {
-      d.charsShown = d.text.length;
-      d.doneTyping = true;
-    }
-  }
-  if (Input.wasPressed('action')) {
-    if (!d.doneTyping) {
-      d.charsShown = d.text.length;
-      d.doneTyping = true;
-    } else {
-      Sound.play('click');
-      closeDialog();
-    }
-  }
-}
+      function updateDialog() {
+        if (!game.dialog) return;
+        const d = game.dialog;
+        if (!d.doneTyping) {
+          d.charsShown += 1.4;
+          d.blipTimer++;
+          if (d.blipTimer >= 3) {
+            d.blipTimer = 0;
+            Sound.play('dialogBlip');
+          }
+          if (d.charsShown >= d.text.length) {
+            d.charsShown = d.text.length;
+            d.doneTyping = true;
+          }
+        }
+        if (Input.wasPressed('action')) {
+          if (!d.doneTyping) {
+            d.charsShown = d.text.length;
+            d.doneTyping = true;
+          } else {
+            Sound.play('click');
+            closeDialog();
+          }
+        }
+      }
 
-/* ---------- Movement ---------- */
-function tryMove(entity, dx, dy) {
-  // attempt with sliding for collision
-  const nx = entity.x + dx;
-  const ny = entity.y + dy;
-  // x
-  if (!collides(entity, nx, entity.y)) entity.x = nx;
-  if (!collides(entity, entity.x, ny)) entity.y = ny;
-  // bound to world
-  entity.x = clamp(entity.x, 30, WORLD_W - 30);
-  entity.y = clamp(entity.y, 100, WORLD_H - 60);
-}
+      /* ---------- Movement ---------- */
+      function tryMove(entity, dx, dy) {
+        // attempt with sliding for collision
+        const nx = entity.x + dx;
+        const ny = entity.y + dy;
+        // x
+        if (!collides(entity, nx, entity.y)) entity.x = nx;
+        if (!collides(entity, entity.x, ny)) entity.y = ny;
+        // bound to world
+        entity.x = clamp(entity.x, 30, WORLD_W - 30);
+        entity.y = clamp(entity.y, 100, WORLD_H - 60);
+      }
 
-function collides(entity, x, y) {
-  // bushes block ghost
-  if (entity.type === 'ghost') {
-    for (const b of bushes) {
-      const dx = x - b.x, dy = y - b.y;
-      if (dx * dx + dy * dy < (b.r + entity.r * 0.7) * (b.r + entity.r * 0.7)) return true;
-    }
-  }
-  // logs block bigfoot
-  if (entity.type === 'bigfoot') {
-    for (const l of logs) {
-      // simple AABB ish check (logs aren't rotated much)
-      const lx = l.x, ly = l.y;
-      const lw = l.w, lh = l.h;
-      if (x > lx - entity.r && x < lx + lw + entity.r &&
-          y > ly - entity.r && y < ly + lh + entity.r) return true;
-    }
-  }
-  return false;
-}
+      function collides(entity, x, y) {
+        // bushes block ghost
+        if (entity.type === 'ghost') {
+          for (const b of bushes) {
+            const dx = x - b.x,
+              dy = y - b.y;
+            if (dx * dx + dy * dy < (b.r + entity.r * 0.7) * (b.r + entity.r * 0.7)) return true;
+          }
+        }
+        // logs block bigfoot
+        if (entity.type === 'bigfoot') {
+          for (const l of logs) {
+            // simple AABB ish check (logs aren't rotated much)
+            const lx = l.x,
+              ly = l.y;
+            const lw = l.w,
+              lh = l.h;
+            if (
+              x > lx - entity.r &&
+              x < lx + lw + entity.r &&
+              y > ly - entity.r &&
+              y < ly + lh + entity.r
+            )
+              return true;
+          }
+        }
+        return false;
+      }
 
-function updateLeader(t) {
-  if (Juice.isFrozen()) return;
+      function updateLeader(t) {
+        if (Juice.isFrozen()) return;
 
-  let dx = 0, dy = 0;
-  if (Input.isDown('left'))  dx -= 1;
-  if (Input.isDown('right')) dx += 1;
-  if (Input.isDown('up'))    dy -= 1;
-  if (Input.isDown('down'))  dy += 1;
+        let dx = 0,
+          dy = 0;
+        if (Input.isDown('left')) dx -= 1;
+        if (Input.isDown('right')) dx += 1;
+        if (Input.isDown('up')) dy -= 1;
+        if (Input.isDown('down')) dy += 1;
 
-  // normalize diagonal
-  if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
+        // normalize diagonal
+        if (dx && dy) {
+          dx *= 0.7071;
+          dy *= 0.7071;
+        }
 
-  const sp = leader.speed;
-  const targetVx = dx * sp;
-  const targetVy = dy * sp;
+        const sp = leader.speed;
+        const targetVx = dx * sp;
+        const targetVy = dy * sp;
 
-  leader.vx = Juice.lerp(leader.vx, targetVx, 0.25);
-  leader.vy = Juice.lerp(leader.vy, targetVy, 0.25);
+        leader.vx = Juice.lerp(leader.vx, targetVx, 0.25);
+        leader.vy = Juice.lerp(leader.vy, targetVy, 0.25);
 
-  if (dx !== 0) leader.facing = dx > 0 ? 1 : -1;
+        if (dx !== 0) leader.facing = dx > 0 ? 1 : -1;
 
-  tryMove(leader, leader.vx, leader.vy);
+        tryMove(leader, leader.vx, leader.vy);
 
-  // walk phase / step sound
-  const moving = Math.abs(leader.vx) + Math.abs(leader.vy) > 0.4;
-  if (moving) {
-    leader.walkPhase = (leader.walkPhase || 0) + 0.18;
-    if (leader.type === 'bigfoot' && Math.floor(leader.walkPhase * 0.5) % 2 === 0 && !leader._lastStep) {
-      Sound.play('step');
-      leader._lastStep = true;
-      setTimeout(() => leader._lastStep = false, 200);
-    }
-  } else {
-    leader.walkPhase = 0;
-  }
-}
+        // walk phase / step sound
+        const moving = Math.abs(leader.vx) + Math.abs(leader.vy) > 0.4;
+        if (moving) {
+          leader.walkPhase = (leader.walkPhase || 0) + 0.18;
+          if (
+            leader.type === 'bigfoot' &&
+            Math.floor(leader.walkPhase * 0.5) % 2 === 0 &&
+            !leader._lastStep
+          ) {
+            Sound.play('step');
+            leader._lastStep = true;
+            setTimeout(() => (leader._lastStep = false), 200);
+          }
+        } else {
+          leader.walkPhase = 0;
+        }
+      }
 
-function updateFollower(t) {
-  // follower drifts toward leader, but stays just behind, NOT through walls of its type
-  const desiredOffset = leader.facing >= 0 ? -28 : 28;
-  const targetX = leader.x + desiredOffset;
-  const targetY = leader.y + 8;
-  const dx = targetX - follower.x;
-  const dy = targetY - follower.y;
-  const dist = Math.hypot(dx, dy);
+      function updateFollower(t) {
+        // follower drifts toward leader, but stays just behind, NOT through walls of its type
+        const desiredOffset = leader.facing >= 0 ? -28 : 28;
+        const targetX = leader.x + desiredOffset;
+        const targetY = leader.y + 8;
+        const dx = targetX - follower.x;
+        const dy = targetY - follower.y;
+        const dist = Math.hypot(dx, dy);
 
-  // only move if reasonably far
-  let stepX = 0, stepY = 0;
-  if (dist > 12) {
-    const nm = follower.speed * 0.85;
-    stepX = (dx / dist) * Math.min(nm, dist - 12);
-    stepY = (dy / dist) * Math.min(nm, dist - 12);
-  }
+        // only move if reasonably far
+        let stepX = 0,
+          stepY = 0;
+        if (dist > 12) {
+          const nm = follower.speed * 0.85;
+          stepX = (dx / dist) * Math.min(nm, dist - 12);
+          stepY = (dy / dist) * Math.min(nm, dist - 12);
+        }
 
-  follower.vx = Juice.lerp(follower.vx, stepX, 0.2);
-  follower.vy = Juice.lerp(follower.vy, stepY, 0.2);
+        follower.vx = Juice.lerp(follower.vx, stepX, 0.2);
+        follower.vy = Juice.lerp(follower.vy, stepY, 0.2);
 
-  // follower respects ITS OWN collision rules — but if leader has gone through
-  // something the follower can't pass, the follower will path around (best effort).
-  tryMove(follower, follower.vx, follower.vy);
+        // follower respects ITS OWN collision rules — but if leader has gone through
+        // something the follower can't pass, the follower will path around (best effort).
+        tryMove(follower, follower.vx, follower.vy);
 
-  // facing
-  if (Math.abs(follower.vx) > 0.1) follower.facing = follower.vx > 0 ? 1 : -1;
-  follower.bobPhase = (follower.bobPhase || 0) + 0.04;
-  follower.walkPhase = (follower.walkPhase || 0) + (Math.abs(follower.vx) + Math.abs(follower.vy)) * 0.1;
-}
+        // facing
+        if (Math.abs(follower.vx) > 0.1) follower.facing = follower.vx > 0 ? 1 : -1;
+        follower.bobPhase = (follower.bobPhase || 0) + 0.04;
+        follower.walkPhase =
+          (follower.walkPhase || 0) + (Math.abs(follower.vx) + Math.abs(follower.vy)) * 0.1;
+      }
 
-function swapLeader() {
-  // can't swap during dialog or before game start
-  if (game.mode !== 'playing') return;
-  Sound.play('swap');
-  burstParticles.push(...Juice.burst(leader.x, leader.y, 14, PAL.limeGlow));
-  burstParticles.push(...Juice.burst(follower.x, follower.y, 14, PAL.pinkGlit));
-  const tmp = leader; leader = follower; follower = tmp;
-}
+      function swapLeader() {
+        // can't swap during dialog or before game start
+        if (game.mode !== 'playing') return;
+        Sound.play('swap');
+        burstParticles.push(...Juice.burst(leader.x, leader.y, 14, PAL.limeGlow));
+        burstParticles.push(...Juice.burst(follower.x, follower.y, 14, PAL.pinkGlit));
+        const tmp = leader;
+        leader = follower;
+        follower = tmp;
+      }
 
-/* ---------- Camera follows leader smoothly --------------- */
-function updateCamera() {
-  camera.tx = clamp(leader.x - W / 2, 0, WORLD_W - W);
-  camera.ty = clamp(leader.y - H / 2, 0, WORLD_H - H);
-  camera.x = Juice.lerp(camera.x, camera.tx, 0.12);
-  camera.y = Juice.lerp(camera.y, camera.ty, 0.12);
-}
+      /* ---------- Camera follows leader smoothly --------------- */
+      function updateCamera() {
+        camera.tx = clamp(leader.x - W / 2, 0, WORLD_W - W);
+        camera.ty = clamp(leader.y - H / 2, 0, WORLD_H - H);
+        camera.x = Juice.lerp(camera.x, camera.tx, 0.12);
+        camera.y = Juice.lerp(camera.y, camera.ty, 0.12);
+      }
 
-/* ---------- Clue interactions --------------------------- */
-function updateClues() {
-  for (const c of clues) {
-    if (c.collected) continue;
-    const dx = leader.x - c.x;
-    const dy = leader.y - c.y;
-    const d = dx * dx + dy * dy;
-    if (d < 36 * 36) {
-      collectClue(c);
-    } else if (d < 90 * 90 && !game._mysterySoundPlaying) {
-      // approaching a clue — soft mystery cue
-      game._mysterySoundPlaying = true;
-      Sound.play('mystery');
-      setTimeout(() => game._mysterySoundPlaying = false, 1100);
-    }
-  }
-}
+      /* ---------- Clue interactions --------------------------- */
+      function updateClues() {
+        for (const c of clues) {
+          if (c.collected) continue;
+          const dx = leader.x - c.x;
+          const dy = leader.y - c.y;
+          const d = dx * dx + dy * dy;
+          if (d < 36 * 36) {
+            collectClue(c);
+          } else if (d < 90 * 90 && !game._mysterySoundPlaying) {
+            // approaching a clue — soft mystery cue
+            game._mysterySoundPlaying = true;
+            Sound.play('mystery');
+            setTimeout(() => (game._mysterySoundPlaying = false), 1100);
+          }
+        }
+      }
 
-function collectClue(c) {
-  c.collected = true;
-  game.collectedCount++;
-  Sound.play('clue');
-  Juice.shake(6);
-  burstParticles.push(...Juice.burst(c.x, c.y, 22, PAL.pinkGlit));
-  sparkleParticles.push(...Juice.sparkle(c.x, c.y, 14, PAL.uiAccent));
-  sparkleParticles.push(...Juice.sparkle(c.x, c.y, 10, PAL.purpleSplat));
+      function collectClue(c) {
+        c.collected = true;
+        game.collectedCount++;
+        Sound.play('clue');
+        Juice.shake(6);
+        burstParticles.push(...Juice.burst(c.x, c.y, 22, PAL.pinkGlit));
+        sparkleParticles.push(...Juice.sparkle(c.x, c.y, 14, PAL.uiAccent));
+        sparkleParticles.push(...Juice.sparkle(c.x, c.y, 10, PAL.purpleSplat));
 
-  // Queue dialog: clue text then ghost quip
-  queueDialog('JOURNAL', `Found: ${c.title}.\n${c.flavor}`);
-  if (c.ghostQuip) queueDialog('GHOST', c.ghostQuip);
+        // Queue dialog: clue text then ghost quip
+        queueDialog('JOURNAL', `Found: ${c.title}.\n${c.flavor}`);
+        if (c.ghostQuip) queueDialog('GHOST', c.ghostQuip);
 
-  if (game.collectedCount === TOTAL_CLUES) {
-    queueDialog('GHOST', 'Wait. Did the forest just... shimmer? In a suspicious-pond direction? Bigfoot. We are SO going north.', () => {
-      revealPond();
-    });
-  } else if (game.collectedCount === 1) {
-    queueDialog('GHOST', '(Five more weird things to find. The mailbox said so. Don\u2019t ask.)');
-  }
-  flushDialogQueue();
-}
+        if (game.collectedCount === TOTAL_CLUES) {
+          queueDialog(
+            'GHOST',
+            'Wait. Did the forest just... shimmer? In a suspicious-pond direction? Bigfoot. We are SO going north.',
+            () => {
+              revealPond();
+            }
+          );
+        } else if (game.collectedCount === 1) {
+          queueDialog(
+            'GHOST',
+            '(Five more weird things to find. The mailbox said so. Don\u2019t ask.)'
+          );
+        }
+        flushDialogQueue();
+      }
 
-function revealPond() {
-  pond.revealed = true;
-  game.mode = 'pondReveal';
-  game.modeT = 0;
-  Sound.play('pondReveal');
-  Juice.shake(14);
-}
+      function revealPond() {
+        pond.revealed = true;
+        game.mode = 'pondReveal';
+        game.modeT = 0;
+        Sound.play('pondReveal');
+        Juice.shake(14);
+      }
 
-/* ---------- Ambient ghost quips ------------------------- */
-function maybeGhostQuip() {
-  if (game.mode !== 'playing') return;
-  game.ghostQuipTimer--;
-  if (game.ghostQuipTimer <= 0) {
-    game.ghostQuipTimer = 540 + Math.random() * 540; // every 9-18 seconds
-    const pool = idleGhostLines;
-    const line = pool[Math.floor(Math.random() * pool.length)];
-    startDialog('GHOST', line);
-  }
-}
+      /* ---------- Ambient ghost quips ------------------------- */
+      function maybeGhostQuip() {
+        if (game.mode !== 'playing') return;
+        game.ghostQuipTimer--;
+        if (game.ghostQuipTimer <= 0) {
+          game.ghostQuipTimer = 540 + Math.random() * 540; // every 9-18 seconds
+          const pool = idleGhostLines;
+          const line = pool[Math.floor(Math.random() * pool.length)];
+          startDialog('GHOST', line);
+        }
+      }
 
-/* ---------- Magic (cat) interaction --------------------- */
-function updateMagic() {
-  if (magicSpot.mmmmTimer > 0) magicSpot.mmmmTimer--;
-  const dx = leader.x - magicSpot.x;
-  const dy = leader.y - magicSpot.y;
-  if (dx * dx + dy * dy < 100 * 100) {
-    if (!magicSpot.mmmmShown) {
-      magicSpot.mmmmShown = true;
-      magicSpot.mmmmTimer = 200;
-      const line = magicLines[Math.floor(Math.random() * magicLines.length)];
-      startDialog('MAGIC', line);
-    }
-  } else if (dx * dx + dy * dy > 220 * 220) {
-    magicSpot.mmmmShown = false;
-  }
-}
+      /* ---------- Magic (cat) interaction --------------------- */
+      function updateMagic() {
+        if (magicSpot.mmmmTimer > 0) magicSpot.mmmmTimer--;
+        const dx = leader.x - magicSpot.x;
+        const dy = leader.y - magicSpot.y;
+        if (dx * dx + dy * dy < 100 * 100) {
+          if (!magicSpot.mmmmShown) {
+            magicSpot.mmmmShown = true;
+            magicSpot.mmmmTimer = 200;
+            const line = magicLines[Math.floor(Math.random() * magicLines.length)];
+            startDialog('MAGIC', line);
+          }
+        } else if (dx * dx + dy * dy > 220 * 220) {
+          magicSpot.mmmmShown = false;
+        }
+      }
 
-/* ---------- Particle update ----------------------------- */
-function updateParticles() {
-  // fireflies wander
-  for (const f of fireflies) {
-    f.x += f.vx; f.y += f.vy;
-    f.vx += (Math.random() - 0.5) * 0.05;
-    f.vy += (Math.random() - 0.5) * 0.05;
-    f.vx = clamp(f.vx, -0.6, 0.6);
-    f.vy = clamp(f.vy, -0.6, 0.6);
-    if (f.x < 0) f.x = WORLD_W;
-    if (f.x > WORLD_W) f.x = 0;
-    if (f.y < 100) f.y = WORLD_H - 100;
-    if (f.y > WORLD_H - 100) f.y = 100;
-  }
-  // fog drift
-  for (const p of fogPuffs) {
-    p.x += p.vx;
-    if (p.x < -p.r) p.x = WORLD_W + p.r;
-  }
-  // dust motes
-  for (const d of dustMotes) {
-    d.x += d.vx;
-    d.y += d.vy;
-    d.life++;
-    if (d.life > 200 + Math.random() * 100 || d.y < 100) {
-      d.x = Math.random() * WORLD_W;
-      d.y = WORLD_H - 100;
-      d.vx = (Math.random() - 0.5) * 0.2;
-      d.vy = -0.05 - Math.random() * 0.15;
-      d.life = 0;
-    }
-  }
-  // bursts
-  burstParticles = burstParticles.filter(p => p.life > 0);
-  for (const p of burstParticles) {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx *= 0.92;
-    p.vy *= 0.92;
-    p.vy += 0.05;
-    p.life--;
-  }
-  // sparkles
-  sparkleParticles = sparkleParticles.filter(p => p.life > 0);
-  for (const p of sparkleParticles) {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy *= 0.95;
-    p.life--;
-  }
-}
+      /* ---------- Particle update ----------------------------- */
+      function updateParticles() {
+        // fireflies wander
+        for (const f of fireflies) {
+          f.x += f.vx;
+          f.y += f.vy;
+          f.vx += (Math.random() - 0.5) * 0.05;
+          f.vy += (Math.random() - 0.5) * 0.05;
+          f.vx = clamp(f.vx, -0.6, 0.6);
+          f.vy = clamp(f.vy, -0.6, 0.6);
+          if (f.x < 0) f.x = WORLD_W;
+          if (f.x > WORLD_W) f.x = 0;
+          if (f.y < 100) f.y = WORLD_H - 100;
+          if (f.y > WORLD_H - 100) f.y = 100;
+        }
+        // fog drift
+        for (const p of fogPuffs) {
+          p.x += p.vx;
+          if (p.x < -p.r) p.x = WORLD_W + p.r;
+        }
+        // dust motes
+        for (const d of dustMotes) {
+          d.x += d.vx;
+          d.y += d.vy;
+          d.life++;
+          if (d.life > 200 + Math.random() * 100 || d.y < 100) {
+            d.x = Math.random() * WORLD_W;
+            d.y = WORLD_H - 100;
+            d.vx = (Math.random() - 0.5) * 0.2;
+            d.vy = -0.05 - Math.random() * 0.15;
+            d.life = 0;
+          }
+        }
+        // bursts
+        burstParticles = burstParticles.filter((p) => p.life > 0);
+        for (const p of burstParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.92;
+          p.vy *= 0.92;
+          p.vy += 0.05;
+          p.life--;
+        }
+        // sparkles
+        sparkleParticles = sparkleParticles.filter((p) => p.life > 0);
+        for (const p of sparkleParticles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy *= 0.95;
+          p.life--;
+        }
+      }
 
-/* ---------- Pond reveal cutscene ------------------------ */
-function updatePondReveal() {
-  game.modeT++;
-  pond.revealT = Math.min(1, game.modeT / 120);
-  if (game.modeT < 60) {
-    // pan camera toward pond
-    camera.tx = pond.x - W / 2;
-    camera.ty = pond.y - H / 2;
-    camera.x = Juice.lerp(camera.x, camera.tx, 0.04);
-    camera.y = Juice.lerp(camera.y, camera.ty, 0.04);
-  }
-  if (game.modeT === 30) {
-    Sound.play('coin');
-  }
-  if (game.modeT === 90) {
-    queueDialog('JOURNAL', 'A SECRET POND has appeared, deep in the dark forest. Walk to it.');
-    queueDialog('GHOST', 'I am freaking out. In a sarcastic way. Obviously.');
-    flushDialogQueue();
-    game.mode = 'playing';
-  }
-}
+      /* ---------- Pond reveal cutscene ------------------------ */
+      function updatePondReveal() {
+        game.modeT++;
+        pond.revealT = Math.min(1, game.modeT / 120);
+        if (game.modeT < 60) {
+          // pan camera toward pond
+          camera.tx = pond.x - W / 2;
+          camera.ty = pond.y - H / 2;
+          camera.x = Juice.lerp(camera.x, camera.tx, 0.04);
+          camera.y = Juice.lerp(camera.y, camera.ty, 0.04);
+        }
+        if (game.modeT === 30) {
+          Sound.play('coin');
+        }
+        if (game.modeT === 90) {
+          queueDialog(
+            'JOURNAL',
+            'A SECRET POND has appeared, deep in the dark forest. Walk to it.'
+          );
+          queueDialog('GHOST', 'I am freaking out. In a sarcastic way. Obviously.');
+          flushDialogQueue();
+          game.mode = 'playing';
+        }
+      }
 
-function updateApproachPond() {
-  if (!pond.revealed) return;
-  if (game.mode !== 'playing') return;
-  const dx = leader.x - pond.x;
-  const dy = leader.y - pond.y;
-  if (dx * dx / (pond.rx * pond.rx) + dy * dy / (pond.ry * pond.ry) < 1.4) {
-    triggerEnding();
-  }
-}
+      function updateApproachPond() {
+        if (!pond.revealed) return;
+        if (game.mode !== 'playing') return;
+        const dx = leader.x - pond.x;
+        const dy = leader.y - pond.y;
+        if ((dx * dx) / (pond.rx * pond.rx) + (dy * dy) / (pond.ry * pond.ry) < 1.4) {
+          triggerEnding();
+        }
+      }
 
-function triggerEnding() {
-  game.mode = 'ending';
-  game.endingT = 0;
-  Sound.play('win');
-  // big celebratory burst
-  for (let i = 0; i < 6; i++) {
-    setTimeout(() => {
-      sparkleParticles.push(...Juice.sparkle(pond.x, pond.y, 24, [PAL.pinkGlit, PAL.limeGlow, PAL.purpleSplat][i % 3]));
-    }, i * 120);
-  }
-}
+      function triggerEnding() {
+        game.mode = 'ending';
+        game.endingT = 0;
+        Sound.play('win');
+        // big celebratory burst
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => {
+            sparkleParticles.push(
+              ...Juice.sparkle(
+                pond.x,
+                pond.y,
+                24,
+                [PAL.pinkGlit, PAL.limeGlow, PAL.purpleSplat][i % 3]
+              )
+            );
+          }, i * 120);
+        }
+      }
 
-/* ---------- Title screen update ------------------------- */
-function updateTitle() {
-  if (Input.wasPressed('action')) {
-    Sound.play('click');
-    game.mode = 'playing';
-    if (!game.introShown) {
-      game.introShown = true;
-      queueDialog('GHOST', 'Okay. The forest. We\u2019re really doing this. Looking for a mermaid.');
-      queueDialog('GHOST', 'I will say it once: I do NOT believe in her. But I\u2019m a ghost so my opinions on real-vs-fake are statistically suspect.');
-      queueDialog('GHOST', 'Bigfoot, find clues. I\u2019ll narrate. Press SPACE to swap who\u2019s in front when you need it.');
-      flushDialogQueue();
-    }
-  }
-}
+      /* ---------- Title screen update ------------------------- */
+      function updateTitle() {
+        if (Input.wasPressed('action')) {
+          Sound.play('click');
+          game.mode = 'playing';
+          if (!game.introShown) {
+            game.introShown = true;
+            queueDialog(
+              'GHOST',
+              'Okay. The forest. We\u2019re really doing this. Looking for a mermaid.'
+            );
+            queueDialog(
+              'GHOST',
+              'I will say it once: I do NOT believe in her. But I\u2019m a ghost so my opinions on real-vs-fake are statistically suspect.'
+            );
+            queueDialog(
+              'GHOST',
+              'Bigfoot, find clues. I\u2019ll narrate. Press SPACE to swap who\u2019s in front when you need it.'
+            );
+            flushDialogQueue();
+          }
+        }
+      }
 
-/* ---------- Ending update ------------------------------- */
-function updateEnding() {
-  game.endingT++;
-  if (game.endingT > 180 && Input.wasPressed('action')) {
-    location.reload();
-  }
-}
+      /* ---------- Ending update ------------------------------- */
+      function updateEnding() {
+        game.endingT++;
+        if (game.endingT > 180 && Input.wasPressed('action')) {
+          location.reload();
+        }
+      }
 
-/* ============================================================
+      /* ============================================================
    MAIN LOOP
    ============================================================ */
 
-let lastT = 0;
+      let lastT = 0;
 
-function frame(t) {
-  const dt = Math.min(33, t - lastT);
-  lastT = t;
+      function frame(t) {
+        const dt = Math.min(33, t - lastT);
+        lastT = t;
 
-  // ---- update ----
-  if (game.mode === 'title') {
-    updateTitle();
-  } else if (game.mode === 'playing') {
-    if (game.dialog) {
-      updateDialog();
-    } else {
-      if (Input.wasPressed('action')) swapLeader();
-      updateLeader(t);
-      updateFollower(t);
-      updateClues();
-      updateMagic();
-      maybeGhostQuip();
-      updateApproachPond();
-    }
-    updateCamera();
-  } else if (game.mode === 'dialog') {
-    updateDialog();
-    if (game.mode === 'playing' && game.dialogQueue.length > 0) {
-      flushDialogQueue();
-    }
-  } else if (game.mode === 'pondReveal') {
-    updatePondReveal();
-    updateCamera();
-  } else if (game.mode === 'ending') {
-    updateEnding();
-  }
-  updateParticles();
+        // ---- update ----
+        if (game.mode === 'title') {
+          updateTitle();
+        } else if (game.mode === 'playing') {
+          if (game.dialog) {
+            updateDialog();
+          } else {
+            if (Input.wasPressed('action')) swapLeader();
+            updateLeader(t);
+            updateFollower(t);
+            updateClues();
+            updateMagic();
+            maybeGhostQuip();
+            updateApproachPond();
+          }
+          updateCamera();
+        } else if (game.mode === 'dialog') {
+          updateDialog();
+          if (game.mode === 'playing' && game.dialogQueue.length > 0) {
+            flushDialogQueue();
+          }
+        } else if (game.mode === 'pondReveal') {
+          updatePondReveal();
+          updateCamera();
+        } else if (game.mode === 'ending') {
+          updateEnding();
+        }
+        updateParticles();
 
-  // ---- draw ----
-  // shake offset
-  const sh = Juice.getShakeOffset();
-  ctx.save();
-  ctx.translate(sh.x, sh.y);
+        // ---- draw ----
+        // shake offset
+        const sh = Juice.getShakeOffset();
+        ctx.save();
+        ctx.translate(sh.x, sh.y);
 
-  // 1. background gradient
-  drawGradientBackground();
+        // 1. background gradient
+        drawGradientBackground();
 
-  // 2. distant trees + fog (parallax depth)
-  drawDistantTrees(t);
-  drawFog(t);
+        // 2. distant trees + fog (parallax depth)
+        drawDistantTrees(t);
+        drawFog(t);
 
-  // 3. foreground trees BEHIND player
-  drawForegroundTrees(t);
+        // 3. foreground trees BEHIND player
+        drawForegroundTrees(t);
 
-  // 4. ground tint
-  drawGround();
+        // 4. ground tint
+        drawGround();
 
-  // 5. midground props
-  drawRocks();
-  drawGrassTufts(t);
+        // 5. midground props
+        drawRocks();
+        drawGrassTufts(t);
 
-  // 6. interactive obstacles
-  drawBushes(t);
-  drawLogs();
+        // 6. interactive obstacles
+        drawBushes(t);
+        drawLogs();
 
-  // 7. mushrooms (drawn before player so player walks in front)
-  drawMushrooms(t);
+        // 7. mushrooms (drawn before player so player walks in front)
+        drawMushrooms(t);
 
-  // 8. clues
-  drawClues(t);
+        // 8. clues
+        drawClues(t);
 
-  // 9. pond
-  drawPond(t);
+        // 9. pond
+        drawPond(t);
 
-  // 10. magic the cat (Easter egg)
-  drawMagic(t);
+        // 10. magic the cat (Easter egg)
+        drawMagic(t);
 
-  // 11. characters (sorted by y so closer one draws over)
-  if (bigfoot.y > ghost.y) {
-    drawGhost(ghost, t);
-    drawBigfoot(bigfoot, t);
-  } else {
-    drawBigfoot(bigfoot, t);
-    drawGhost(ghost, t);
-  }
+        // 11. characters (sorted by y so closer one draws over)
+        if (bigfoot.y > ghost.y) {
+          drawGhost(ghost, t);
+          drawBigfoot(bigfoot, t);
+        } else {
+          drawBigfoot(bigfoot, t);
+          drawGhost(ghost, t);
+        }
 
-  // 12. trees in front of player (depth)
-  drawTreesAroundPlayer(t, leader.y);
+        // 12. trees in front of player (depth)
+        drawTreesAroundPlayer(t, leader.y);
 
-  // 13. particles
-  drawBurstParticles();
-  drawSparkles(t);
-  drawDustMotes();
+        // 13. particles
+        drawBurstParticles();
+        drawSparkles(t);
+        drawDustMotes();
 
-  // 14. lighting overlay (additive — mushroom glows etc)
-  drawMushroomLightOverlay(t);
+        // 14. lighting overlay (additive — mushroom glows etc)
+        drawMushroomLightOverlay(t);
 
-  // 15. fireflies (additive)
-  drawFireflies(t);
+        // 15. fireflies (additive)
+        drawFireflies(t);
 
-  // 16. vignette
-  drawVignette();
+        // 16. vignette
+        drawVignette();
 
-  ctx.restore();
+        ctx.restore();
 
-  // 17. UI (no shake)
-  drawCharacterIndicator();
-  drawMysteryJournal();
-  drawDialog(t);
+        // 17. UI (no shake)
+        drawCharacterIndicator();
+        drawMysteryJournal();
+        drawDialog(t);
 
-  if (game.mode === 'title') drawTitle(t);
-  if (game.mode === 'ending') drawEnding(t);
+        if (game.mode === 'title') drawTitle(t);
+        if (game.mode === 'ending') drawEnding(t);
 
-  Input.endFrame();
-  requestAnimationFrame(frame);
-}
+        Input.endFrame();
+        requestAnimationFrame(frame);
+      }
 
-// ---- start ----
-Input.enableTouchControls();
-requestAnimationFrame(frame);
-
-</script>
-</body>
+      // ---- start ----
+      Input.enableTouchControls();
+      requestAnimationFrame(frame);
+    </script>
+  </body>
 </html>
