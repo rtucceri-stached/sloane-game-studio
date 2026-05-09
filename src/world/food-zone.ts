@@ -13,6 +13,7 @@ import { Juice } from '../engine/juice.js';
 import { Sound } from '../engine/sound.js';
 import { FogSystem, FireflySystem, DustMoteSystem } from '../engine/atmosphere.js';
 import { ColorGrading } from '../engine/color-grading.js';
+import { Sprites } from '../assets/manifest.js';
 
 // ---------- Game-object interfaces ----------
 
@@ -135,6 +136,16 @@ function clamp(v: number, a: number, b: number): number {
   return v < a ? a : v > b ? b : v;
 }
 
+// Sprite render path — dormant until real Critic 1 renders land.
+// Flip USE_SPRITE_PLAYER to true after Session E to activate.
+const USE_SPRITE_PLAYER = false;
+const IDLE_FPS = 8;
+const WALK_FPS = 12;
+const IDLE_FRAME_COUNT = 6;
+const WALK_FRAME_COUNT = 12;
+// TODO: tune SPRITE_FRAME_SIZE, FPS, and anchor offset when Critic 1 sprites are first rendered — current values are pre-render guesses
+const SPRITE_FRAME_SIZE = 512;
+
 // ============================================================
 // FoodZone — scene class
 // ============================================================
@@ -153,6 +164,7 @@ export class FoodZone {
   burstParticles: BurstParticle[];
   hud: HUD;
   t: number;
+  _criticSprites: Map<string, HTMLImageElement>;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -230,6 +242,7 @@ export class FoodZone {
     this.burstParticles = [];
     this.hud = { titleAlpha: 1, introHintT: 600 };
     this.t = 0;
+    this._criticSprites = new Map();
 
     this._buildSpiritMotes();
   }
@@ -484,8 +497,13 @@ export class FoodZone {
     }
   }
 
-  /* ---------- PLAYER PLACEHOLDER — circle + facing indicator ---------- */
+  /* ---------- PLAYER — circle placeholder or Blender sprite strip ---------- */
   _drawPlayer(_t: number): void {
+    if (USE_SPRITE_PLAYER) {
+      this._drawPlayerSprite();
+      return;
+    }
+
     const ctx = this.ctx;
     const wx = this.player.x - this.camera.x;
     const wy = this.player.y - this.camera.y;
@@ -516,6 +534,52 @@ export class FoodZone {
     ctx.fill();
 
     ctx.restore();
+  }
+
+  /* ---------- SPRITE PLAYER — draws from Critic 1 horizontal strip ---------- */
+  _drawPlayerSprite(): void {
+    // Determine animation + direction from current movement state
+    const p = this.player;
+    const moving = Math.abs(p.vx) + Math.abs(p.vy) > 0.4;
+    const animation: 'idle' | 'walk' = moving ? 'walk' : 'idle';
+    const fps = animation === 'walk' ? WALK_FPS : IDLE_FPS;
+    const frameCount = animation === 'walk' ? WALK_FRAME_COUNT : IDLE_FRAME_COUNT;
+
+    // Map velocity to 4-way direction; fall back to facing when nearly still
+    const absVx = Math.abs(p.vx);
+    const absVy = Math.abs(p.vy);
+    let direction: 'front' | 'back' | 'left' | 'right';
+    if (absVx > absVy) {
+      direction = p.facing > 0 ? 'right' : 'left';
+    } else if (absVy > 0.1) {
+      direction = p.vy > 0 ? 'front' : 'back';
+    } else {
+      direction = p.facing > 0 ? 'right' : 'left';
+    }
+
+    const url = Sprites.characters['critic-1'][animation][direction];
+
+    // Lazy-load the strip image; returns null until the image is ready
+    let img = this._criticSprites.get(url);
+    if (!img) {
+      img = new Image();
+      img.src = url;
+      this._criticSprites.set(url, img);
+    }
+    if (!img.complete || img.naturalWidth === 0) return;
+
+    // Index into the horizontal strip: frame 0 leftmost, each frame SPRITE_FRAME_SIZE wide
+    const frameIndex = Math.floor((this.t / 60) * fps) % frameCount;
+    const sx = frameIndex * SPRITE_FRAME_SIZE;
+
+    const wx = this.player.x - this.camera.x;
+    const wy = this.player.y - this.camera.y;
+
+    // Anchor: bottom-center — feet at (wx, wy)
+    const drawX = Math.round(wx - SPRITE_FRAME_SIZE / 2);
+    const drawY = Math.round(wy - SPRITE_FRAME_SIZE);
+
+    this.ctx.drawImage(img, sx, 0, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE, drawX, drawY, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE);
   }
 
   /* ---------- LIGHT POOLS — boba stand neon + interior ---------- */

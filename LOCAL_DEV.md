@@ -153,12 +153,140 @@ Both must pass for the commit to go through.
 
 ## Blender connector (Claude Desktop)
 
-Blender rendering is scripted via a Claude Desktop MCP connector. Setup:
+Blender rendering is scripted via a Claude Desktop MCP connector. The connector is **blender-mcp** — officially supported by Anthropic, actively maintained. It gives Claude Desktop ~18 tools that can create objects, apply materials, set up cameras, and render — all inside a running Blender session.
 
-1. Install Claude Desktop and enable MCP.
-2. *(Connector-specific setup TBD — fill in when the connector is configured.)*
-3. Rendered PNGs land in `public/sprites/{category}/{name}/{animation}/{direction}.png`.
-4. After any render run: `npm run build:manifest` to update the typed sprite index.
+The workflow is: Blender runs on your machine → Claude Desktop talks to it via the MCP connector → you describe what you want and Claude Desktop does the modeling and rendering.
+
+---
+
+### Step 1 — Install Blender
+
+1. Go to **[blender.org/download](https://www.blender.org/download/)**. Download the **Windows Installer** for the current LTS release (4.x as of 2026). The `.msi` or `.exe` file will be around 250–350 MB.
+
+2. Run the installer. Accept all defaults. It will install to:
+   ```
+   C:\Program Files\Blender Foundation\Blender 4.x\
+   ```
+   You don't need to change this.
+
+3. **Verify it installed correctly:** open Blender from the Start menu. A splash screen appears with the version number (e.g., "4.2.0"). Close the splash screen and the default scene appears — a grey cube, a camera, and a light. That's success. Close Blender for now.
+
+   > **Why it matters:** Blender ships with its own bundled Python runtime (`C:\Program Files\Blender Foundation\Blender 4.x\4.x\python\`). This is completely separate from any Python you may have installed for other things. Never run `pip install` against Blender's Python — it doesn't work that way, and you don't need to.
+
+**Common Windows install issues:**
+
+| Symptom | Fix |
+|---|---|
+| Installer asks for admin permission | Click Yes — normal for `C:\Program Files` installs |
+| Blender opens but flickers or goes black | Right-click Blender shortcut → Properties → Compatibility → uncheck "Disable fullscreen optimizations" |
+| "This app can't run on your PC" | You downloaded the wrong architecture. Download the x64 build (the default on the main download page) |
+| Blender won't open at all | Make sure your GPU drivers are up to date — Blender requires reasonably modern drivers |
+
+---
+
+### Step 2 — Install the blender-mcp addon in Blender
+
+The Blender side of the connector is a single Python file called `addon.py`.
+
+1. **Download `addon.py`:**
+   - Go to: [https://github.com/ahujasid/blender-mcp/blob/main/addon.py](https://github.com/ahujasid/blender-mcp/blob/main/addon.py)
+   - Click the **Raw** button (top-right of the code view)
+   - Right-click anywhere → **Save as** → save the file as `addon.py` somewhere easy to find (e.g., your Downloads folder)
+
+2. **Install it in Blender:**
+   - Open Blender
+   - Go to **Edit → Preferences → Add-ons**
+   - Click **Install** (top-right of the Add-ons panel)
+   - Navigate to your `addon.py` file and select it
+   - After install, search for **"blender mcp"** in the Add-ons search box
+   - Check the box next to **"Blender MCP"** to enable it
+
+3. **Start the connector server inside Blender:**
+   - In the Blender main window, look in the top-right area for a panel called **"MCP Server"** — it appears in the 3D Viewport's N panel (press **N** to toggle it if you don't see it)
+   - Click **"Start MCP Server"**
+   - The status should change to something like `Running on port 9000`
+   - Leave Blender open and the server running
+
+   > Blender must stay open and the server must be running for Claude Desktop to talk to it. You'll start the server at the beginning of each modeling session.
+
+---
+
+### Step 3 — Install `uv` (the MCP server runner)
+
+The MCP server that talks between Claude Desktop and Blender runs via `uv`, a fast Python package runner. You install it once on your machine.
+
+1. Open **PowerShell** (search "PowerShell" in Start menu)
+2. Run:
+   ```powershell
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+3. Close and reopen PowerShell when it finishes
+4. Verify it installed: `uv --version` — should print a version number like `uv 0.x.x`
+
+   > **What is `uv`?** It's a package manager for Python tools. `blender-mcp` uses it as its launcher — it handles downloading and running the server automatically, no separate Python install required.
+
+---
+
+### Step 4 — Register blender-mcp in Claude Desktop
+
+Claude Desktop has a config file that tells it which MCP servers to connect to. You need to add one entry.
+
+1. **Find the config file.** In File Explorer, navigate to:
+   ```
+   %APPDATA%\Claude\
+   ```
+   (Paste that path directly into the address bar — `%APPDATA%` is a shortcut Windows resolves automatically.) The file is called `claude_desktop_config.json`.
+
+   > If the file doesn't exist yet: open Notepad, create it yourself at that path. Make sure to save it as `claude_desktop_config.json` with "All files" selected (not `.txt`).
+
+2. **Add the blender-mcp server entry.** Open the file and add (or merge into existing content):
+   ```json
+   {
+     "mcpServers": {
+       "blender": {
+         "command": "uvx",
+         "args": ["blender-mcp"]
+       }
+     }
+   }
+   ```
+   If you already have other MCP servers in the file, add `"blender"` as a new key inside the existing `"mcpServers"` block — don't replace what's already there.
+
+3. **Save the file and restart Claude Desktop** (quit completely and reopen).
+
+---
+
+### Step 5 — Smoke test
+
+1. Open Blender, start the MCP Server (Step 2, step 3)
+2. Open Claude Desktop
+3. Start a new conversation
+4. Look for a **hammer icon** (🔨) near the chat input — it means Claude Desktop detected at least one MCP tool. If it's not there, check the troubleshooting section below.
+5. Type: **"Create a default cube in Blender and move it up 2 units on the Z axis."**
+6. Claude Desktop will use the Blender tools — you should see it report what it did, and the cube should move in the Blender viewport
+
+That's the full setup verified. From here, Dad drives Claude Desktop with prompts like "rig a human character with 4 directional renders" and it does the Blender work.
+
+**Troubleshooting:**
+
+| Symptom | Fix |
+|---|---|
+| Hammer icon missing in Claude Desktop | `uv` may not be on PATH — close and reopen Claude Desktop after installing `uv`. If still missing, restart your machine. |
+| "Connection refused" or "Could not connect to Blender" | Blender's MCP Server isn't running. Open Blender → N panel → Start MCP Server. |
+| `uvx` not found | `uv` didn't install correctly. Re-run the install command, then close/reopen PowerShell. |
+| Claude Desktop shows Blender tool errors | Make sure the `addon.py` version matches the `blender-mcp` package version — re-download `addon.py` from the repo if in doubt. |
+
+---
+
+### After each render run
+
+Once Claude Desktop has rendered sprite PNGs into `public/sprites/`:
+
+```bash
+npm run build:manifest
+```
+
+This regenerates `src/assets/manifest.ts` with the new sprite paths typed correctly. Run it any time sprites change.
 
 ---
 
