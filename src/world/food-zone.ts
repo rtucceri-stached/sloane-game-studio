@@ -579,7 +579,17 @@ export class FoodZone {
     const drawX = Math.round(wx - SPRITE_FRAME_SIZE / 2);
     const drawY = Math.round(wy - SPRITE_FRAME_SIZE);
 
-    this.ctx.drawImage(img, sx, 0, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE, drawX, drawY, SPRITE_FRAME_SIZE, SPRITE_FRAME_SIZE);
+    this.ctx.drawImage(
+      img,
+      sx,
+      0,
+      SPRITE_FRAME_SIZE,
+      SPRITE_FRAME_SIZE,
+      drawX,
+      drawY,
+      SPRITE_FRAME_SIZE,
+      SPRITE_FRAME_SIZE
+    );
   }
 
   /* ---------- LIGHT POOLS — boba stand neon + interior ---------- */
